@@ -146,8 +146,6 @@ persona interacts with the system>
 
 ## Non Functional Requirements
 
-\<Describe constraints on functional requirements>
-
 | ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
 | ------------- |:-------------:| :-----:| -----:|
 |  NFR1     | Usability | Company users should be able to use EZShop with an introductory training only | All FR |
@@ -161,16 +159,13 @@ persona interacts with the system>
 # Use case diagram and use cases
 
 ## Use case diagram
-
-\<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
-
-\<next describe here each use case in the UCD>
+<mark>TODO insert UCD</mark>
 
 ### Use case 1, UC1 - Add product to cart
 
-| Actors Involved        |  |
+| Actors Involved        | Cashier, Product |
 | ------------- |:-------------:| 
-|  Precondition     | Sale started |  
+|  Precondition     | Authorized cashier, Sale started |  
 |  Post condition     | - |
 |  Nominal Scenario     | Scan barcode, barcode present into products table, add product to cart |
 |  Variants     | Scan barcode, barcode not present into products table, notify error |
@@ -179,7 +174,7 @@ persona interacts with the system>
 
 | Scenario 1.1 | product is defined |
 | ------------- |:-------------:| 
-|  Precondition     |  Sale started |
+|  Precondition     |   Authorized cashier, Sale started |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Scan barcode  |  
@@ -187,7 +182,7 @@ persona interacts with the system>
 |  3     |  Update shopping cart: items list, total |
 
 ##### Scenario 1.2
-| Scenario 1.1 | product is not  defined |
+| Scenario 1.2 | product is not defined |
 | ------------- |:-------------:| 
 |  Precondition     |  Sale started |
 |  Post condition     | - |
@@ -244,21 +239,41 @@ persona interacts with the system>
 
 ### Use case 7, UC7 - Add product to inventory
 
-| Actors Involved        |  |
+| Actors Involved        | Inventory manager, Product |
 | ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
-|  Variants     | |
+|  Precondition     | Authorized Inventory manager |  
+|  Post condition     | - |
+|  Nominal Scenario     | Barcode is not present into products table, add product |
+|  Variants     | Barcode is already present into products table, notify error |
+
+##### Scenario 7.1
+
+| Scenario 7.1 | product is defined |
+| ------------- |:-------------:| 
+|  Precondition     |  Authorized Inventory manager |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Scan barcode  |  
+|  2     | Barcode present into products table |
+|  3     |  Add product |
+
+##### Scenario 7.2
+| Scenario 7.2 | product is not defined |
+| ------------- |:-------------:| 
+|  Precondition     |  Authorized Inventory manager |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Scan barcode  |  
+|  2     | Barcode not present into products table |
+|  3     |  Notify error |
 
 ### Use case 8, UC8 - Edit product from inventory
 
-| Actors Involved        |  |
+| Actors Involved        | Inventory manager, Product |
 | ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
-|  Variants     | |
+|  Precondition     |  Authorized Inventory manager |  
+|  Post condition     | - |
+|  Nominal Scenario     | Increase inventory quantity and/or update sale price |
 
 ### Use case 9, UC9 - Add new customer
 
