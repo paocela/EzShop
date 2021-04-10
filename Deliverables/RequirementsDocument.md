@@ -290,8 +290,44 @@ persona interacts with the system>
 | ------------- |:-------------:| 
 |  Precondition     | Customer already owns a fidelity card |  
 |  Post condition     | - |
-|  Nominal Scenario     | Cashier asks customer to provide form of authentication and authorize them, customer provide data to be changed, cashier applies changes |
-|  Variants     | Cashier asks customer to provide form of authentication and refuse authentication, edit failed |
+|  Nominal Scenario     | Cashier asks customer to provide form of authentication and authorize them, customer provide data to be updated, cashier applies changes |
+|  Variants     | Cashier asks customer to provide form of authentication and refuse authentication, edit failed notified|
+|  Variants     | Cashier asks customer to provide form of authentication and authorize them, customer ask cashier to delete fidelity card, cashier remove customer data and unlink fidelity card |
+
+
+##### Scenario 10.1
+| Scenario 7.2 | Authorized form of authentication |
+| ------------- |:-------------:| 
+|  Precondition     |  Customer already owns a fidelity card |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Cashier asks customer to provide form of authentication  |  
+|  2     | Form of authentication authorized |
+|  3     | Customer provide data to be changed |
+|  4     | Cashier applies changes |
+
+
+##### Scenario 10.2
+| Scenario 7.2 | Not authorized form of authentication |
+| ------------- |:-------------:| 
+|  Precondition     |  Customer already owns a fidelity card |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Cashier asks customer to provide form of authentication  |  
+|  2     | Form of authentication not authorized |
+|  3     | Edif fail notified|
+
+##### Scenario 10.3
+| Scenario 7.2 | Deletion of fidelity card |
+| ------------- |:-------------:| 
+|  Precondition     |  Customer already owns a fidelity card |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Cashier asks customer to provide form of authentication  |  
+|  2     | Form of authentication authorized |
+|  3     | Customer ask cashier to delete fidelity card |
+|  4     | Cashier remove customer data |
+|  5     | unlink fidelity card |
 
 ### Use case 11, UC11 - Add new user
 
@@ -310,6 +346,7 @@ persona interacts with the system>
 |  Post condition     | Account user fields update |
 |  Nominal Scenario     | Manager modifies one or more fields of account|
 |  Variants     | |
+
 # Glossary
 
 \<use UML class diagram to define important terms, or concepts in the domain of the system, and their relationships>
