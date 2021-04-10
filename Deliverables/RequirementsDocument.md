@@ -262,21 +262,21 @@ persona interacts with the system>
 
 ### Use case 9, UC9 - Add new customer
 
-| Actors Involved        |  |
+| Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
-|  Variants     | |
+|  Precondition     | Customer doesn't already own a fidelity card |  
+|  Post condition     | Customer owns a fidelity card, fidelity card on system is linked to the customer |
+|  Nominal Scenario     | Customer provide cashier personal data, cashier record them on system, system link fidelity card to user data, system provide a fidelity card, cashier issues fidelity card to customer |
+|  Variants     |  |
 
 ### Use case 10, UC10 - Edit customer data
 
-| Actors Involved        |  |
+| Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
-|  Variants     | |
+|  Precondition     | Customer already owns a fidelity card |  
+|  Post condition     | - |
+|  Nominal Scenario     | Cashier asks customer to provide form of authentication and authorize them, customer provide data to be changed, cashier applies changes |
+|  Variants     | Cashier asks customer to provide form of authentication and refuse authentication, edit failed |
 
 ### Use case 11, UC11 - Add new user
 
