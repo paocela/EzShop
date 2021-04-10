@@ -280,20 +280,20 @@ persona interacts with the system>
 
 ### Use case 11, UC11 - Add new user
 
-| Actors Involved        |  |
+| Actors Involved        | Manager |
 | ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
+|  Precondition     | Account user doesn't exist |  
+|  Post condition     | Account added in the system |
+|  Nominal Scenario     | Manager create a new account and populate its fields  |
 |  Variants     | |
 
 ### Use case 12, UC12 - Edit user 
 
-| Actors Involved        |  |
+| Actors Involved        | Manager |
 | ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
+|  Precondition     | Account user exist |  
+|  Post condition     | Account user fields update |
+|  Nominal Scenario     | Manager modifies one or more fields of account|
 |  Variants     | |
 # Glossary
 
