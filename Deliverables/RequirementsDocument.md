@@ -59,8 +59,21 @@ interface.
 # Context Diagram and interfaces
 
 ## Context Diagram
+```plantuml
+left to right direction
+skinparam PackageStyle rect
 
-![Context diagram](./images/context_diagram.png)
+rectangle system{
+usecase EzShop
+}
+
+:cashier: --> EzShop
+:manager: --> EzShop
+:inventory_manager: --> EzShop
+:shelf_stacker: --> EzShop
+:product: -up-> EzShop
+:credit_card_system: -up->EzShop
+```
 
 ## Interfaces
 
