@@ -191,7 +191,7 @@ persona interacts with the system>
 |  2     | Barcode not present into products table |
 |  3     |  Notify error |
 
-### Use case 2, UC2 - Add fidelity card
+### Use case 2, UC2 - Add fidelity card to cart
 
 | Actors Involved        | Cashier |
 | ------------- |:-------------:| 
@@ -231,12 +231,64 @@ persona interacts with the system>
 
 ### Use case 4, UC4 - End sale
 
-| Actors Involved        |  |
+| Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
-|  Variants     | |
+|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |  
+|  Post condition     | - |
+|  Nominal Scenario     | Customer pays successfully with cash and gets change, receipt printed, inventory updated |
+|  Variants     | Customer pays with credit card, payment fails, customer is asked to provide another form of payment |
+|  Variants     | Customer pays with credit card, payment fails, customer aborts sale |
+|  Variants     | Customer pays successfully with credit card, receipt printed, inventory updated  |
+
+##### Scenario 4.1
+
+| Scenario 4.1 | successful sale with cash |
+| ------------- |:-------------:| 
+|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Cart is finalized  |  
+|  2     | Customer chooses to pay with cash  |  
+|  3     | Cashier records received money and handles change  |  
+|  4     | Receipt is printed  |  
+|  5     | Product quantity is decreased for all products included in sale  |  
+
+##### Scenario 4.2
+
+| Scenario 4.2 | failed sale with credit card, with retry |
+| ------------- |:-------------:| 
+|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Cart is finalized  |  
+|  2     | Customer chooses to pay with credit card, inserts PIN  |  
+|  3     | Cashier receives failed payment notification  |
+|  4     | Cashier asks customer to try with a different payment method  |  
+
+##### Scenario 4.3
+
+| Scenario 4.3 | failed sale with credit card, aborted |
+| ------------- |:-------------:| 
+|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Cart is finalized  |  
+|  2     | Customer chooses to pay with credit card, inserts PIN  |  
+|  3     | Cashier receives failed payment notification  |
+|  4     | Customer asks cashier to abort sale  |
+
+##### Scenario 4.4
+
+| Scenario 4.4 | successful sale with credit card |
+| ------------- |:-------------:| 
+|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Cart is finalized  |  
+|  2     | Customer chooses to pay with credit card, inserts PIN  |  
+|  3     | Cashier receives successful payment confirmation  |  
+|  4     | Receipt is printed  |  
+|  5     | Product quantity is decreased for all products included in sale  |  
 
 ### Use case 5, UC5 - Log in
 
@@ -249,7 +301,7 @@ persona interacts with the system>
 
 ##### Scenario 5.1
 
-| Scenario 1.1 | user correctly log in |
+| Scenario 5.1 | user correctly log in |
 | ------------- |:-------------:| 
 |  Precondition     |  User already exists |
 |  Post condition     | - |
@@ -258,7 +310,7 @@ persona interacts with the system>
 |  2     | Access is permitted  |
 
 ##### Scenario 5.2
-| Scenario 1.1 | user access denied |
+| Scenario 5.2 | user access denied |
 | ------------- |:-------------:| 
 |  Precondition     |  User already exists |
 |  Post condition     | - |
@@ -276,26 +328,6 @@ persona interacts with the system>
 |  Post condition     | User exits the system |
 |  Nominal Scenario     | User clciks the log out icon |
 |  Variants     | - |
-
-
-### Use case 7, UC7 - Add product to inventory
-
-| Actors Involved        |  |
-| ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
-|  Variants     | |
-
-### Use case 8, UC8 - Edit product from inventory
-
-| Actors Involved        |  |
-| ------------- |:-------------:| 
-|  Precondition     | |  
-|  Post condition     |  |
-|  Nominal Scenario     |  |
-|  Variants     | |
-
 
 ### Use case 7, UC7 - Add product to inventory
 
