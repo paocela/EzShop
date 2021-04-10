@@ -165,7 +165,7 @@ persona interacts with the system>
 
 | Actors Involved        | Cashier, Product |
 | ------------- |:-------------:| 
-|  Precondition     | Authorized cashier, Sale started |  
+|  Precondition     | Sale started |  
 |  Post condition     | - |
 |  Nominal Scenario     | Scan barcode, barcode present into products table, add product to cart |
 |  Variants     | Scan barcode, barcode not present into products table, notify error |
@@ -174,7 +174,7 @@ persona interacts with the system>
 
 | Scenario 1.1 | product is defined |
 | ------------- |:-------------:| 
-|  Precondition     |   Authorized cashier, sale started |
+|  Precondition     |   sale started |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Scan barcode  |  
@@ -184,7 +184,7 @@ persona interacts with the system>
 ##### Scenario 1.2
 | Scenario 1.2 | product is not defined |
 | ------------- |:-------------:| 
-|  Precondition     |  Authorized cashier, sale started |
+|  Precondition     |  sale started |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Scan barcode  |  
@@ -195,7 +195,7 @@ persona interacts with the system>
 
 | Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     | Authorized cashier, sale started, existing fidelity card |
+|  Precondition     | sale started, existing fidelity card |
 |  Post condition     | - |
 |  Nominal Scenario     | Retrieve customer info from fidelity card, card points < discount_threshold, link sale with customer |
 |  Variants     | Retrieve customer info from fidelity card, card points >= discount_threshold, apply discount, link sale with customer|
@@ -204,7 +204,7 @@ persona interacts with the system>
 
 | Scenario 2.1 | fidelity card points are not enough for a discount |
 | ------------- |:-------------:| 
-|  Precondition     | Authorized cashier, sale started, existing fidelity card |
+|  Precondition     | sale finalized, existing fidelity card |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Retrieve customer info from fidelity card |  
@@ -214,7 +214,7 @@ persona interacts with the system>
 ##### Scenario 2.2
 | Scenario 2.2 |  fidelity card points are enough for a discount |
 | ------------- |:-------------:| 
-|  Precondition     | Authorized cashier, sale started, existing fidelity card |
+|  Precondition     | sale finalized, existing fidelity card |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Retrieve customer info from fidelity card |  
@@ -225,7 +225,7 @@ persona interacts with the system>
 
 | Actors Involved        | Cashier, Product |
 | ------------- |:-------------:| 
-|  Precondition     |  Authorized cashier, sale started, product present into cart |
+|  Precondition     |  sale started, product present into cart |
 |  Post condition     | Update shopping cart: items list, total |
 |  Nominal Scenario     | Remove product from cart |
 
@@ -233,7 +233,7 @@ persona interacts with the system>
 
 | Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |  
+|  Precondition     |  sale started, at least 1 product in cart |  
 |  Post condition     | - |
 |  Nominal Scenario     | Customer pays successfully with cash and gets change, receipt printed, inventory updated |
 |  Variants     | Customer pays with credit card, payment fails, customer is asked to provide another form of payment |
@@ -244,7 +244,7 @@ persona interacts with the system>
 
 | Scenario 4.1 | successful sale with cash |
 | ------------- |:-------------:| 
-|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |
+|  Precondition     |  sale started, at least 1 product in cart |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Cart is finalized  |  
@@ -252,12 +252,13 @@ persona interacts with the system>
 |  3     | Cashier records received money and handles change  |  
 |  4     | Receipt is printed  |  
 |  5     | Product quantity is decreased for all products included in sale  |  
+|  6     | If a fidelity card was provided, update points accordingly |  
 
 ##### Scenario 4.2
 
 | Scenario 4.2 | failed sale with credit card, with retry |
 | ------------- |:-------------:| 
-|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |
+|  Precondition     |  sale started, at least 1 product in cart |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Cart is finalized  |  
@@ -269,7 +270,7 @@ persona interacts with the system>
 
 | Scenario 4.3 | failed sale with credit card, aborted |
 | ------------- |:-------------:| 
-|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |
+|  Precondition     |  sale started, at least 1 product in cart |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Cart is finalized  |  
@@ -281,7 +282,7 @@ persona interacts with the system>
 
 | Scenario 4.4 | successful sale with credit card |
 | ------------- |:-------------:| 
-|  Precondition     |  Authorized cashier, sale started, at least 1 product in cart |
+|  Precondition     |  sale started, at least 1 product in cart |
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Cart is finalized  |  
@@ -289,6 +290,7 @@ persona interacts with the system>
 |  3     | Cashier receives successful payment confirmation  |  
 |  4     | Receipt is printed  |  
 |  5     | Product quantity is decreased for all products included in sale  |  
+|  6     | If a fidelity card was provided, update points accordingly |
 
 ### Use case 5, UC5 - Log in
 
@@ -325,62 +327,41 @@ persona interacts with the system>
 | Actors Involved        | Cashier, Manager, Inventory Manager, Shelf Stacker |
 | ------------- |:-------------:| 
 |  Precondition     | User is already logged in |  
-|  Post condition     | User exits the system |
-|  Nominal Scenario     | User clciks the log out icon |
+|  Post condition     | User logged out |
+|  Nominal Scenario     | User clicks the log out icon and exits the system |
 |  Variants     | - |
 
 ### Use case 7, UC7 - Add product to inventory
 
 | Actors Involved        | Inventory manager, Product |
 | ------------- |:-------------:| 
-|  Precondition     | Authorized Inventory manager |  
+|  Precondition     | Authorized Inventory manager, non-existing product |  
 |  Post condition     | - |
-|  Nominal Scenario     | Barcode is not present into products table, add product |
-|  Variants     | Barcode is already present into products table, notify error |
+|  Nominal Scenario     | Insert product information, add product |
 
-##### Scenario 7.1
-
-| Scenario 7.1 | product is defined |
-| ------------- |:-------------:| 
-|  Precondition     |  Authorized Inventory manager |
-|  Post condition     | - |
-| Step#        | Description  |
-|  1     | Scan barcode  |  
-|  2     | Barcode present into products table |
-|  3     |  Add product |
-
-##### Scenario 7.2
-| Scenario 7.2 | product is not defined |
-| ------------- |:-------------:| 
-|  Precondition     |  Authorized Inventory manager |
-|  Post condition     | - |
-| Step#        | Description  |
-|  1     | Scan barcode  |  
-|  2     | Barcode not present into products table |
-|  3     |  Notify error |
 
 ### Use case 8, UC8 - Edit product from inventory
 
 | Actors Involved        | Inventory manager, Product |
 | ------------- |:-------------:| 
-|  Precondition     |  Authorized Inventory manager |  
-|  Post condition     | - |
-|  Nominal Scenario     | Increase inventory quantity and/or update sale price |
+|  Precondition     |  Authorized Inventory manager, existing product |  
+|  Post condition     | Inventory updated |
+|  Nominal Scenario     | Increase inventory quantity and/or sale price, update inventory |
 
 ### Use case 9, UC9 - Add new customer
 
 | Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     | Customer doesn't already own a fidelity card |  
+|  Precondition     | Customer doesn't exist |  
 |  Post condition     | Customer owns a fidelity card, fidelity card on system is linked to the customer |
 |  Nominal Scenario     | Customer provide cashier personal data, cashier record them on system, system link fidelity card to user data, system provide a fidelity card, cashier issues fidelity card to customer |
-|  Variants     |  |
+
 
 ### Use case 10, UC10 - Edit customer data
 
 | Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     | Customer already owns a fidelity card |  
+|  Precondition     | Customer exists |  
 |  Post condition     | - |
 |  Nominal Scenario     | Cashier verifies customer identity, verification is successful, customer provide data to be updated, cashier applies changes |
 |  Variants     | Cashier verifies customer identity, verification fails, edit failed notified|
@@ -388,9 +369,9 @@ persona interacts with the system>
 
 
 ##### Scenario 10.1
-| Scenario 7.2 | Authorized form of authentication |
+| Scenario 10.1 | Customer identity verified |
 | ------------- |:-------------:| 
-|  Precondition     |  Customer already owns a fidelity card |
+|  Precondition     | Customer exists |  
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Cashier verifies customer identity  |  
@@ -400,9 +381,9 @@ persona interacts with the system>
 
 
 ##### Scenario 10.2
-| Scenario 7.2 | Not authorized form of authentication |
+| Scenario 10.2 | Customer identity verification fails |
 | ------------- |:-------------:| 
-|  Precondition     |  Customer already owns a fidelity card |
+|  Precondition     | Customer exists |  
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Cashier verifies customer identity  |  
@@ -410,9 +391,9 @@ persona interacts with the system>
 |  3     | Edit fail notified|
 
 ##### Scenario 10.3
-| Scenario 7.2 | Deletion of fidelity card |
+| Scenario 10.3 | Customer deletion |
 | ------------- |:-------------:| 
-|  Precondition     |  Customer already owns a fidelity card |
+|  Precondition     | Customer exists |  
 |  Post condition     | - |
 | Step#        | Description  |
 |  1     | Cashier verifies customer identity  |  
@@ -435,9 +416,28 @@ persona interacts with the system>
 | Actors Involved        | Manager |
 | ------------- |:-------------:| 
 |  Precondition     | Account user exist |  
-|  Post condition     | Account user fields update |
-|  Nominal Scenario     | Manager modifies one or more fields of account|
-|  Variants     | |
+|  Post condition     | - |
+|  Nominal Scenario     | Manager modifies one or more fields of account, Account fields updated |
+|  Variants     | Manager deletes the account |
+
+##### Scenario 12.1
+| Scenario 12.1 | User update |
+| ------------- |:-------------:| 
+|  Precondition     | Account user exist |  
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Manager modifies one or more fields of account  |  
+|  2     | Account fields updated |
+
+##### Scenario 12.2
+| Scenario 12.2 | User delete |
+| ------------- |:-------------:| 
+|  Precondition     | Account user exist |  
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Manager requests user account deletion  |  
+|  2     | User account deleted |
+
 # Glossary
 
 \<use UML class diagram to define important terms, or concepts in the domain of the system, and their relationships>
