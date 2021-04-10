@@ -106,11 +106,11 @@ persona interacts with the system>
 |  FR1.2       | Add customer fidelity card |
 |  FR1.2.1     | Scan customer fidelity card |
 |  FR1.2.2     | Apply discount if card points are above threshold |
-|  FR1.3       | Add product |
+|  FR1.3       | Add product to cart |
 |  FR1.3.1     | Scan or insert product barcode |
 |  FR1.3.2     | Retrieve product info & price |
 |  FR1.3.2     | Update shopping cart |
-|  FR1.4       | Remove product |
+|  FR1.4       | Remove product from cart|
 |  FR1.4.1     | Scan or insert product barcode |
 |  FR1.4.2     | Update shopping cart |
 |  FR1.5       | End sale |
@@ -120,14 +120,14 @@ persona interacts with the system>
 |  FR1.5.4     | Update customer fidelity card points |
 |  FR1.5.5     | Update inventory |
 |  FR2         | Authorize and authenticate  |
-|  FR2.1       | Manage accounts |
-|  FR2.2       | Log in  |
-|  FR2.3       | Log out  |
+|  FR2.1       | Log in  |
+|  FR2.2       | Log out  |
 |  FR3         | Manage inventory | 
-|  FR3.1       | Add new product (descriptors,supplier cost, sale price) |
-|  FR3.2       | Update inventory quantity | 
-|  FR3.3       | Update product sale price |   
-|  FR3.4       | Remove product |
+|  FR3.1       | Add product to inventory (descriptors,supplier cost, sale price) |
+|  FR3.2       | Edit product from inventory| 
+|  FR3.2.1       | Update inventory quantity | 
+|  FR3.2.2       | Update product sale price |   
+|  FR3.3       | Remove product from inventory|
 |  FR4         | Manage customer | 
 |  FR4.1       | Add new customer |
 |  FR4.2       | Link fidelity card to customer | 
@@ -138,6 +138,11 @@ persona interacts with the system>
 |  FR5.1       | Show revenue |  
 |  FR5.2       | Show profit |  
 |  FR5.3       | Show current inventory value |  
+|  FR6       | Manage Users |
+|  FR6.1       | List Users |
+|  FR6.2       | Create User |
+|  FR6.3       | Edit User |
+|  FR6.4       | Delete User |
 
 ## Non Functional Requirements
 
@@ -161,46 +166,135 @@ persona interacts with the system>
 
 \<next describe here each use case in the UCD>
 
-### Use case 1, UC1
+### Use case 1, UC1 - Add product to cart
 
 | Actors Involved        |  |
 | ------------- |:-------------:| 
-|  Precondition     | \<Boolean expression, must evaluate to true before the UC can start> |  
-|  Post condition     | \<Boolean expression, must evaluate to true after UC is finished> |
-|  Nominal Scenario     | \<Textual description of actions executed by the UC> |
-|  Variants     | \<other executions, ex in case of errors> |
+|  Precondition     | Sale started |  
+|  Post condition     | - |
+|  Nominal Scenario     | Scan barcode, barcode present into products table, add product to cart |
+|  Variants     | Scan barcode, barcode not present into products table, notify error |
 
 ##### Scenario 1.1
 
-\<describe here scenarios instances of UC1>
-
-\<a scenario is a sequence of steps that corresponds to a particular execution of one use case>
-
-\<a scenario is a more formal description of a story>
-
-\<only relevant scenarios should be described>
-
-| Scenario 1.1 | |
+| Scenario 1.1 | product is defined |
 | ------------- |:-------------:| 
-|  Precondition     | \<Boolean expression, must evaluate to true before the scenario can start> |
-|  Post condition     | \<Boolean expression, must evaluate to true after scenario is finished> |
+|  Precondition     |  Sale started |
+|  Post condition     | - |
 | Step#        | Description  |
-|  1     |  |  
-|  2     |  |
-|  ...     |  |
+|  1     | Scan barcode  |  
+|  2     | Barcode present into products table |
+|  3     |  Update shopping cart: items list, total |
 
 ##### Scenario 1.2
+| Scenario 1.1 | product is not  defined |
+| ------------- |:-------------:| 
+|  Precondition     |  Sale started |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Scan barcode  |  
+|  2     | Barcode not present into products table |
+|  3     |  Notify error |
 
-##### Scenario 1.x
+### Use case 2, UC2 - Add fidelity card
 
-### Use case 2, UC2
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
 
-..
+### Use case 3, UC3 - Remove product from cart
 
-### Use case x, UCx
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
 
-..
+### Use case 4, UC4 - End sale
 
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
+
+### Use case 5, UC5 - Log in
+
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
+
+### Use case 6, UC6 - Log out
+
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
+
+
+### Use case 7, UC7 - Add product to inventory
+
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
+
+### Use case 8, UC8 - Edit product from inventory
+
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
+
+### Use case 9, UC9 - Add new customer
+
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
+
+### Use case 10, UC10 - Edit customer data
+
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
+
+### Use case 11, UC11 - Add new user
+
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
+
+### Use case 12, UC12 - Edit user 
+
+| Actors Involved        |  |
+| ------------- |:-------------:| 
+|  Precondition     | |  
+|  Post condition     |  |
+|  Nominal Scenario     |  |
+|  Variants     | |
 # Glossary
 
 \<use UML class diagram to define important terms, or concepts in the domain of the system, and their relationships>
