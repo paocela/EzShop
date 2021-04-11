@@ -159,7 +159,63 @@ persona interacts with the system>
 # Use case diagram and use cases
 
 ## Use case diagram
-<mark>TODO insert UCD</mark>
+```plantuml
+actor Cashier
+actor Credit_Card_System
+actor Product
+actor Manager
+actor Inventory_Manager
+actor Shelf_Stacker
+
+skinparam PackageStyle rect
+
+rectangle EzShop{
+    
+    Cashier -> (Manage Customers)
+    Cashier -> (Handle Sales)
+    (Handle Sales) --down-> Credit_Card_System
+    (Handle Sales) -down-> Product
+
+    Cashier --> (Authorize & Authenticate)
+    Shelf_Stacker --> (Authorize & Authenticate)
+    Manager --> (Authorize & Authenticate)
+    Inventory_Manager --> (Authorize & Authenticate)
+
+    Manager -> (Manage Users)
+    Manager -> (Manage Accounting)
+
+    Shelf_Stacker --> (Manage Inventory)
+
+    Inventory_Manager -up-> (Manage Inventory)
+
+    (Manage Inventory) ---> Product
+
+}
+```
+<br/><br/><br/>
+```plantuml
+(Handle Sales) .> (End Sale) :include
+(Handle Sales) .> (Add customer\n fidelity card) :include
+(Handle Sales) .> (Remove Product\n to cart) :include
+(Handle Sales) .> (Add Product\n to cart) :include
+```
+<br/><br/><br/>
+
+```plantuml
+(Authorize & Authenticate) .> (Log out) :include
+(Authorize & Authenticate) .> (Log in) :include
+
+(Manage Inventory) .> (Edit product\n from inventory) :include
+(Manage Inventory) .> (Add product\n to inventory) :include
+```
+<br/><br/><br/>
+```plantuml
+(Manage Customer) .> (Edit customer data) :include
+(Manage Customer) .> (Add new customer) :include
+
+(Manage User) .> (Edit user) :include
+(Manage User) .> (Create user) :include
+```
 
 ### Use case 1, UC1 - Add product to cart
 
