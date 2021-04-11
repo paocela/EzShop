@@ -36,10 +36,6 @@ square meters, sells 500-2000 different item types, has one or a few cash regist
 * manage customers
 * support accounting
 
-We assume that each sale point is composed of hardware (computer with peripherals, barcode reader, printer) plus
-software. From now on we will assume POS includes both hardware and software, while EZShop represents only the software
-interface.
-
 # Stakeholders
 
 | Stakeholder name  | Description | 
