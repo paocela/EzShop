@@ -351,7 +351,7 @@ rectangle EzShop{
 
 ### Use case 5, UC5 - Log in
 
-| Actors Involved        | Cashier, Manager, Inventory Manager, Shelf Stacker |
+| Actors Involved        | Cashier, Manager, Inventory Manager |
 | ------------- |:-------------:| 
 |  Precondition     | User already exists |  
 |  Post condition     | - |
@@ -381,7 +381,7 @@ rectangle EzShop{
 
 ### Use case 6, UC6 - Log out
 
-| Actors Involved        | Cashier, Manager, Inventory Manager, Shelf Stacker |
+| Actors Involved        | Cashier, Manager, Inventory Manager |
 | ------------- |:-------------:| 
 |  Precondition     | User is already logged in |  
 |  Post condition     | User logged out |
