@@ -77,7 +77,6 @@ usecase EzShop
 |   Cashier     | GUI | Screen, keyboard, mouse |
 |   Manager     | GUI |Screen, keyboard, mouse  |
 |   Inventory manager     | GUI  | Screen, keyboard, mouse |
-|   Shelf stacker     | GUI  | Screen, keyboard, mouse |
 |   Product     | bar code | laser beam |
 |   Credit card system     | API | internet connection |
 
