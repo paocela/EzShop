@@ -247,31 +247,42 @@ rectangle EzShop{
 
 | Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     | sale started, existing fidelity card |
+|  Precondition     | sale started |
 |  Post condition     | - |
-|  Nominal Scenario     | Retrieve customer info from fidelity card, card points < discount_threshold, link sale with customer |
-|  Variants     | Retrieve customer info from fidelity card, card points >= discount_threshold, apply discount, link sale with customer|
+|  Nominal Scenario     | Fidelity card points are not enough for a discount |
+|  Variants     | Fidelity card points are enough for a discount |
+|  Variants     | Invalid fidelity card number |
 
 ##### Scenario 2.1
 
-| Scenario 2.1 | fidelity card points are not enough for a discount |
+| Scenario 2.1 | Fidelity card points are not enough for a discount |
 | ------------- |:-------------:| 
-|  Precondition     | sale finalized, existing fidelity card |
+|  Precondition     | sale started |
 |  Post condition     | - |
 | Step#        | Description  |
-|  1     | Retrieve customer info from fidelity card |  
-|  2     | card points < discount_threshold: no discount |
+|  1     | Insert fidelity card number to retrieve customer data |  
+|  2     | Fidelity card points < 500: no discount |
 |  3     | Link sale with customer |
 
 ##### Scenario 2.2
-| Scenario 2.2 |  fidelity card points are enough for a discount |
+| Scenario 2.2 |  Fidelity card points are enough for a discount |
 | ------------- |:-------------:| 
-|  Precondition     | sale finalized, existing fidelity card |
+|  Precondition     | sale started |
 |  Post condition     | - |
 | Step#        | Description  |
-|  1     | Retrieve customer info from fidelity card |  
-|  2     | card points >= discount_threshold: apply discount |
+|  1     | Insert fidelity card number to retrieve customer data |  
+|  2     | Fidelity card points >= 500: 20% discount |
 |  3     | Link sale with customer |
+
+
+##### Scenario 2.2
+| Scenario 2.2 |  Invalid fidelity card number |
+| ------------- |:-------------:| 
+|  Precondition     | sale started |
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Insert fidelity card number to retrieve customer data |  
+|  2     | Notify invalid fidelity card provided |
 
 ### Use case 3, UC3 - Remove product from cart
 
