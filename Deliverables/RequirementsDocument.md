@@ -492,17 +492,121 @@ rectangle EzShop{
 
 # Glossary
 
-\<use UML class diagram to define important terms, or concepts in the domain of the system, and their relationships>
+```plantuml
+class EZShop
 
-\<concepts are used consistently all over the document, ex in use cases, requirements etc>
+class Sale_Transaction{
+    Id
+    date
+    cart value
+    discount
+    total amount
+    payment method
+    payment reference
+    received cash
+    cash change
+}
+
+class Product_Record{
+    Id
+    name
+    quantity
+    unit price
+    price
+    barcode
+}
+
+class Product{
+    Id
+    name
+    unit price
+    supplier cost
+    barcode
+    inventory quantity
+
+}
+
+class User{
+    Id
+    first name
+    last name
+    login
+    password
+    role
+    created at
+    updated at
+    deleted at
+}
+
+class Customer {
+    Id
+    first name
+    last name
+    physical address
+    email address
+    phone number
+    created at
+    updated at
+}
+
+class Fidelity_Card{
+    number
+    points
+    created at
+}
+
+EZShop - "*" User
+EZShop - "*" Product
+EZShop -- "*" Sale_Transaction
+
+Sale_Transaction o-- "*" Product_Record
+Sale_Transaction -- "0..1" Customer
+Sale_Transaction -- User :handles\n role='cashier'
+
+Product_Record -- Product :describe
+
+Customer -- "1" Fidelity_Card :owns
+
+note right of Sale_Transaction : Transaction between customer and retailer.\nIf payment method is card the transaction\n will include a payment reference.\nIf payment method is cash received cash\n will include the cash provided by the customer,\n while cash change is the change provided by the cashier.
+note bottom of Product : physical product
+note bottom of Product_Record : descriptor of physical\nproducts with same bar code.
+note right of User : an employee of the shop having\nEZShop access credentials.
+note bottom of Fidelity_Card : the card associated\nwith a specific customer
+```
 
 # System Design
+```plantuml
+class EZShop_System{
+    Handle sales()
+    Authorize & authenticate()
+    Manage inventory()
+    Manage customers()
+    Manage accounting()
+    Manage users()
+}
 
-\<describe here system design>
+EZShop_System o-- Bar_Code_Reader
+EZShop_System o-- Computer
+EZShop_System o-- Printer
+EZShop_System o-- Credit_Card_Reader
+EZShop_System o-- Cash_Drawer
+Computer -- Software
 
-\<must be consistent with Context diagram>
-
+hide EZShop_System circle
+hide Bar_Code_Reader circle
+hide Computer circle
+hide Printer circle
+hide Credit_Card_Reader circle
+hide Cash_Drawer circle
+hide Software circle
+```
 # Deployment Diagram
+```plantuml
+node Server
+node Shop_Client
+artifact EZShop_application
 
-\<describe here deployment diagram >
+Server -- "*" Shop_Client
+Server -- EZShop_application
+```
 
