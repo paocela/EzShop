@@ -66,7 +66,6 @@ usecase EzShop
 :cashier: --> EzShop
 :manager: --> EzShop
 :inventory_manager: --> EzShop
-:shelf_stacker: --> EzShop
 :product: -up-> EzShop
 :credit_card_system: -up->EzShop
 ```
