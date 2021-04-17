@@ -159,7 +159,6 @@ actor Credit_Card_System
 actor Product
 actor Manager
 actor Inventory_Manager
-actor Shelf_Stacker
 
 skinparam PackageStyle rect
 
@@ -170,17 +169,14 @@ rectangle EzShop{
     (Handle Sales) --down-> Credit_Card_System
     (Handle Sales) -down-> Product
 
+    Inventory_Manager -up-> (Manage Inventory)
+    Inventory_Manager -up--> (Authorize & Authenticate)
     Cashier --> (Authorize & Authenticate)
-    Shelf_Stacker --> (Authorize & Authenticate)
     Manager --> (Authorize & Authenticate)
-    Inventory_Manager --> (Authorize & Authenticate)
+    
 
     Manager -> (Manage Users)
     Manager -> (Manage Accounting)
-
-    Shelf_Stacker --> (Manage Inventory)
-
-    Inventory_Manager -up-> (Manage Inventory)
 
     (Manage Inventory) ---> Product
 
