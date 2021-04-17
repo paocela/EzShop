@@ -413,46 +413,29 @@ rectangle EzShop{
 
 | Actors Involved        | Cashier |
 | ------------- |:-------------:| 
-|  Precondition     | Customer exists |  
+|  Precondition     | Customer identity verified, customer account exists |  
 |  Post condition     | - |
-|  Nominal Scenario     | Cashier verifies customer identity, verification is successful, customer provide data to be updated, cashier applies changes |
-|  Variants     | Cashier verifies customer identity, verification fails, edit failed notified|
-|  Variants     | Cashier verifies customer identity, verification is successful, customer ask cashier to delete fidelity card, cashier remove customer data and unlink fidelity card |
+|  Nominal Scenario     | Customer provides data to be updated, cashier applies changes |
+|  Variants     | Customer asks cashier to delete its data, cashier performs customer deletion |
 
 
 ##### Scenario 10.1
-| Scenario 10.1 | Customer identity verified |
+| Scenario 10.1 | Customer update |
 | ------------- |:-------------:| 
-|  Precondition     | Customer exists |  
+|  Precondition     | Customer identity verified, customer account exists |  
 |  Post condition     | - |
 | Step#        | Description  |
-|  1     | Cashier verifies customer identity  |  
-|  2     | Customer identity verified |
-|  3     | Customer provide data to be changed |
-|  4     | Cashier applies changes |
-
+|  1     | Customer provides data to be changed |
+|  2     | Cashier applies changes |
 
 ##### Scenario 10.2
-| Scenario 10.2 | Customer identity verification fails |
+| Scenario 10.2 | Customer deletion |
 | ------------- |:-------------:| 
-|  Precondition     | Customer exists |  
+|  Precondition     | Customer identity verified, customer account exists |  
 |  Post condition     | - |
 | Step#        | Description  |
-|  1     | Cashier verifies customer identity  |  
-|  2     | Customer identity not verified |
-|  3     | Edit fail notified|
-
-##### Scenario 10.3
-| Scenario 10.3 | Customer deletion |
-| ------------- |:-------------:| 
-|  Precondition     | Customer exists |  
-|  Post condition     | - |
-| Step#        | Description  |
-|  1     | Cashier verifies customer identity  |  
-|  2     | Customer identity verified |
-|  3     | Customer ask cashier to delete fidelity card |
-|  4     | Cashier remove customer data |
-|  5     | unlink fidelity card |
+|  1     | Customer asks cashier to delete its data |
+|  2     | Cashier removes customer data |
 
 ### Use case 11, UC11 - Add new user
 
