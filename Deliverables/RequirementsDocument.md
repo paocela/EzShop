@@ -2,9 +2,9 @@
 
 Authors: Luca Pezzolla, Teodoro Corbo, Francesco Policastro, Paolo Celada
 
-Date: 3/4/2021
+Date: 18/4/2021
 
-Version: 1.0
+Version: 2.0
 
 # Contents
 
@@ -82,12 +82,26 @@ usecase EzShop
 
 # Stories and personas
 
-\<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a
-persona interacts with the system>
+Elizabeth James is the *shop owner*: she's 65 years old and has worked in the sale industry for all her life.
+She does not have a great relationship with technology, but she understands it can benefit the daily activity of her employee.
+Her goal is to maximize the profitability of her shop: she decided to finance the creation of EZShop following the suggestions provided by Maurizio, the store manager.
 
-\<Persona is-an-instance-of actor>
+Maurizio Morisio is the *store manager*: he's an experienced manager in the hospitality industry, over the years he practiced data analysis to understand customer behavior.
+He started working in the shop from just a couple of months, but he brought change with him as soon as he arrived.
+Elizabeth trusts him to make the shop more profitable, and his goal is to do so by understanding and supporting the needs of the employee. After all, who knows best how to improve processes? 
+His main need from EZShop is to obtain greater visibility over revenue information and customer retention.
 
-\<stories will be formalized later as scenarios in use cases>
+
+Teodoro Corbo is the *inventory manager*: he works in the shop from 20 years, and his role is to manage product restock. 
+Over time he got to know all the shop suppliers, and is always able to find a way to have the store shelf refilled. His network of relationships are of extreme value for the shop. 
+He used to remember the information for all the products in the inventory, but lately he's been having some trouble with memory.
+EZShop can help him glance at the current stock numbers to notice if he needs to make some calls.
+
+
+Luca Pezzolla is the *store cashier*: he's 30 and this is his first job and he's trying hard to make it work.
+Right now he's the only store cashier, and there are moments in which he feels overwhelmed by the infinite line of customers.
+Elizabeth explained to him that talking to customers and making them feel welcome is an important time for the job, but he's just too slow at manually inserting all receipt data.
+He hopes the change from an analogic cash register to the new system will help him to keep the queue short, lessening his anxiety and giving him more time to interact with his customers.
 
 # Functional and non functional requirements
 
@@ -448,7 +462,7 @@ rectangle EzShop{
 | ------------- |:-------------:| 
 |  Precondition     | Account user doesn't exist |  
 |  Post condition     | Account added in the system |
-|  Nominal Scenario     | Manager create a new account and populate its fields  |
+|  Nominal Scenario     | Manager creates a new account and populate its fields  |
 |  Variants     | |
 
 ### Use case 12, UC12 - Edit user 
@@ -477,6 +491,14 @@ rectangle EzShop{
 | Step#        | Description  |
 |  1     | Manager requests user account deletion  |  
 |  2     | User account deleted |
+
+### Use case 13, UC13 - Management dashboard
+
+| Actors Involved        | Manager |
+| ------------- |:-------------:| 
+|  Precondition     | - |  
+|  Post condition     | - |
+|  Nominal Scenario     | Manager can access revenue & customer stats |
 
 # Glossary
 
@@ -518,7 +540,9 @@ class User{
     Id
     first name
     last name
-    login
+    physical address
+    email address
+    phone number
     password
     role
     created at
