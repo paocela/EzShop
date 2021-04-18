@@ -631,10 +631,12 @@ hide Software circle
 # Deployment Diagram
 ```plantuml
 node Server
-node Shop_Client
-artifact EZShop_application
+node Client
+artifact EZShop_client
+artifact EZShop_server
 
-Server -- "*" Shop_Client
-Server -- EZShop_application
+EZShop_server -- Server
+Server -- "*" Client
+Client -- EZShop_client
 ```
 
