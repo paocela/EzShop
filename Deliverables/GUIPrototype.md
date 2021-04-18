@@ -47,7 +47,7 @@ Version: 1.0
 ![Use case #13.2](gui/Presentation/usecase13.2.png?raw=true "Use case #13.2")
 
 
-![Manage Inventory button](gui/Button/inventory.png?raw=true "Manage Inventory button")
+![Manage Inventory button](gui/Button/inventorybut.png?raw=true "Manage Inventory button")
 ![Use case #7](gui/Presentation/usecase7.png?raw=true "Use case #7")
 ![Use case #8](gui/Presentation/usecase8.png?raw=true "Use case #8")
 
