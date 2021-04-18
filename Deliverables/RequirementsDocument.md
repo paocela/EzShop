@@ -496,7 +496,25 @@ rectangle EzShop{
 | ------------- |:-------------:| 
 |  Precondition     | - |  
 |  Post condition     | - |
-|  Nominal Scenario     | Manager can access revenue & customer stats |
+|  Nominal Scenario     | Manager can access revenue stats |
+|  Variants     | Manager can access customer stats |
+
+##### Scenario 13.1
+| Scenario 13.1 | Revenue |
+| ------------- |:-------------:| 
+|  Precondition     | - |  
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Manager accesses revenue stats  |  
+
+##### Scenario 13.2
+| Scenario 13.2 | Customer stats |
+| ------------- |:-------------:| 
+|  Precondition     | Account user exist |  
+|  Post condition     | - |
+| Step#        | Description  |
+|  1     | Manager accesses customer stats  |  
+
 
 # Glossary
 
