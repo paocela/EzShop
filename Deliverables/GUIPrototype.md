@@ -20,6 +20,8 @@ Version: 1.0
 ![Use case #1.2](gui/Presentation/usecase1.2.png?raw=true "Use case #1.2")
 ![Use case #1.1](gui/Presentation/usecase1.1.png?raw=true "Use case #1.1")
 
+![Use case #3](gui/Presentation/usecase3.png?raw=true "Use case #3")
+
 ![Use case #2](gui/Presentation/usecase2.png?raw=true "Use case #2")
 ![Use case #2.3](gui/Presentation/usecase2.3.png?raw=true "Use case #2.3")
 ![Use case #2.1 2.2](gui/Presentation/usecase2.1_2.2.png?raw=true "Use case #2.1 2.2")
