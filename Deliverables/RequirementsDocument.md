@@ -282,8 +282,8 @@ rectangle EzShop{
 |  3     | Link sale with customer |
 
 
-##### Scenario 2.2
-| Scenario 2.2 |  Invalid fidelity card number |
+##### Scenario 2.3
+| Scenario 2.3 |  Invalid fidelity card number |
 | ------------- |:-------------:| 
 |  Precondition     | sale started |
 |  Post condition     | - |
