@@ -82,7 +82,7 @@ usecase EzShop
 
 # Stories and personas
 
-Guido Saracco is the *shop owner*: she's 65 years old and has worked in the sale industry for all his life.
+Guido Saracco is the *shop owner*: he's 65 years old and has worked in the sale industry for all his life.
 He does not have a great relationship with technology, but he understands it can benefit the daily activity of his employee.
 His goal is to maximize the profitability of his shop: he decided to finance the creation of EZShop following the suggestions provided by Maurizio, the store manager.
 
