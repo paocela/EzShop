@@ -50,9 +50,12 @@
 50
 51
 # Project Estimation  
-Authors:
-Date:
-Version:
+Authors: Francesco Policastro, Paolo Celada, Luca Pezzolla, Teodoro Corbo
+
+Date: 24/04/2021
+
+Version: 1.0
+
 # Contents
 - [Estimate by product decomposition]
 - [Estimate by activity decomposition ]
@@ -62,16 +65,38 @@ Version:
 ### 
 |             | Estimate                        |             
 | ----------- | ------------------------------- |  
-| NC =  Estimated number of classes to be developed   |                             |             
-|  A = Estimated average size per class, in LOC       |                            | 
-| S = Estimated size of project, in LOC (= NC * A) | |
-| E = Estimated effort, in person hours (here use productivity 10 LOC per person hour)  |                                      |   
-| C = Estimated cost, in euro (here use 1 person hour cost = 30 euro) | | 
-| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week ) |                    |               
+| NC =  Estimated number of classes to be developed   |              13               |             
+|  A = Estimated average size per class, in LOC       |                  350          | 
+| S = Estimated size of project, in LOC (= NC * A) | 4500 |
+| E = Estimated effort, in person hours (here use productivity 10 LOC per person hour)  |                450                      |   
+| C = Estimated cost, in euro (here use 1 person hour cost = 30 euro) | 13500 | 
+| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week ) |         3           |               
+
+<br />
+<br />
+
 # Estimate by activity decomposition
 ### 
 |         Activity name    | Estimated effort (person hours)   |             
 | ----------- | ------------------------------- | 
-| | |
+| Requirement document| 66 |
+| GUI prototype | 30 |
+|Design| 32 |
+|Code + unit test| 256 |
+|Integration+GUI test| 64 |
 ###
-Insert here Gantt chart with above activities
+<br />
+<br />
+
+```plantuml
+scale 1.5
+Project starts 2021-05-01
+[Requirement document + GUI prototype] starts 2021-05-01
+[Requirement document + GUI prototype] ends 2021-05-5
+[Design] starts at [Requirement document + GUI prototype]'s end 
+[Design] ends 2021-05-6
+[Code + unit test] starts at [Design]'s end 
+[Code + unit test] ends 2021-05-16
+[Integr+GUI test] starts at [Code + unit test]'s end
+[Integr+GUI test] ends 2021-05-18
+```
