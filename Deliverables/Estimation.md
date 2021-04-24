@@ -97,6 +97,6 @@ Project starts 2021-05-01
 [Design] ends 2021-05-6
 [Code + unit test] starts at [Design]'s end 
 [Code + unit test] ends 2021-05-16
-[Integr+GUI test] starts at [Code + unit test]'s end
-[Integr+GUI test] ends 2021-05-18
+[Integration test + GUI test] starts at [Code + unit test]'s end
+[Integration test + GUI test] ends 2021-05-18
 ```
