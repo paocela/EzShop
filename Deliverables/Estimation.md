@@ -60,7 +60,7 @@ Version: 1.0
 - [Estimate by product decomposition]
 - [Estimate by activity decomposition ]
 # Estimation approach
-<Consider the EZGas  project as described in YOUR requirement document, assume that you are going to develop the project INDEPENDENT of the deadlines of the course>
+<Consider the EZShop  project as described in YOUR requirement document, assume that you are going to develop the project INDEPENDENT of the deadlines of the course>
 # Estimate by product decomposition
 ### 
 |             | Estimate                        |             
@@ -88,15 +88,16 @@ Version: 1.0
 <br />
 <br />
 
+
 ```plantuml
-scale 1.5
+saturday are closed
+sunday are closed
 Project starts 2021-05-01
-[Requirement document + GUI prototype] starts 2021-05-01
-[Requirement document + GUI prototype] ends 2021-05-5
+[Requirement document + GUI prototype] lasts 5 days
 [Design] starts at [Requirement document + GUI prototype]'s end 
-[Design] ends 2021-05-6
+[Design] lasts 1 day
 [Code + unit test] starts at [Design]'s end 
-[Code + unit test] ends 2021-05-16
+[Code + unit test] lasts 10 days
 [Integration test + GUI test] starts at [Code + unit test]'s end
-[Integration test + GUI test] ends 2021-05-18
+[Integration test + GUI test] lasts 2 days
 ```
