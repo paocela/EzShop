@@ -135,3 +135,98 @@ Admin <-- EzShop : return true
 ```
 
 
+
+
+
+
+
+Scenario 4.1
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : defineCustomer()
+EzShop -> Customer : Customer()
+EzShop <-- Customer : return Customer
+User <-- EzShop : c.getId()
+
+```
+
+Scenario 4.2
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : createCard()
+EzShop -> Card : Card()
+EzShop <-- Card : return Card
+User <-- EzShop : card.getId()
+User -> EzShop : getCustomer()
+User <-- EzShop : customer.getId()
+User -> EzShop : attachCardToCustomer()
+EzShop -> EzShop : modifyCustomer()
+EzShop -> Customer : c.setCardNumber()
+EzShop <-- Customer : return true
+User <-- EzShop : return true
+
+```
+
+Scenario 4.3
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : getCustomer()
+User <-- EzShop : customer.getId()
+User <-- EzShop : customer.getCustomerName()
+User -> EzShop : modifyCustomer()
+EzShop -> Customer : c.setCardNumber()
+EzShop <-- Customer : return true
+User <-- EzShop : return true
+
+```
+
+Scenario 4.4
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : getCustomer()
+User <-- EzShop : customer.getId()
+User -> EzShop : modifyCustomer()
+EzShop -> Customer : c.setCardNumber()
+EzShop <-- Customer : return true
+EzShop -> Customer : c.setCustomerName()
+EzShop <-- Customer : return true
+User <-- EzShop : return true
+
+```
+
+Scenario 5.1
+
+```plantuml
+
+actor user
+note over user: User ="Admin or\nShop Manager or\nCashier"
+user -> EzShop : login()
+EzShop -> EzShop : getUserByUsername() //ADDED TOBECHECKED
+EzShop -> User : user.getPassword()
+EzShop <-- User : return password
+user <-- EzShop : return user
+
+```
+
+Scenario 5.2
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : logout()
+User <-- EzShop : return true
+
+```
