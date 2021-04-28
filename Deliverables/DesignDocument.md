@@ -10,8 +10,11 @@ Version: 1.0
 
 # Contents
 
-- [High level design](#package-diagram)
-- [Low level design](#class-diagram)
+- [Design Document](#design-document)
+- [Contents](#contents)
+- [Instructions](#instructions)
+- [High level design](#high-level-design)
+- [Low level design](#low-level-design)
 - [Verification traceability matrix](#verification-traceability-matrix)
 - [Verification sequence diagrams](#verification-sequence-diagrams)
 
