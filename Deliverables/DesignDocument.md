@@ -71,5 +71,38 @@ The software is designed in Java and only represents the application logic. The 
 
 
 # Verification sequence diagrams 
-\<select key scenarios from the requirement document. For each of them define a sequence diagram showing that the scenario can be implemented by the classes and methods in the design>
+
+Scenario 1.1
+
+```plantuml
+note over User: User ="Admin or\nShop Manager"
+User -> EzShop : createProductType()
+EzShop -> ProductType : Product()
+EzShop <-- ProductType : return Product 
+User <-- EzShop : p.getID()
+
+```
+Scenario 1.2
+
+```plantuml
+note over User: User ="Admin or\nShop Manager"
+User -> EzShop : UpdatePosition()
+EzShop -> EzShop : p.getProductTypeByBarCode()
+EzShop -> ProductType : p.setPosition()
+EzShop <-- ProductType : return true 
+User <-- EzShop : return true
+
+```
+Scenario 1.3
+
+```plantuml
+note over User: User ="Admin or\nShop Manager"
+User -> EzShop : UpdateProduct()
+EzShop -> EzShop : p.getProductTypeByBarCode()
+EzShop -> ProductType : p.setPricePerUnit()
+EzShop <-- ProductType : return true 
+User <-- EzShop : return true
+```
+
+
 
