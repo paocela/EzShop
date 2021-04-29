@@ -17,29 +17,31 @@ Version: 1.0
 - [Low level design](#low-level-design)
 - [Verification traceability matrix](#verification-traceability-matrix)
 - [Verification sequence diagrams](#verification-sequence-diagrams)
-  - [Scenario 1.1](#scenario-11)
-  - [Scenario 1.2](#scenario-12)
-  - [Scenario 1.3](#scenario-13)
-  - [Scenario 2.1](#scenario-21)
-  - [Scenario 2.3](#scenario-23)
+  - [Scenario 1.1 - Create product type X](#scenario-11---create-product-type-x)
+  - [Scenario 1.2 - Modify product type location](#scenario-12---modify-product-type-location)
+  - [Scenario 1.3 - Modify product type price per unit](#scenario-13---modify-product-type-price-per-unit)
+  - [Scenario 2.1 - Create user and define rights](#scenario-21---create-user-and-define-rights)
+  - [Scenario 2.3 - Modify user rights](#scenario-23---modify-user-rights)
   - [Scenario 3.1 - Order of product type X issued](#scenario-31---order-of-product-type-x-issued)
   - [Scenario 3.2 - Order of product type X payed](#scenario-32---order-of-product-type-x-payed)
-  - [Scenario 4.2](#scenario-42)
-  - [Scenario 4.3](#scenario-43)
-  - [Scenario 4.4](#scenario-44)
-  - [Scenario 5.1](#scenario-51)
-  - [Scenario 5.2](#scenario-52)
-  - [Scenario 6.1](#scenario-61)
-  - [Scenario 6.2](#scenario-62)
-  - [Scenario 6.3](#scenario-63)
-  - [Scenario 6.5](#scenario-65)
-  - [Scenario 7.1](#scenario-71)
-  - [Scenario 7.2](#scenario-72)
-  - [Scenario 7.3](#scenario-73)
-  - [Scenario 7.4](#scenario-74)
-  - [Scenario 8.1/8.2](#scenario-8182)
+  - [Scenario 3.3 - Record order of product type X arrival](#scenario-33---record-order-of-product-type-x-arrival)
+  - [Scenario 4.1 - Create customer record](#scenario-41---create-customer-record)
+  - [Scenario 4.2 - Attach Loyalty card to customer record](#scenario-42---attach-loyalty-card-to-customer-record)
+  - [Scenario 4.3 - Detach Loyalty card from customer record](#scenario-43---detach-loyalty-card-from-customer-record)
+  - [Scenario 4.4 - Update customer record](#scenario-44---update-customer-record)
+  - [Scenario 5.1 - Login](#scenario-51---login)
+  - [Scenario 5.2 - Logout](#scenario-52---logout)
+  - [Scenario 6.1 - Sale of product type X completed](#scenario-61---sale-of-product-type-x-completed)
+  - [Scenario 6.2 - Sale of product type X with product discount](#scenario-62---sale-of-product-type-x-with-product-discount)
+  - [Scenario 6.3 - Sale of product type X with sale discount](#scenario-63---sale-of-product-type-x-with-sale-discount)
+  - [Scenario 6.5 - Sale of product type X cancelled](#scenario-65---sale-of-product-type-x-cancelled)
+  - [Scenario 7.1 - Manage payment by valid credit card](#scenario-71---manage-payment-by-valid-credit-card)
+  - [Scenario 7.2 - Manage payment by invalid credit card](#scenario-72---manage-payment-by-invalid-credit-card)
+  - [Scenario 7.3 - Manage credit card payment with not enough credit](#scenario-73---manage-credit-card-payment-with-not-enough-credit)
+  - [Scenario 7.4 - Manage cash payment](#scenario-74---manage-cash-payment)
+  - [Scenario 8.1/8.2 - Return transaction of product type X completed, credit card / cash](#scenario-8182---return-transaction-of-product-type-x-completed-credit-card--cash)
   - [Scenario 9.1 - List credits and debits](#scenario-91---list-credits-and-debits)
-  - [Scenario 10.1 - Return payment by  credit card](#scenario-101---return-payment-by--credit-card)
+  - [Scenario 10.1 - Return payment by credit card](#scenario-101---return-payment-by-credit-card)
   - [Scenario 10.2 - Return cash payment](#scenario-102---return-cash-payment)
 
 # Instructions
@@ -79,7 +81,7 @@ package it.polito.ezshop.data {
 
    
     abstract class EzShopInterface {
-    + reset() :void
+    + reset() : void
     + createUser(String username, String password, String role): Integer
     + deleteUser(Integer id): boolean
     + getAllUsers() : List<User>
@@ -92,7 +94,6 @@ package it.polito.ezshop.data {
     + deleteProductType(Integer id) : boolean
     + getAllProductTypes() : List<ProductType>
     + getProductTypeByBarCode(String barCode) : ProductType
-
     + getProductTypesByDescription(string description): List<ProductType>
     + updateQuantity(integer productId, int toBeAdded): boolean
     + updatePosition(integer productId, string newPos): boolean
@@ -104,20 +105,18 @@ package it.polito.ezshop.data {
     + defineCustomer(string customerName)
     + modifyCustomer(integer Id, string newCustomerName, string newCustomerCard): boolean
     + deleteCustomer(integer Id): boolean
-
     + getCustomer(id: Integer): Customer
     + getAllCustomers(): List<Customer>
-    + createCard(): String // Returns an assignable card code
+    + createCard(): String
     + attachCardToCustomer(customerCard: String, customerId: Integer): boolean
     + modifyPointsOnCard(customerCard: String, pointsToBeAdded: int): boolean
     + startSaleTransaction(): Integer
     + addProductToSale(transactionId: Integer, productCode: String, amount: int): boolean
     + deleteProductFromSale(Integer transactionId, String productCode, int amount): boolean
-    + applyDiscountRateToProduct(transactionId: Integer, productCode: String, discountRate: double):boolean // TODO how to represent discountRate into models?
-    + applyDiscountRateToSale(transactionId: Integer, discountRate: double): boolean // TODO how to represent discountRate into models?
+    + applyDiscountRateToProduct(transactionId: Integer, productCode: String, discountRate: double):boolean
+    + applyDiscountRateToSale(transactionId: Integer, discountRate: double): boolean
     + computePointsForSale(transactionId: Integer): int
     + endSaleTransaction(transactionId: Integer): boolean
-
     + deleteSaleTransaction(Integer transactionId) : Boolean
     + getSaleTransaction(Integer transactionId) : SaleTransaction
     + startReturnTransaction(Integer transactionId) : Integer
@@ -331,62 +330,82 @@ hide members
 
 # Verification sequence diagrams 
 
-## Scenario 1.1
+## Scenario 1.1 - Create product type X
 
 ```plantuml
 actor User
 note over User: User ="Admin or\nShop Manager"
 User -> EzShop : createProductType()
+activate EzShop
 EzShop -> ProductType : Product()
+activate ProductType
 EzShop <-- ProductType : return Product 
+deactivate ProductType
 User <-- EzShop : p.getID()
+deactivate EzShop
 
 ```
-## Scenario 1.2
+## Scenario 1.2 - Modify product type location
 
 ```plantuml
 actor User
 note over User: User ="Admin or\nShop Manager"
 User -> EzShop : UpdatePosition()
+activate EzShop
 EzShop -> EzShop : p.getProductTypeByBarCode()
 EzShop -> ProductType : p.setPosition()
+activate ProductType
 EzShop <-- ProductType : return true 
+deactivate ProductType
 User <-- EzShop : return true
+deactivate EzShop
 
 ```
-## Scenario 1.3
+## Scenario 1.3 - Modify product type price per unit
 
 ```plantuml
 actor User
 note over User: User ="Admin or\nShop Manager"
 User -> EzShop : UpdateProduct()
+activate EzShop
 EzShop -> EzShop : p.getProductTypeByBarCode()
 EzShop -> ProductType : p.setPricePerUnit()
+activate ProductType
 EzShop <-- ProductType : return true 
+deactivate ProductType
 User <-- EzShop : return true
+deactivate EzShop
 
 ```
 
-## Scenario 2.1
+## Scenario 2.1 - Create user and define rights
 
 ```plantuml
 actor Admin
 Admin -> EzShop : createUser()
+activate EzShop
 EzShop -> User : User()
+activate User
 EzShop <-- User : return User
+deactivate User
 Admin <-- EzShop : u.getId()
+deactivate EzShop
 
 ```
 
-## Scenario 2.3
+## Scenario 2.3 - Modify user rights
 
 ```plantuml
 actor Admin
 Admin -> EzShop : updateUserRights()
+activate EzShop
 EzShop -> EzShop : u.getUser()
 EzShop -> User : u.setUserRights()
+activate User
 EzShop <-- User : return true
+deactivate User
 Admin <-- EzShop : return true
+deactivate EzShop
 
 ```
 
@@ -418,323 +437,383 @@ ShopManager <-- EzShop : true
 deactivate EzShop
 
 ```
-##Scenario 3.3 - Record order of product type X arrival
+## Scenario 3.3 - Record order of product type X arrival
 ```plantuml
 actor ShopManager
 ShopManager -> EzShop: recordOrderArrival()
+activate EzShop
 EzShop -> EzShop : getOrder()
 EzShop -> Order : setState()
+activate Order
+deactivate Order
 EzShop -> EzShop : getProductType()
 EzShop -> Product : setUnits()
+activate Product
+deactivate Product
 ShopManager <-- EzShop : true 
+deactivate EzShop
 ```
 
-##Scenario 4.1
+## Scenario 4.1 - Create customer record
 
 ```plantuml
 
 actor User
 note over User: User ="Admin or\nShop Manager or\nCashier"
 User -> EzShop : defineCustomer()
+activate EzShop
 EzShop -> Customer : Customer()
+activate Customer
 EzShop <-- Customer : return Customer
+deactivate Customer
 User <-- EzShop : c.getId()
+deactivate EzShop
 
 ```
 
-## Scenario 4.2
+## Scenario 4.2 - Attach Loyalty card to customer record
 
 ```plantuml
 
 actor User
 note over User: User ="Admin or\nShop Manager or\nCashier"
 User -> EzShop : createCard()
+activate EzShop
 EzShop -> Card : Card()
+activate Card
 EzShop <-- Card : return Card
+deactivate Card
 User <-- EzShop : card.getId()
 User -> EzShop : getCustomer()
 User <-- EzShop : customer.getId()
 User -> EzShop : attachCardToCustomer()
 EzShop -> EzShop : modifyCustomer()
 EzShop -> Customer : c.setCardNumber()
+activate Customer
 EzShop <-- Customer : return true
+deactivate Customer
 User <-- EzShop : return true
+deactivate EzShop
 
 ```
 
-## Scenario 4.3
+## Scenario 4.3 - Detach Loyalty card from customer record
 
 ```plantuml
 
 actor User
 note over User: User ="Admin or\nShop Manager or\nCashier"
 User -> EzShop : getCustomer()
+activate EzShop
 User <-- EzShop : customer.getId()
 User <-- EzShop : customer.getCustomerName()
 User -> EzShop : modifyCustomer()
 EzShop -> Customer : c.setCardNumber()
+activate Customer
 EzShop <-- Customer : return true
+deactivate Customer
 User <-- EzShop : return true
+deactivate EzShop
 
 ```
 
-## Scenario 4.4
+## Scenario 4.4 - Update customer record
 
 ```plantuml
 
 actor User
 note over User: User ="Admin or\nShop Manager or\nCashier"
 User -> EzShop : getCustomer()
+activate EzShop
 User <-- EzShop : customer.getId()
 User -> EzShop : modifyCustomer()
 EzShop -> Customer : c.setCardNumber()
+activate Customer
 EzShop <-- Customer : return true
 EzShop -> Customer : c.setCustomerName()
 EzShop <-- Customer : return true
+deactivate Customer
 User <-- EzShop : return true
+deactivate EzShop
 
 ```
 
-## Scenario 5.1
+## Scenario 5.1 - Login
 
 ```plantuml
 
 actor user
 note over user: User ="Admin or\nShop Manager or\nCashier"
 user -> EzShop : login()
-EzShop -> EzShop : getUserByUsername() //ADDED TOBECHECKED
+activate EzShop
+EzShop -> EzShop : getUserByUsername()
 EzShop -> User : user.getPassword()
+activate User
 EzShop <-- User : return password
+deactivate User
 user <-- EzShop : return user
+deactivate EzShop
 
 ```
 
-## Scenario 5.2
+## Scenario 5.2 - Logout
 
 ```plantuml
 
 actor User
 note over User: User ="Admin or\nShop Manager or\nCashier"
 User -> EzShop : logout()
+activate EzShop
 User <-- EzShop : return true
+deactivate EzShop
 
 ```
 
 
-## Scenario 6.1
+## Scenario 6.1 - Sale of product type X completed
 
 ```plantuml
 
 actor Cashier
 Cashier -> EzShop : startSaleTransaction()
+activate EzShop
 EzShop -> SaleTransaction : SaleTransaction()
+activate SaleTransaction
 EzShop <-- SaleTransaction : return SaleTransaction
-
 Cashier -> EzShop : addProductToSale
 EzShop -> ProductType : ProductType()
+activate ProductType
 EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
 EzShop <-- ProductType : return true
+deactivate ProductType
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
+activate SaleTransactionRecord
 EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
+deactivate SaleTransactionRecord
 EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <-- SaleTransaction : return true
+deactivate SaleTransaction
 Cashier <-- EzShop : return true
-
 Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
 Cashier <-- EzShop : return true
-
-
+deactivate EzShop
 Cashier -> Cashier : Manage payment (UC7)
 ```
 
-## Scenario 6.2
+## Scenario 6.2 - Sale of product type X with product discount
 
 ```plantuml
 
 actor Cashier
 Cashier -> EzShop : startSaleTransaction()
+activate EzShop
 EzShop -> SaleTransaction : SaleTransaction()
+activate SaleTransaction
 EzShop <-- SaleTransaction : return SaleTransaction
-
 Cashier -> EzShop : addProductToSale
 EzShop -> ProductType : ProductType()
+activate ProductType
 EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
 EzShop <-- ProductType : return true
+deactivate ProductType
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
+activate SaleTransactionRecord
 EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
+deactivate SaleTransactionRecord
 EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <-- SaleTransaction : return true
+deactivate SaleTransaction
 Cashier <-- EzShop : return true
-
 Cashier -> EzShop : applyDiscountRateToProduct (id, code, discount)
-
 Cashier <-- EzShop : return true
-
-
 Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
 Cashier <-- EzShop : return true
-
-
+deactivate EzShop
 Cashier -> Cashier : Manage payment (UC7)
 ```
 
-## Scenario 6.3
+## Scenario 6.3 - Sale of product type X with sale discount
 
 ```plantuml
 
 actor Cashier
 Cashier -> EzShop : startSaleTransaction()
+activate EzShop
 EzShop -> SaleTransaction : SaleTransaction()
+activate SaleTransaction
 EzShop <-- SaleTransaction : return SaleTransaction
-
 Cashier -> EzShop : addProductToSale
 EzShop -> ProductType : ProductType()
+activate ProductType
 EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
 EzShop <-- ProductType : return true
+deactivate ProductType
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
+activate SaleTransactionRecord
 EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
+deactivate SaleTransactionRecord
 EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <-- SaleTransaction : return true
+deactivate SaleTransaction
 Cashier <-- EzShop : return true
-
 Cashier -> EzShop : applyDiscountRateToSale (id, discount)
 Cashier <-- EzShop : return true
-
-
 Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
 Cashier <-- EzShop : return true
-
-
+deactivate EzShop
 Cashier -> Cashier : Manage payment (UC7)
 ```
 
 
-## Scenario 6.5
+## Scenario 6.5 - Sale of product type X cancelled
 
 ```plantuml
 
 actor Cashier
 Cashier -> EzShop : startSaleTransaction()
+activate EzShop
 EzShop -> SaleTransaction : SaleTransaction()
+activate SaleTransaction
 EzShop <-- SaleTransaction : return SaleTransaction
-
 Cashier -> EzShop : addProductToSale
 EzShop -> ProductType : ProductType()
+activate ProductType
 EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
 EzShop <-- ProductType : return true
+deactivate ProductType
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
+activate SaleTransactionRecord
 EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
+deactivate SaleTransactionRecord
 EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <-- SaleTransaction : return true
+deactivate SaleTransaction
 Cashier <-- EzShop : return true
-
 Cashier -> EzShop : applyDiscountRateToSale (id, discount)
 Cashier <-- EzShop : return true
-
-
 Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
 Cashier <-- EzShop : return true
-
-
 Cashier -> Cashier : Manage payment (UC7)
-
 Cashier -> EzShop : deleteSaleTransaction (id)
 Cashier <-- EzShop : return true
+deactivate EzShop
 ```
 
-## Scenario 7.1
+## Scenario 7.1 - Manage payment by valid credit card
 
 ```plantuml
 actor User
 note over User : User = "Admin,\nShop Manager,\nCashier"
 User -> EzShop : receiveCreditCardPayment()
+activate EzShop
 note right : via\nCreditCardCircuit\nAPI
 EzShop -> EzShop : getSaleTransaction()
 EzShop -> EzShop : validateCreditCard()
 note left : via //Luhn algorithm//
 EzShop -> SaleTransaction : getTotal()
+activate SaleTransaction
 EzShop <-- SaleTransaction : total
 EzShop -> SaleTransaction : setCreditCard()
 EzShop <-- SaleTransaction : return true
+deactivate SaleTransaction
 EzShop -> BalanceOperation : recordBalanceUpdate() 
+activate BalanceOperation
 note right: type =<CREDIT>
 EzShop <-- BalanceOperation : return true
+deactivate BalanceOperation
 note left: (or return false if toBeAdded + currentBalance < 0)
 User <-- EzShop : return true
+deactivate EzShop
 ```
 
-## Scenario 7.2
+## Scenario 7.2 - Manage payment by invalid credit card
 
 ```plantuml
 actor User
 note over User : User = "Admin,\nShop Manager,\nCashier"
 User -> EzShop : receiveCreditCardPayment()
+activate EzShop
 note right : via\nCreditCardCircuit\nAPI
 EzShop -> EzShop : getSaleTransaction()
 EzShop -> EzShop : validateCreditCard()
 note left : via //Luhn algorithm//
 User <-- EzShop : return false
+deactivate EzShop
 note left : invalid credit\n card number
 
 ```
 
-## Scenario 7.3
+## Scenario 7.3 - Manage credit card payment with not enough credit
 
 ```plantuml
 actor User
 note over User : User = "Admin,\nShop Manager,\nCashier"
 User -> EzShop : receiveCreditCardPayment()
+activate EzShop
 note right : via\nCreditCardCircuit\nAPI
 EzShop -> EzShop : getSaleTransaction()
 EzShop -> EzShop : validateCreditCard()
 note left : via //Luhn algorithm//
 EzShop -> SaleTransaction : getTotal()
+activate SaleTransaction
 EzShop <- SaleTransaction : total
+deactivate SaleTransaction
 User <-- EzShop : return false
+deactivate EzShop
 note left : insufficient credit
 ```
 
-## Scenario 7.4 
+## Scenario 7.4 - Manage cash payment
 
 ```plantuml
 actor User
 note over User : User = "Admin,\nShop Manager,\nCashier"
 User -> EzShop : receiveCashPayment()
+activate EzShop
 EzShop -> EzShop : getSaleTransaction()
 EzShop -> SaleTransaction : getTotal()
+activate SaleTransaction
 EzShop <- SaleTransaction : total
 EzShop -> SaleTransaction : setCash()
 EzShop <-- SaleTransaction : return true 
+deactivate SaleTransaction
 EzShop -> BalanceOperation : recordBalanceUpdate() 
+activate BalanceOperation
 note right: type =<CREDIT>
 EzShop <-- BalanceOperation : return true
+deactivate BalanceOperation
 note left: (or return false if toBeAdded + currentBalance < 0)
 User <-- EzShop : return t.change
+deactivate EzShop
 
 ```
 
-## Scenario 8.1/8.2
+## Scenario 8.1/8.2 - Return transaction of product type X completed, credit card / cash
 ```plantuml
 actor User
 note over User : User = "Admin,\nShop Manager,\nCashier"
 User -> EzShop : startReturnTransaction()
+activate EzShop
 User <-- EzShop : return t.Id
 User -> EzShop : returnProduct()
 note left : N = return \nproduct quantity
 EzShop -> ProductType : updateQuantity()
+activate ProductType
 note right : p.quantity + N
 EzShop <- ProductType : return true
+deactivate ProductType
 User -> User : Manage payment(UC 10)
 User -> EzShop : EndReturnTransaction()
 User <- EzShop : return true
+deactivate EzShop
 
 ```
 
@@ -742,10 +821,14 @@ User <- EzShop : return true
 ```plantuml
 actor ShopManager
 ShopManager -> EzShop : getCreditsAndDebits()
+activate EzShop
+deactivate EzShop
 ShopManager <--  BalanceOperation  : List<BalanceOperation>
+activate BalanceOperation
+deactivate BalanceOperation
 ```
 
-## Scenario 10.1 - Return payment by  credit card
+## Scenario 10.1 - Return payment by credit card
 ```plantuml
 actor Any
 Any -> EzShop : returnCreditCardPayment()
