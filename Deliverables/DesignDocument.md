@@ -73,12 +73,12 @@ The software is designed in Java and only represents the application logic. The 
 
 # Low level design
 
-<for each package, report class diagram>
-
 ```plantuml
 
-package EzShop {
-    class EzShopInterface {
+package it.polito.ezshop.data {
+
+   
+    abstract class EzShopInterface {
     + reset() :void
     + createUser(String username, String password, String role): Integer
     + deleteUser(Integer id): boolean
@@ -133,11 +133,12 @@ package EzShop {
     + computeBalance(): double
 
     }
-}
-
-package it.polito.ezshop.model {
-    class Shop {
-        balance
+    
+       class Shop {
+        balance: double
+        userLogged: User
+        ongoingTransactionId: Integer
+        ongoingReturnTransactionId: Integer
 
         + getReturnTransaction()
         + getOrder()
@@ -145,7 +146,14 @@ package it.polito.ezshop.model {
         + validateCreditCard()
         + getUserByUsername()
 
-    }
+    } 
+    Shop --^ EzShopInterface
+}
+```
+
+```plantuml
+
+package it.polito.ezshop.model {
 
     class Customer {
         Id: Integer
@@ -238,10 +246,34 @@ package it.polito.ezshop.model {
     }
 }
 
-
 ```
 
 
+```plantuml
+
+package it.polito.ezshop.exceptions {
+class InvalidUsernameException {}
+class InvalidPasswordException {}
+class InvalidRoleException {}
+class InvalidUserIdException {}
+class UnauthorizedException {}
+class InvalidPasswordException {}
+class InvalidProductDescriptionException {}
+class InvalidProductCodeException {}
+class InvalidPricePerUnitException {} 
+class InvalidProductIdException {} 
+class InvalidLocationException {} 
+class InvalidQuantityException {} 
+class InvalidOrderIdException {} 
+class InvalidCustomerNameException {} 
+class InvalidCustomerCardException {}
+class InvalidCustomerIdException {}
+class InvalidTransactionIdException {}
+class InvalidPaymentException{}
+class InvalidCreditCardException{}
+hide members
+}
+```
 
 
 
