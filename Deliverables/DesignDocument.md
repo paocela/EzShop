@@ -325,9 +325,9 @@ ShopManager <--  BalanceOperation  : List<BalanceOperation>
 actor Any
 Any -> EzShop : returnCreditCardPayment()
 activate EzShop
-EzShop -> EzShop : getOngoingReturnTransaction()
-EzShop -> EzShop : validateCreditCard()
+EzShop -> EzShop : getReturnTransaction()
 activate ReturnTransaction
+EzShop -> EzShop : validateCreditCard()
 EzShop -> ReturnTransaction  : getTotal()
 EzShop <-- ReturnTransaction  : total
 deactivate ReturnTransaction
@@ -341,7 +341,7 @@ deactivate EzShop
 actor Any
 Any -> EzShop : returnCashPayment()
 activate EzShop
-EzShop -> EzShop : getOngoingReturnTransaction()
+EzShop -> EzShop : getReturnTransaction()
 activate ReturnTransaction
 EzShop -> ReturnTransaction  : getTotal()
 EzShop <-- ReturnTransaction  : total
