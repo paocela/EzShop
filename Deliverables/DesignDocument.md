@@ -264,38 +264,38 @@ package it.polito.ezshop.model {
 | FR4.2 | X | | | | X |
 | FR4.3 | X | | | | X | | | | | | X |
 | FR4.4 | X | | | | X | | | | | | X | 
-| FR4.5 | X | | | |  | | | | | | X | X
-| FR4.6 | X | | | |  | | | | | | X
-| FR4.7 | X |
-| FR5.1 | X |
-| FR5.2 | X |
-| FR5.3 | X |
-| FR5.4 | X |
-| FR5.5 | X |
-| FR5.6 | X |
-| FR5.7 | X |
-| FR6.1 | X |
-| FR6.2 | X |
-| FR6.3 | X |
-| FR6.4 | X |
-| FR6.5 | X |
-| FR6.6 | X |
-| FR6.7 | X |
-| FR6.8 | X |
-| FR6.10 | X |
-| FR6.11 | X |
-| FR6.12 | X |
-| FR6.13 | X |
-| FR6.14 | X |
-| FR6.15 | X |
-| FR7.1 | X |
-| FR7.2 | X |
-| FR7.3 | X |
-| FR7.4 | X |
-| FR8.1 | X |
-| FR8.2 | X |
-| FR8.3 | X |
-| FR8.4 | X |
+| FR4.5 | X | | | | | | | | | | X | X
+| FR4.6 | X | | | | | | | | | | X
+| FR4.7 | X | | | | | | | | | | X
+| FR5.1 | X | X
+| FR5.2 | X | X
+| FR5.3 | X | X
+| FR5.4 | X | X
+| FR5.5 | X | | X
+| FR5.6 | X | X | X
+| FR5.7 | X | | X
+| FR6.1 | X | | | | | X
+| FR6.2 | X | | | | X | X | X
+| FR6.3 | X | | | | X | X | X
+| FR6.4 | X | | | | | X
+| FR6.5 | X | | | |  | X | | | | X
+| FR6.6 | X | | X| | | X
+| FR6.7 | X | | | | X
+| FR6.8 | X | | | | | X
+| FR6.10 | X | | | | | X
+| FR6.11 | X | | | | | X
+| FR6.12 | X | | | | | | | X
+| FR6.13 | X | | | | X | X | X
+| FR6.14 | X | | | | | | | X
+| FR6.15 | X | | | | | | | X
+| FR7.1 | X | | | | | X | | | | | | X
+| FR7.2 | X | | | | | X | | | | | | X
+| FR7.3 | X | | | | | | | X | | | | X
+| FR7.4 | X | | | | | | |X  | | | | X
+| FR8.1 | X | | | | | | |  | | | | X
+| FR8.2 | X | | | | | | |  | | | | X
+| FR8.3 | X | | | | | | |  | | | | X
+| FR8.4 | X | | | | | | |  | | | | X
 
 # Verification sequence diagrams 
 
@@ -496,22 +496,22 @@ User <-- EzShop : return true
 actor Cashier
 Cashier -> EzShop : startSaleTransaction()
 EzShop -> SaleTransaction : SaleTransaction()
-EzShop <- SaleTransaction : return SaleTransaction
+EzShop <-- SaleTransaction : return SaleTransaction
 
 Cashier -> EzShop : addProductToSale
 EzShop -> ProductType : ProductType()
-EzShop <- ProductType : return ProductType
+EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
-EzShop <- ProductType : return true
+EzShop <-- ProductType : return true
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
-EzShop <- SaleTransactionRecord : return SaleTransactionRecord
-EzShop -> SaleTransaction : t.addRecord(r)
-EzShop <- SaleTransaction : return true
-Cashier <- EzShop : return true
+EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
+EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
+EzShop <-- SaleTransaction : return true
+Cashier <-- EzShop : return true
 
-Cashier <- EzShop : return t.getId()
+Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
-Cashier <- EzShop : return true
+Cashier <-- EzShop : return true
 
 
 Cashier -> Cashier : Manage payment (UC7)
@@ -524,27 +524,27 @@ Cashier -> Cashier : Manage payment (UC7)
 actor Cashier
 Cashier -> EzShop : startSaleTransaction()
 EzShop -> SaleTransaction : SaleTransaction()
-EzShop <- SaleTransaction : return SaleTransaction
+EzShop <-- SaleTransaction : return SaleTransaction
 
 Cashier -> EzShop : addProductToSale
 EzShop -> ProductType : ProductType()
-EzShop <- ProductType : return ProductType
+EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
-EzShop <- ProductType : return true
+EzShop <-- ProductType : return true
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
-EzShop <- SaleTransactionRecord : return SaleTransactionRecord
-EzShop -> SaleTransaction : t.addRecord(r)
-EzShop <- SaleTransaction : return true
-Cashier <- EzShop : return true
+EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
+EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
+EzShop <-- SaleTransaction : return true
+Cashier <-- EzShop : return true
 
 Cashier -> EzShop : applyDiscountRateToProduct (id, code, discount)
 
-Cashier <- EzShop : return true
+Cashier <-- EzShop : return true
 
 
-Cashier <- EzShop : return t.getId()
+Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
-Cashier <- EzShop : return true
+Cashier <-- EzShop : return true
 
 
 Cashier -> Cashier : Manage payment (UC7)
@@ -557,26 +557,26 @@ Cashier -> Cashier : Manage payment (UC7)
 actor Cashier
 Cashier -> EzShop : startSaleTransaction()
 EzShop -> SaleTransaction : SaleTransaction()
-EzShop <- SaleTransaction : return SaleTransaction
+EzShop <-- SaleTransaction : return SaleTransaction
 
 Cashier -> EzShop : addProductToSale
 EzShop -> ProductType : ProductType()
-EzShop <- ProductType : return ProductType
+EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
-EzShop <- ProductType : return true
+EzShop <-- ProductType : return true
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
-EzShop <- SaleTransactionRecord : return SaleTransactionRecord
-EzShop -> SaleTransaction : t.addRecord(r)
-EzShop <- SaleTransaction : return true
-Cashier <- EzShop : return true
+EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
+EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
+EzShop <-- SaleTransaction : return true
+Cashier <-- EzShop : return true
 
 Cashier -> EzShop : applyDiscountRateToSale (id, discount)
-Cashier <- EzShop : return true
+Cashier <-- EzShop : return true
 
 
-Cashier <- EzShop : return t.getId()
+Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
-Cashier <- EzShop : return true
+Cashier <-- EzShop : return true
 
 
 Cashier -> Cashier : Manage payment (UC7)
@@ -590,32 +590,32 @@ Cashier -> Cashier : Manage payment (UC7)
 actor Cashier
 Cashier -> EzShop : startSaleTransaction()
 EzShop -> SaleTransaction : SaleTransaction()
-EzShop <- SaleTransaction : return SaleTransaction
+EzShop <-- SaleTransaction : return SaleTransaction
 
 Cashier -> EzShop : addProductToSale
 EzShop -> ProductType : ProductType()
-EzShop <- ProductType : return ProductType
+EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
-EzShop <- ProductType : return true
+EzShop <-- ProductType : return true
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
-EzShop <- SaleTransactionRecord : return SaleTransactionRecord
-EzShop -> SaleTransaction : t.addRecord(r)
-EzShop <- SaleTransaction : return true
-Cashier <- EzShop : return true
+EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
+EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
+EzShop <-- SaleTransaction : return true
+Cashier <-- EzShop : return true
 
 Cashier -> EzShop : applyDiscountRateToSale (id, discount)
-Cashier <- EzShop : return true
+Cashier <-- EzShop : return true
 
 
-Cashier <- EzShop : return t.getId()
+Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
-Cashier <- EzShop : return true
+Cashier <-- EzShop : return true
 
 
 Cashier -> Cashier : Manage payment (UC7)
 
 Cashier -> EzShop : deleteSaleTransaction (id)
-Cashier <- EzShop : return true
+Cashier <-- EzShop : return true
 ```
 
 ## Scenario 7.1
@@ -629,7 +629,7 @@ EzShop -> EzShop : getSaleTransaction()
 EzShop -> EzShop : validateCreditCard()
 note left : via //Luhn algorithm//
 EzShop -> SaleTransaction : getTotal()
-EzShop <- SaleTransaction : total
+EzShop <-- SaleTransaction : total
 EzShop -> SaleTransaction : setCreditCard()
 EzShop <-- SaleTransaction : return true
 EzShop -> BalanceOperation : recordBalanceUpdate() 
