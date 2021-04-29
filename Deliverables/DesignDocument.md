@@ -312,6 +312,95 @@ User <-- EzShop : return true
 
 ```
 
+## Scenario 7.1
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : receiveCreditCardPayment()
+note right : via\nCreditCardCircuit\nAPI
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> EzShop : validateCreditCard()
+note left : via //Luhn algorithm//
+EzShop -> SaleTransaction : getTotal()
+EzShop <- SaleTransaction : total
+EzShop -> SaleTransaction : setCreditCard()
+EzShop <-- SaleTransaction : return true
+EzShop -> BalanceOperation : recordBalanceUpdate() 
+note right: type =<CREDIT>
+EzShop <-- BalanceOperation : return true
+note left: (or return false if toBeAdded + currentBalance < 0)
+User <-- EzShop : return true
+
+```
+
+## Scenario 7.2
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : receiveCreditCardPayment()
+note right : via\nCreditCardCircuit\nAPI
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> EzShop : validateCreditCard()
+note left : via //Luhn algorithm//
+User <-- EzShop : return false
+note left : invalid credit\n card number
+
+```
+
+## Scenario 7.3
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : receiveCreditCardPayment()
+note right : via\nCreditCardCircuit\nAPI
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> EzShop : validateCreditCard()
+note left : via //Luhn algorithm//
+EzShop -> SaleTransaction : getTotal()
+EzShop <- SaleTransaction : total
+User <-- EzShop : return false
+note left : insufficient credit
+```
+
+## Scenario 7.4 
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : receiveCashPayment()
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> SaleTransaction : getTotal()
+EzShop <- SaleTransaction : total
+EzShop -> SaleTransaction : setCash()
+EzShop <-- SaleTransaction : return true 
+EzShop -> BalanceOperation : recordBalanceUpdate() 
+note right: type =<CREDIT>
+EzShop <-- BalanceOperation : return true
+note left: (or return false if toBeAdded + currentBalance < 0)
+User <-- EzShop : return t.change
+
+```
+
+## Scenario 8.1/8.2
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : startReturnTransaction()
+User <-- EzShop : return t.Id
+User -> EzShop : returnProduct()
+note left : N = return \nproduct quantity
+EzShop -> ProductType : updateQuantity()
+note right : p.quantity + N
+EzShop <- ProductType : return true
+User -> User : Manage payment(UC 10)
+User -> EzShop : EndReturnTransaction()
+User <- EzShop : return true
+
+```
 
 ## Scenario 9.1 - List credits and debits
 ```plantuml
