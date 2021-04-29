@@ -76,38 +76,38 @@ The software is designed in Java and only represents the application logic. The 
 | FR4.2 | X | | | | X |
 | FR4.3 | X | | | | X | | | | | | X |
 | FR4.4 | X | | | | X | | | | | | X | 
-| FR4.5 | X | | | |  | | | | | | X | X
-| FR4.6 | X | | | |  | | | | | | X
-| FR4.7 | X |
-| FR5.1 | X |
-| FR5.2 | X |
-| FR5.3 | X |
-| FR5.4 | X |
-| FR5.5 | X |
-| FR5.6 | X |
-| FR5.7 | X |
-| FR6.1 | X |
-| FR6.2 | X |
-| FR6.3 | X |
-| FR6.4 | X |
-| FR6.5 | X |
-| FR6.6 | X |
-| FR6.7 | X |
-| FR6.8 | X |
-| FR6.10 | X |
-| FR6.11 | X |
-| FR6.12 | X |
-| FR6.13 | X |
-| FR6.14 | X |
-| FR6.15 | X |
-| FR7.1 | X |
-| FR7.2 | X |
-| FR7.3 | X |
-| FR7.4 | X |
-| FR8.1 | X |
-| FR8.2 | X |
-| FR8.3 | X |
-| FR8.4 | X |
+| FR4.5 | X | | | | | | | | | | X | X
+| FR4.6 | X | | | | | | | | | | X
+| FR4.7 | X | | | | | | | | | | X
+| FR5.1 | X | X
+| FR5.2 | X | X
+| FR5.3 | X | X
+| FR5.4 | X | X
+| FR5.5 | X | | X
+| FR5.6 | X | X | X
+| FR5.7 | X | | X
+| FR6.1 | X | | | | | X
+| FR6.2 | X | | | | X | X | X
+| FR6.3 | X | | | | X | X | X
+| FR6.4 | X | | | | | X
+| FR6.5 | X | | | |  | X | | | | X
+| FR6.6 | X | | X| | | X
+| FR6.7 | X | | | | X
+| FR6.8 | X | | | | | X
+| FR6.10 | X | | | | | X
+| FR6.11 | X | | | | | X
+| FR6.12 | X | | | | | | | X
+| FR6.13 | X | | | | X | X | X
+| FR6.14 | X | | | | | | | X
+| FR6.15 | X | | | | | | | X
+| FR7.1 | X | | | | | X | | | | | | X
+| FR7.2 | X | | | | | X | | | | | | X
+| FR7.3 | X | | | | | | | X | | | | X
+| FR7.4 | X | | | | | | |X  | | | | X
+| FR8.1 | X | | | | | | |  | | | | X
+| FR8.2 | X | | | | | | |  | | | | X
+| FR8.3 | X | | | | | | |  | | | | X
+| FR8.4 | X | | | | | | |  | | | | X
 
 # Verification sequence diagrams 
 
