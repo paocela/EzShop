@@ -77,7 +77,8 @@ The software is designed in Java and only represents the application logic. The 
 
 ```plantuml
 
-class EzShopInterface {
+package EzShop {
+    class EzShopInterface {
     + reset() :void
     + createUser(String username, String password, String role): Integer
     + deleteUser(Integer id): boolean
@@ -131,104 +132,113 @@ class EzShopInterface {
     + getCreditsAndDebits(LocalDate from, LocalDate to): List<BalanceOperation>
     + computeBalance(): double
 
+    }
 }
 
-class Shop {
-    balance
+package it.polito.ezshop.model {
+    class Shop {
+        balance
 
-    + getReturnTransaction()
-    + getOrder()
-    + getProductType()
-    + validateCreditCard()
-    + getUserByUsername()
+        + getReturnTransaction()
+        + getOrder()
+        + getProductType()
+        + validateCreditCard()
+        + getUserByUsername()
 
+    }
+
+    class Customer {
+        Id: Integer
+        cardNumber: String
+        customerName: String
+    }
+    class Card {
+        cardNumber: String
+        cardPoints: int
+
+    }
+    class User {
+        id: Integer
+        username : String   
+        password : String
+        role : String in <"Administrator", "Cashier", "ShopManager">
+
+    }
+    class ProductType {
+        id: Integer
+        code: String
+        description: String
+        sellPrice: double
+        quantity: int
+        notes: String
+        position: String
+        pricePerUnit: double
+        + updateQuantity()
+
+
+    }
+    class SaleTransaction {
+        id: Integer
+        date : LocalDate
+        time : LocalTime
+        amount: double
+        discountRateProducts : List <ProductDiscount>
+        discountRateAmount : double
+        paymentType: String in <cash, card>
+        cash: double
+        change: double
+        creditCard: String
+        recordList : List <SaleTransactionRecord>
+        + addSaleTransactionRecord()
+        + addProductDiscount()
+
+    }
+    class SaleTransactionRecord {
+        transactionId: Integer
+        productId: Integer
+        quantity: int
+        totalPrice : double
+
+    }
+    class ReturnTransaction {
+        returnId : Integer
+        transactionId: Integer
+        returnedValue: double
+        recordList : List <ReturnTransactionRecord>
+
+    }
+    class ReturnTransactionRecord {
+        returnId: Integer
+        productId: Integer
+        quantity: int
+        totalPrice : double
+
+    }
+    class ProductDiscount {
+        id: Integer
+        productId: Integer
+        discountRate: double
+
+    }
+    class Order {
+        id: Integer
+        status: Enum< ISSUED, ORDERED, COMPLETED>
+        productCode: String
+        quantity: Integer
+        pricePerUnit: double
+
+    }
+    class BalanceOperation {
+        id: Integer
+        date: LocalDate
+        type: Enum<CREDIT,DEBIT,ORDER,SALE,RETURN>
+        amount: double
+        description: String
+
+    }
 }
 
-class Customer {
-    Id: Integer
-    cardNumber: String
-    customerName: String
-}
-class Card {
-    cardNumber: String
-    cardPoints: int
 
-}
-class User {
-    id: Integer
-    username : String   
-    password : String
-    role : String in <"Administrator", "Cashier", "ShopManager">
-
-}
-class ProductType {
-    id: Integer
-    code: String
-    description: String
-    sellPrice: double
-    quantity: int
-    notes: String
-    position: String
-    pricePerUnit: double
-
-}
-class SaleTransaction {
-    id: Integer
-    date : LocalDate
-    time : LocalTime
-    amount: double
-    discountRateProducts : List <ProductDiscount>
-    discountRateAmount : double
-    paymentType: String in <cash, card>
-    cash: double
-    change: double
-    creditCard: String
-    recordList : List <SaleTransactionRecord>
-
-}
-class SaleTransactionRecord {
-    transactionId: Integer
-    productId: Integer
-    quantity: int
-    totalPrice : double
-
-}
-class ReturnTransaction {
-    returnId : Integer
-    transactionId: Integer
-    returnedValue: double
-    recordList : List <ReturnTransactionRecord>
-
-}
-class ReturnTransactionRecord {
-    returnId: Integer
-    productId: Integer
-    quantity: int
-    totalPrice : double
-
-}
-class ProductDiscount {
-    id: Integer
-    productId: Integer
-    discountRate: double
-
-}
-class Order {
-    id: Integer
-    status: Enum< ISSUED, ORDERED, COMPLETED>
-    productCode: String
-    quantity: Integer
-    pricePerUnit: double
-
-}
-class BalanceOperation {
-    id: Integer
-    date: LocalDate
-    type: Enum<CREDIT,DEBIT,ORDER,SALE,RETURN>
-    amount: double
-    description: String
-
-}
 ```
 
 
@@ -714,7 +724,8 @@ EzShop -> EzShop : validateCreditCard()
 EzShop -> ReturnTransaction  : getTotal()
 EzShop <-- ReturnTransaction  : total
 deactivate ReturnTransaction
-EzShop -> BalanceOperation  ** : new
+EzShop -> BalanceOperation  : recordBalanceUpdate() 
+note right: type = <DEBIT>
 Any <-- EzShop : total 
 deactivate EzShop
 ```
@@ -729,7 +740,8 @@ activate ReturnTransaction
 EzShop -> ReturnTransaction  : getTotal()
 EzShop <-- ReturnTransaction  : total
 deactivate ReturnTransaction
-EzShop -> BalanceOperation  ** : new
+EzShop -> BalanceOperation : recordBalanceUpdate() 
+note right: type = <DEBIT>
 Any <-- EzShop : total 
 deactivate EzShop
 ```
