@@ -10,8 +10,11 @@ Version: 1.0
 
 # Contents
 
-- [High level design](#package-diagram)
-- [Low level design](#class-diagram)
+- [Design Document](#design-document)
+- [Contents](#contents)
+- [Instructions](#instructions)
+- [High level design](#high-level-design)
+- [Low level design](#low-level-design)
 - [Verification traceability matrix](#verification-traceability-matrix)
 - [Verification sequence diagrams](#verification-sequence-diagrams)
 
@@ -58,6 +61,54 @@ The software is designed in Java and only represents the application logic. The 
 
 # Verification traceability matrix
 
+| Functional requirement      | Class 1 |
+| ----------- | ----------- |
+| FR1.1 | |
+| FR1.2 | |
+| FR1.3 | |
+| FR1.4 | |
+| FR1.5 | |
+| FR3.1 | |
+| FR3.2 | |
+| FR3.3 | |
+| FR3.4 | |
+| FR4.1 | |
+| FR4.2 | |
+| FR4.3 | |
+| FR4.4 | |
+| FR4.5 | |
+| FR4.6 | |
+| FR4.7 | |
+| FR5.1 | |
+| FR5.2 | |
+| FR5.3 | |
+| FR5.4 | |
+| FR5.5 | |
+| FR5.6 | |
+| FR5.7 | |
+| FR6.1 | |
+| FR6.2 | |
+| FR6.3 | |
+| FR6.4 | |
+| FR6.5 | |
+| FR6.6 | |
+| FR6.7 | |
+| FR6.8 | |
+| FR6.10 | |
+| FR6.11 | |
+| FR6.12 | |
+| FR6.13 | |
+| FR6.14 | |
+| FR6.15 | |
+| FR7.1 | |
+| FR7.2 | |
+| FR7.3 | |
+| FR7.4 | |
+| FR8.1 | |
+| FR8.2 | |
+| FR8.3 | |
+| FR8.4 | |
+
 \<for each functional requirement from the requirement document, list which classes concur to implement it>
 
 
@@ -72,9 +123,10 @@ The software is designed in Java and only represents the application logic. The 
 
 # Verification sequence diagrams 
 
-Scenario 1.1
+## Scenario 1.1
 
 ```plantuml
+actor User
 note over User: User ="Admin or\nShop Manager"
 User -> EzShop : createProductType()
 EzShop -> ProductType : Product()
@@ -82,9 +134,10 @@ EzShop <-- ProductType : return Product
 User <-- EzShop : p.getID()
 
 ```
-Scenario 1.2
+## Scenario 1.2
 
 ```plantuml
+actor User
 note over User: User ="Admin or\nShop Manager"
 User -> EzShop : UpdatePosition()
 EzShop -> EzShop : p.getProductTypeByBarCode()
@@ -93,20 +146,174 @@ EzShop <-- ProductType : return true
 User <-- EzShop : return true
 
 ```
-Scenario 1.3
+## Scenario 1.3
 
 ```plantuml
+actor User
 note over User: User ="Admin or\nShop Manager"
 User -> EzShop : UpdateProduct()
 EzShop -> EzShop : p.getProductTypeByBarCode()
 EzShop -> ProductType : p.setPricePerUnit()
 EzShop <-- ProductType : return true 
 User <-- EzShop : return true
+
+```
+
+## Scenario 2.1
+
+```plantuml
+actor Admin
+Admin -> EzShop : createUser()
+EzShop -> User : User()
+EzShop <-- User : return User
+Admin <-- EzShop : u.getId()
+
+```
+
+## Scenario 2.3
+
+```plantuml
+actor Admin
+Admin -> EzShop : updateUserRights()
+EzShop -> EzShop : u.getUser()
+EzShop -> User : u.setUserRights()
+EzShop <-- User : return true
+Admin <-- EzShop : return true
+
+```
+
+## Scenario 3.1 - Order of product type X issued
+```plantuml
+actor ShopManager
+ShopManager -> EzShop : issueOrder()
+activate EzShop
+EzShop -> Order ** : new
+activate Order
+EzShop -> Order  : getId()
+deactivate Order
+ShopManager <-- EzShop : orderId
+deactivate EzShop
+
+```
+## Scenario 3.2 - Order of product type X payed
+```plantuml
+actor ShopManager
+ShopManager -> EzShop : payOrder()
+activate EzShop
+EzShop -> EzShop : computeBalance()
+EzShop -> EzShop : getOrder()
+EzShop -> Order : setState()
+activate Order
+deactivate Order
+EzShop -> BalanceOperation ** : new
+ShopManager <-- EzShop : true 
+deactivate EzShop
+
+```
+##Scenario 3.3 - Record order of product type X arrival
+```plantuml
+actor ShopManager
+ShopManager -> EzShop: recordOrderArrival()
+EzShop -> EzShop : getOrder()
+EzShop -> Order : setState()
+EzShop -> EzShop : getProductType()
+EzShop -> Product : setUnits()
+ShopManager <-- EzShop : true 
+```
+
+##Scenario 4.1
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : defineCustomer()
+EzShop -> Customer : Customer()
+EzShop <-- Customer : return Customer
+User <-- EzShop : c.getId()
+
+```
+
+## Scenario 4.2
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : createCard()
+EzShop -> Card : Card()
+EzShop <-- Card : return Card
+User <-- EzShop : card.getId()
+User -> EzShop : getCustomer()
+User <-- EzShop : customer.getId()
+User -> EzShop : attachCardToCustomer()
+EzShop -> EzShop : modifyCustomer()
+EzShop -> Customer : c.setCardNumber()
+EzShop <-- Customer : return true
+User <-- EzShop : return true
+
+```
+
+## Scenario 4.3
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : getCustomer()
+User <-- EzShop : customer.getId()
+User <-- EzShop : customer.getCustomerName()
+User -> EzShop : modifyCustomer()
+EzShop -> Customer : c.setCardNumber()
+EzShop <-- Customer : return true
+User <-- EzShop : return true
+
+```
+
+## Scenario 4.4
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : getCustomer()
+User <-- EzShop : customer.getId()
+User -> EzShop : modifyCustomer()
+EzShop -> Customer : c.setCardNumber()
+EzShop <-- Customer : return true
+EzShop -> Customer : c.setCustomerName()
+EzShop <-- Customer : return true
+User <-- EzShop : return true
+
+```
+
+## Scenario 5.1
+
+```plantuml
+
+actor user
+note over user: User ="Admin or\nShop Manager or\nCashier"
+user -> EzShop : login()
+EzShop -> EzShop : getUserByUsername() //ADDED TOBECHECKED
+EzShop -> User : user.getPassword()
+EzShop <-- User : return password
+user <-- EzShop : return user
+
+```
+
+## Scenario 5.2
+
+```plantuml
+
+actor User
+note over User: User ="Admin or\nShop Manager or\nCashier"
+User -> EzShop : logout()
+User <-- EzShop : return true
+
 ```
 
 
-
-Scenario 6.1
+## Scenario 6.1
 
 ```plantuml
 
@@ -132,10 +339,9 @@ Cashier <- EzShop : return true
 
 
 Cashier -> Cashier : Manage payment (UC7)
-
 ```
 
-Scenario 6.2
+## Scenario 6.2
 
 ```plantuml
 
@@ -168,7 +374,7 @@ Cashier <- EzShop : return true
 Cashier -> Cashier : Manage payment (UC7)
 ```
 
-Scenario 6.3
+## Scenario 6.3
 
 ```plantuml
 
@@ -201,7 +407,7 @@ Cashier -> Cashier : Manage payment (UC7)
 ```
 
 
-Scenario 6.5
+## Scenario 6.5
 
 ```plantuml
 
@@ -236,3 +442,128 @@ Cashier -> EzShop : deleteSaleTransaction (id)
 Cashier <- EzShop : return true
 ```
 
+## Scenario 7.1
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : receiveCreditCardPayment()
+note right : via\nCreditCardCircuit\nAPI
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> EzShop : validateCreditCard()
+note left : via //Luhn algorithm//
+EzShop -> SaleTransaction : getTotal()
+EzShop <- SaleTransaction : total
+EzShop -> SaleTransaction : setCreditCard()
+EzShop <-- SaleTransaction : return true
+EzShop -> BalanceOperation : recordBalanceUpdate() 
+note right: type =<CREDIT>
+EzShop <-- BalanceOperation : return true
+note left: (or return false if toBeAdded + currentBalance < 0)
+User <-- EzShop : return true
+```
+
+## Scenario 7.2
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : receiveCreditCardPayment()
+note right : via\nCreditCardCircuit\nAPI
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> EzShop : validateCreditCard()
+note left : via //Luhn algorithm//
+User <-- EzShop : return false
+note left : invalid credit\n card number
+
+```
+
+## Scenario 7.3
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : receiveCreditCardPayment()
+note right : via\nCreditCardCircuit\nAPI
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> EzShop : validateCreditCard()
+note left : via //Luhn algorithm//
+EzShop -> SaleTransaction : getTotal()
+EzShop <- SaleTransaction : total
+User <-- EzShop : return false
+note left : insufficient credit
+```
+
+## Scenario 7.4 
+
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : receiveCashPayment()
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> SaleTransaction : getTotal()
+EzShop <- SaleTransaction : total
+EzShop -> SaleTransaction : setCash()
+EzShop <-- SaleTransaction : return true 
+EzShop -> BalanceOperation : recordBalanceUpdate() 
+note right: type =<CREDIT>
+EzShop <-- BalanceOperation : return true
+note left: (or return false if toBeAdded + currentBalance < 0)
+User <-- EzShop : return t.change
+
+```
+
+## Scenario 8.1/8.2
+```plantuml
+actor User
+note over User : User = "Admin,\nShop Manager,\nCashier"
+User -> EzShop : startReturnTransaction()
+User <-- EzShop : return t.Id
+User -> EzShop : returnProduct()
+note left : N = return \nproduct quantity
+EzShop -> ProductType : updateQuantity()
+note right : p.quantity + N
+EzShop <- ProductType : return true
+User -> User : Manage payment(UC 10)
+User -> EzShop : EndReturnTransaction()
+User <- EzShop : return true
+
+```
+
+## Scenario 9.1 - List credits and debits
+```plantuml
+actor ShopManager
+ShopManager -> EzShop : getCreditsAndDebits()
+ShopManager <--  BalanceOperation  : List<BalanceOperation>
+```
+
+## Scenario 10.1 - Return payment by  credit card
+```plantuml
+actor Any
+Any -> EzShop : returnCreditCardPayment()
+activate EzShop
+EzShop -> EzShop : getReturnTransaction()
+activate ReturnTransaction
+EzShop -> EzShop : validateCreditCard()
+EzShop -> ReturnTransaction  : getTotal()
+EzShop <-- ReturnTransaction  : total
+deactivate ReturnTransaction
+EzShop -> BalanceOperation  ** : new
+Any <-- EzShop : total 
+deactivate EzShop
+```
+
+## Scenario 10.2 - Return cash payment
+```plantuml
+actor Any
+Any -> EzShop : returnCashPayment()
+activate EzShop
+EzShop -> EzShop : getReturnTransaction()
+activate ReturnTransaction
+EzShop -> ReturnTransaction  : getTotal()
+EzShop <-- ReturnTransaction  : total
+deactivate ReturnTransaction
+EzShop -> BalanceOperation  ** : new
+Any <-- EzShop : total 
+deactivate EzShop
+```
