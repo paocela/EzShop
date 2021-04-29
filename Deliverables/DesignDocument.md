@@ -61,65 +61,53 @@ The software is designed in Java and only represents the application logic. The 
 
 # Verification traceability matrix
 
-| Functional requirement      | Class 1 |
-| ----------- | ----------- |
-| FR1.1 | |
-| FR1.2 | |
-| FR1.3 | |
-| FR1.4 | |
-| FR1.5 | |
-| FR3.1 | |
-| FR3.2 | |
-| FR3.3 | |
-| FR3.4 | |
-| FR4.1 | |
-| FR4.2 | |
-| FR4.3 | |
-| FR4.4 | |
-| FR4.5 | |
-| FR4.6 | |
-| FR4.7 | |
-| FR5.1 | |
-| FR5.2 | |
-| FR5.3 | |
-| FR5.4 | |
-| FR5.5 | |
-| FR5.6 | |
-| FR5.7 | |
-| FR6.1 | |
-| FR6.2 | |
-| FR6.3 | |
-| FR6.4 | |
-| FR6.5 | |
-| FR6.6 | |
-| FR6.7 | |
-| FR6.8 | |
-| FR6.10 | |
-| FR6.11 | |
-| FR6.12 | |
-| FR6.13 | |
-| FR6.14 | |
-| FR6.15 | |
-| FR7.1 | |
-| FR7.2 | |
-| FR7.3 | |
-| FR7.4 | |
-| FR8.1 | |
-| FR8.2 | |
-| FR8.3 | |
-| FR8.4 | |
-
-\<for each functional requirement from the requirement document, list which classes concur to implement it>
-
-
-
-
-
-
-
-
-
-
+| Functional requirement      | Shop | Customer | Card | User | ProductType | SaleTransaction | SaleTransactionRecord | ReturnTransaction | ReturnTransactionRecord | ProductDiscount | Order | BalanceOperation |
+| ---------- | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: | :-----------: |
+| FR1.1 | X | | | X |
+| FR1.2 | X | | | X |
+| FR1.3 | X | | | X |
+| FR1.4 | X | | | X |
+| FR1.5 | X | | | X |
+| FR3.1 | X | | | | X |
+| FR3.2 | X | | | | X |
+| FR3.3 | X | | | | X |
+| FR3.4 | X | | | | X |
+| FR4.1 | X | | | | X |
+| FR4.2 | X | | | | X |
+| FR4.3 | X | | | | X | | | | | | X |
+| FR4.4 | X | | | | X | | | | | | X | 
+| FR4.5 | X | | | |  | | | | | | X | X
+| FR4.6 | X | | | |  | | | | | | X
+| FR4.7 | X |
+| FR5.1 | X |
+| FR5.2 | X |
+| FR5.3 | X |
+| FR5.4 | X |
+| FR5.5 | X |
+| FR5.6 | X |
+| FR5.7 | X |
+| FR6.1 | X |
+| FR6.2 | X |
+| FR6.3 | X |
+| FR6.4 | X |
+| FR6.5 | X |
+| FR6.6 | X |
+| FR6.7 | X |
+| FR6.8 | X |
+| FR6.10 | X |
+| FR6.11 | X |
+| FR6.12 | X |
+| FR6.13 | X |
+| FR6.14 | X |
+| FR6.15 | X |
+| FR7.1 | X |
+| FR7.2 | X |
+| FR7.3 | X |
+| FR7.4 | X |
+| FR8.1 | X |
+| FR8.2 | X |
+| FR8.3 | X |
+| FR8.4 | X |
 
 # Verification sequence diagrams 
 
