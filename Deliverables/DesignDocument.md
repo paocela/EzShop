@@ -495,7 +495,7 @@ EzShop -> ProductType : p.updateQuantity()
 EzShop <- ProductType : return true
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
 EzShop <- SaleTransactionRecord : return SaleTransactionRecord
-EzShop -> SaleTransaction : t.addRecord(r)
+EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <- SaleTransaction : return true
 Cashier <- EzShop : return true
 
@@ -523,7 +523,7 @@ EzShop -> ProductType : p.updateQuantity()
 EzShop <- ProductType : return true
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
 EzShop <- SaleTransactionRecord : return SaleTransactionRecord
-EzShop -> SaleTransaction : t.addRecord(r)
+EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <- SaleTransaction : return true
 Cashier <- EzShop : return true
 
@@ -556,7 +556,7 @@ EzShop -> ProductType : p.updateQuantity()
 EzShop <- ProductType : return true
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
 EzShop <- SaleTransactionRecord : return SaleTransactionRecord
-EzShop -> SaleTransaction : t.addRecord(r)
+EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <- SaleTransaction : return true
 Cashier <- EzShop : return true
 
@@ -589,7 +589,7 @@ EzShop -> ProductType : p.updateQuantity()
 EzShop <- ProductType : return true
 EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
 EzShop <- SaleTransactionRecord : return SaleTransactionRecord
-EzShop -> SaleTransaction : t.addRecord(r)
+EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <- SaleTransaction : return true
 Cashier <- EzShop : return true
 
