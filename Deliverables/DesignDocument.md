@@ -75,7 +75,7 @@ The software is designed in Java and only represents the application logic. The 
 
 # Verification sequence diagrams 
 
-Scenario 1.1
+## Scenario 1.1
 
 ```plantuml
 actor User
@@ -86,7 +86,7 @@ EzShop <-- ProductType : return Product
 User <-- EzShop : p.getID()
 
 ```
-Scenario 1.2
+## Scenario 1.2
 
 ```plantuml
 actor User
@@ -98,7 +98,7 @@ EzShop <-- ProductType : return true
 User <-- EzShop : return true
 
 ```
-Scenario 1.3
+## Scenario 1.3
 
 ```plantuml
 actor User
@@ -111,7 +111,7 @@ User <-- EzShop : return true
 
 ```
 
-Scenario 2.1
+## Scenario 2.1
 
 ```plantuml
 actor Admin
@@ -122,7 +122,7 @@ Admin <-- EzShop : u.getId()
 
 ```
 
-Scenario 2.3
+## Scenario 2.3
 
 ```plantuml
 actor Admin
@@ -134,13 +134,46 @@ Admin <-- EzShop : return true
 
 ```
 
+## Scenario 3.1 - Order of product type X issued
+```plantuml
+actor ShopManager
+ShopManager -> EzShop : issueOrder()
+activate EzShop
+EzShop -> Order ** : new
+activate Order
+EzShop -> Order  : getId()
+deactivate Order
+ShopManager <-- EzShop : orderId
+deactivate EzShop
 
+```
+## Scenario 3.2 - Order of product type X payed
+```plantuml
+actor ShopManager
+ShopManager -> EzShop : payOrder()
+activate EzShop
+EzShop -> EzShop : computeBalance()
+EzShop -> EzShop : getOrder()
+EzShop -> Order : setState()
+activate Order
+deactivate Order
+EzShop -> BalanceOperation ** : new
+ShopManager <-- EzShop : true 
+deactivate EzShop
 
+```
+##Scenario 3.3 - Record order of product type X arrival
+```plantuml
+actor ShopManager
+ShopManager -> EzShop: recordOrderArrival()
+EzShop -> EzShop : getOrder()
+EzShop -> Order : setState()
+EzShop -> EzShop : getProductType()
+EzShop -> Product : setUnits()
+ShopManager <-- EzShop : true 
+```
 
-
-
-
-Scenario 4.1
+##Scenario 4.1
 
 ```plantuml
 
@@ -153,7 +186,7 @@ User <-- EzShop : c.getId()
 
 ```
 
-Scenario 4.2
+## Scenario 4.2
 
 ```plantuml
 
@@ -173,7 +206,7 @@ User <-- EzShop : return true
 
 ```
 
-Scenario 4.3
+## Scenario 4.3
 
 ```plantuml
 
@@ -189,7 +222,7 @@ User <-- EzShop : return true
 
 ```
 
-Scenario 4.4
+## Scenario 4.4
 
 ```plantuml
 
@@ -206,7 +239,7 @@ User <-- EzShop : return true
 
 ```
 
-Scenario 5.1
+## Scenario 5.1
 
 ```plantuml
 
@@ -220,7 +253,7 @@ user <-- EzShop : return user
 
 ```
 
-Scenario 5.2
+## Scenario 5.2
 
 ```plantuml
 
@@ -229,4 +262,43 @@ note over User: User ="Admin or\nShop Manager or\nCashier"
 User -> EzShop : logout()
 User <-- EzShop : return true
 
+```
+
+
+## Scenario 9.1 - List credits and debits
+```plantuml
+actor ShopManager
+ShopManager -> EzShop : getCreditsAndDebits()
+ShopManager <--  BalanceOperation  : List<BalanceOperation>
+```
+
+## Scenario 10.1 - Return payment by  credit card
+```plantuml
+actor Any
+Any -> EzShop : returnCreditCardPayment()
+activate EzShop
+EzShop -> EzShop : getOngoingReturnTransaction()
+EzShop -> EzShop : validateCreditCard()
+activate ReturnTransaction
+EzShop -> ReturnTransaction  : getTotal()
+EzShop <-- ReturnTransaction  : total
+deactivate ReturnTransaction
+EzShop -> BalanceOperation  ** : new
+Any <-- EzShop : total 
+deactivate EzShop
+```
+
+## Scenario 10.2 - Return cash payment
+```plantuml
+actor Any
+Any -> EzShop : returnCashPayment()
+activate EzShop
+EzShop -> EzShop : getOngoingReturnTransaction()
+activate ReturnTransaction
+EzShop -> ReturnTransaction  : getTotal()
+EzShop <-- ReturnTransaction  : total
+deactivate ReturnTransaction
+EzShop -> BalanceOperation  ** : new
+Any <-- EzShop : total 
+deactivate EzShop
 ```
