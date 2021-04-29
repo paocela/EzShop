@@ -61,6 +61,54 @@ The software is designed in Java and only represents the application logic. The 
 
 # Verification traceability matrix
 
+| Functional requirement      | Class 1 |
+| ----------- | ----------- |
+| FR1.1 | |
+| FR1.2 | |
+| FR1.3 | |
+| FR1.4 | |
+| FR1.5 | |
+| FR3.1 | |
+| FR3.2 | |
+| FR3.3 | |
+| FR3.4 | |
+| FR4.1 | |
+| FR4.2 | |
+| FR4.3 | |
+| FR4.4 | |
+| FR4.5 | |
+| FR4.6 | |
+| FR4.7 | |
+| FR5.1 | |
+| FR5.2 | |
+| FR5.3 | |
+| FR5.4 | |
+| FR5.5 | |
+| FR5.6 | |
+| FR5.7 | |
+| FR6.1 | |
+| FR6.2 | |
+| FR6.3 | |
+| FR6.4 | |
+| FR6.5 | |
+| FR6.6 | |
+| FR6.7 | |
+| FR6.8 | |
+| FR6.10 | |
+| FR6.11 | |
+| FR6.12 | |
+| FR6.13 | |
+| FR6.14 | |
+| FR6.15 | |
+| FR7.1 | |
+| FR7.2 | |
+| FR7.3 | |
+| FR7.4 | |
+| FR8.1 | |
+| FR8.2 | |
+| FR8.3 | |
+| FR8.4 | |
+
 \<for each functional requirement from the requirement document, list which classes concur to implement it>
 
 
