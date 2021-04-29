@@ -106,3 +106,133 @@ User <-- EzShop : return true
 
 
 
+Scenario 6.1
+
+```plantuml
+
+actor Cashier
+Cashier -> EzShop : startSaleTransaction()
+EzShop -> SaleTransaction : SaleTransaction()
+EzShop <- SaleTransaction : return SaleTransaction
+
+Cashier -> EzShop : addProductToSale
+EzShop -> ProductType : ProductType()
+EzShop <- ProductType : return ProductType
+EzShop -> ProductType : p.updateQuantity()
+EzShop <- ProductType : return true
+EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
+EzShop <- SaleTransactionRecord : return SaleTransactionRecord
+EzShop -> SaleTransaction : t.addRecord(r)
+EzShop <- SaleTransaction : return true
+Cashier <- EzShop : return true
+
+Cashier <- EzShop : return t.getId()
+Cashier -> EzShop : endSaleTransaction (id)
+Cashier <- EzShop : return true
+
+
+Cashier -> Cashier : Manage payment (UC7)
+
+```
+
+Scenario 6.2
+
+```plantuml
+
+actor Cashier
+Cashier -> EzShop : startSaleTransaction()
+EzShop -> SaleTransaction : SaleTransaction()
+EzShop <- SaleTransaction : return SaleTransaction
+
+Cashier -> EzShop : addProductToSale
+EzShop -> ProductType : ProductType()
+EzShop <- ProductType : return ProductType
+EzShop -> ProductType : p.updateQuantity()
+EzShop <- ProductType : return true
+EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
+EzShop <- SaleTransactionRecord : return SaleTransactionRecord
+EzShop -> SaleTransaction : t.addRecord(r)
+EzShop <- SaleTransaction : return true
+Cashier <- EzShop : return true
+
+Cashier -> EzShop : applyDiscountRateToProduct (id, code, discount)
+
+Cashier <- EzShop : return true
+
+
+Cashier <- EzShop : return t.getId()
+Cashier -> EzShop : endSaleTransaction (id)
+Cashier <- EzShop : return true
+
+
+Cashier -> Cashier : Manage payment (UC7)
+```
+
+Scenario 6.3
+
+```plantuml
+
+actor Cashier
+Cashier -> EzShop : startSaleTransaction()
+EzShop -> SaleTransaction : SaleTransaction()
+EzShop <- SaleTransaction : return SaleTransaction
+
+Cashier -> EzShop : addProductToSale
+EzShop -> ProductType : ProductType()
+EzShop <- ProductType : return ProductType
+EzShop -> ProductType : p.updateQuantity()
+EzShop <- ProductType : return true
+EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
+EzShop <- SaleTransactionRecord : return SaleTransactionRecord
+EzShop -> SaleTransaction : t.addRecord(r)
+EzShop <- SaleTransaction : return true
+Cashier <- EzShop : return true
+
+Cashier -> EzShop : applyDiscountRateToSale (id, discount)
+Cashier <- EzShop : return true
+
+
+Cashier <- EzShop : return t.getId()
+Cashier -> EzShop : endSaleTransaction (id)
+Cashier <- EzShop : return true
+
+
+Cashier -> Cashier : Manage payment (UC7)
+```
+
+
+Scenario 6.5
+
+```plantuml
+
+actor Cashier
+Cashier -> EzShop : startSaleTransaction()
+EzShop -> SaleTransaction : SaleTransaction()
+EzShop <- SaleTransaction : return SaleTransaction
+
+Cashier -> EzShop : addProductToSale
+EzShop -> ProductType : ProductType()
+EzShop <- ProductType : return ProductType
+EzShop -> ProductType : p.updateQuantity()
+EzShop <- ProductType : return true
+EzShop -> SaleTransactionRecord : SaleTransactionRecord(t.getId, p.getId)
+EzShop <- SaleTransactionRecord : return SaleTransactionRecord
+EzShop -> SaleTransaction : t.addRecord(r)
+EzShop <- SaleTransaction : return true
+Cashier <- EzShop : return true
+
+Cashier -> EzShop : applyDiscountRateToSale (id, discount)
+Cashier <- EzShop : return true
+
+
+Cashier <- EzShop : return t.getId()
+Cashier -> EzShop : endSaleTransaction (id)
+Cashier <- EzShop : return true
+
+
+Cashier -> Cashier : Manage payment (UC7)
+
+Cashier -> EzShop : deleteSaleTransaction (id)
+Cashier <- EzShop : return true
+```
+
