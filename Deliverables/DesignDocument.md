@@ -17,6 +17,30 @@ Version: 1.0
 - [Low level design](#low-level-design)
 - [Verification traceability matrix](#verification-traceability-matrix)
 - [Verification sequence diagrams](#verification-sequence-diagrams)
+  - [Scenario 1.1](#scenario-11)
+  - [Scenario 1.2](#scenario-12)
+  - [Scenario 1.3](#scenario-13)
+  - [Scenario 2.1](#scenario-21)
+  - [Scenario 2.3](#scenario-23)
+  - [Scenario 3.1 - Order of product type X issued](#scenario-31---order-of-product-type-x-issued)
+  - [Scenario 3.2 - Order of product type X payed](#scenario-32---order-of-product-type-x-payed)
+  - [Scenario 4.2](#scenario-42)
+  - [Scenario 4.3](#scenario-43)
+  - [Scenario 4.4](#scenario-44)
+  - [Scenario 5.1](#scenario-51)
+  - [Scenario 5.2](#scenario-52)
+  - [Scenario 6.1](#scenario-61)
+  - [Scenario 6.2](#scenario-62)
+  - [Scenario 6.3](#scenario-63)
+  - [Scenario 6.5](#scenario-65)
+  - [Scenario 7.1](#scenario-71)
+  - [Scenario 7.2](#scenario-72)
+  - [Scenario 7.3](#scenario-73)
+  - [Scenario 7.4](#scenario-74)
+  - [Scenario 8.1/8.2](#scenario-8182)
+  - [Scenario 9.1 - List credits and debits](#scenario-91---list-credits-and-debits)
+  - [Scenario 10.1 - Return payment by  credit card](#scenario-101---return-payment-by--credit-card)
+  - [Scenario 10.2 - Return cash payment](#scenario-102---return-cash-payment)
 
 # Instructions
 
@@ -51,7 +75,161 @@ The software is designed in Java and only represents the application logic. The 
 
 <for each package, report class diagram>
 
+```plantuml
 
+class EzShopInterface {
+    + reset() :void
+    + createUser(String username, String password, String role): Integer
+    + deleteUser(Integer id): boolean
+    + getAllUsers() : List<User>
+    + getUser(Integer id) : User
+    + updateUserRights(Integer id, String role) : boolean
+    + login(String username, String password) : User
+    + logout() : boolean
+    + createProductType(String description, String productCode, double pricePerUnit, String note, String location) : Integer
+    + updateProduct(Integer id, String newDescription, String newCode, double newPrice, String newNote) : boolean
+    + deleteProductType(Integer id) : boolean
+    + getAllProductTypes() : List<ProductType>
+    + getProductTypeByBarCode(String barCode) : ProductType
+
+    + getProductTypesByDescription(string description): List<ProductType>
+    + updateQuantity(integer productId, int toBeAdded): boolean
+    + updatePosition(integer productId, string newPos): boolean
+    + issueOrder(string productCode, int quantity, double pricePerUnit): integer
+    + payOrderFor(string productCode, int quantity, double pricePerUnit): integer
+    + payOrder(integer orderId): boolean
+    + recordOrderArrival(integer orderId): boolean
+    + getAllOrders(): List<Order>
+    + defineCustomer(string customerName)
+    + modifyCustomer(integer Id, string newCustomerName, string newCustomerCard): boolean
+    + deleteCustomer(integer Id): boolean
+
+    + getCustomer(id: Integer): Customer
+    + getAllCustomers(): List<Customer>
+    + createCard(): String // Returns an assignable card code
+    + attachCardToCustomer(customerCard: String, customerId: Integer): boolean
+    + modifyPointsOnCard(customerCard: String, pointsToBeAdded: int): boolean
+    + startSaleTransaction(): Integer
+    + addProductToSale(transactionId: Integer, productCode: String, amount: int): boolean
+    + deleteProductFromSale(Integer transactionId, String productCode, int amount): boolean
+    + applyDiscountRateToProduct(transactionId: Integer, productCode: String, discountRate: double):boolean // TODO how to represent discountRate into models?
+    + applyDiscountRateToSale(transactionId: Integer, discountRate: double): boolean // TODO how to represent discountRate into models?
+    + computePointsForSale(transactionId: Integer): int
+    + endSaleTransaction(transactionId: Integer): boolean
+
+    + deleteSaleTransaction(Integer transactionId) : Boolean
+    + getSaleTransaction(Integer transactionId) : SaleTransaction
+    + startReturnTransaction(Integer transactionId) : Integer
+    + returnProduct(Integer returnId, String productCode, int amount) : Boolean
+    + endReturnTransaction(Integer returnId, boolean commit) : Boolean
+    + deleteReturnTransaction(Integer returnId) : Boolean
+    + receiveCashPayment(Integer transactionId, double cash) : double
+    + receiveCreditCardPayment(Integer transactionId, String creditCard) : Boolean
+    + returnCashPayment(Integer returnId) : double
+    + returnCreditCardPayment(Integer returnId, String creditCard) : double
+    + recordBalanceUpdate(toBeAdded: double): boolean
+    + getCreditsAndDebits(LocalDate from, LocalDate to): List<BalanceOperation>
+    + computeBalance(): double
+
+}
+
+class Shop {
+    balance
+
+    + getReturnTransaction()
+    + getOrder()
+    + getProductType()
+    + validateCreditCard()
+    + getUserByUsername()
+
+}
+
+class Customer {
+    Id: Integer
+    cardNumber: String
+    customerName: String
+}
+class Card {
+    cardNumber: String
+    cardPoints: int
+
+}
+class User {
+    id: Integer
+    username : String   
+    password : String
+    role : String in <"Administrator", "Cashier", "ShopManager">
+
+}
+class ProductType {
+    id: Integer
+    code: String
+    description: String
+    sellPrice: double
+    quantity: int
+    notes: String
+    position: String
+    pricePerUnit: double
+
+}
+class SaleTransaction {
+    id: Integer
+    date : LocalDate
+    time : LocalTime
+    amount: double
+    discountRateProducts : List <ProductDiscount>
+    discountRateAmount : double
+    paymentType: String in <cash, card>
+    cash: double
+    change: double
+    creditCard: String
+    recordList : List <SaleTransactionRecord>
+
+}
+class SaleTransactionRecord {
+    transactionId: Integer
+    productId: Integer
+    quantity: int
+    totalPrice : double
+
+}
+class ReturnTransaction {
+    returnId : Integer
+    transactionId: Integer
+    returnedValue: double
+    recordList : List <ReturnTransactionRecord>
+
+}
+class ReturnTransactionRecord {
+    returnId: Integer
+    productId: Integer
+    quantity: int
+    totalPrice : double
+
+}
+class ProductDiscount {
+    id: Integer
+    productId: Integer
+    discountRate: double
+
+}
+class Order {
+    id: Integer
+    status: Enum< ISSUED, ORDERED, COMPLETED>
+    productCode: String
+    quantity: Integer
+    pricePerUnit: double
+
+}
+class BalanceOperation {
+    id: Integer
+    date: LocalDate
+    type: Enum<CREDIT,DEBIT,ORDER,SALE,RETURN>
+    amount: double
+    description: String
+
+}
+```
 
 
 
