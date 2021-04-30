@@ -245,6 +245,19 @@ package it.polito.ezshop.model {
     }
 }
 
+SaleTransaction - "*" SaleTransactionRecord
+ReturnTransaction - "*" ReturnTransactionRecord
+ProductDiscount "*" -- SaleTransaction 
+SaleTransactionRecord -- ProductType
+ReturnTransactionRecord - ProductType
+
+Customer - "0..1" Card
+ProductType -- Order
+
+BalanceOperation ^- SaleTransaction
+BalanceOperation ^- ReturnTransaction
+BalanceOperation ^- Order
+
 ```
 
 
