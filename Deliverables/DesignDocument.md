@@ -821,12 +821,12 @@ EzShop -> EzShop : getSaleTransaction()
 EzShop -> ReturnTransaction  : ReturnTransaction()
 activate ReturnTransaction
 EzShop <-- ReturnTransaction  : return ReturnTransaction
+User <-- EzShop : return true
 User -> EzShop : returnProduct()
 note left : N = return \nproduct quantity
-activate ProductType
-EzShop -> ProductType : ProductType()
-EzShop <-- ProductType : return ProductType
+EzShop -> EzShop : getProductTypeByBarCode()
 EzShop -> ProductType : p.updateQuantity()
+activate ProductType
 note right : p.quantity + N
 EzShop <-- ProductType : return true
 deactivate ProductType
@@ -838,7 +838,6 @@ EzShop -> ReturnTransaction : t.addReturnTransactionRecord(r)
 EzShop <-- ReturnTransaction : return true
 deactivate ProductType
 deactivate ReturnTransaction
-User <-- EzShop : return true
 User <-- EzShop : return r.getId()
 User -> User : Manage payment(UC 10)
 User -> EzShop : EndReturnTransaction()
