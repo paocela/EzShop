@@ -211,7 +211,8 @@ package it.polito.ezshop.model {
         returnId : Integer
         transactionId: Integer
         returnedValue: double
-        recordList : List <ReturnTransactionRecord>
+        recordList : List <ReturnTransactionRecord>        
+        + addReturnTransactionRecord()
 
     }
     class ReturnTransactionRecord {
@@ -413,7 +414,7 @@ deactivate EzShop
 actor Admin
 Admin -> EzShop : updateUserRights()
 activate EzShop
-EzShop -> EzShop : u.getUser()
+EzShop -> EzShop : getUser()
 EzShop -> User : u.setUserRights()
 activate User
 EzShop <-- User : return true
@@ -428,11 +429,11 @@ deactivate EzShop
 actor ShopManager
 ShopManager -> EzShop : issueOrder()
 activate EzShop
-EzShop -> Order ** : new
+EzShop -> Order  : Order()
 activate Order
-EzShop -> Order  : getId()
+EzShop <-- Order : return order
+ShopManager <-- EzShop : o.getId()
 deactivate Order
-ShopManager <-- EzShop : orderId
 deactivate EzShop
 
 ```
@@ -441,12 +442,15 @@ deactivate EzShop
 actor ShopManager
 ShopManager -> EzShop : payOrder()
 activate EzShop
-EzShop -> EzShop : computeBalance()
 EzShop -> EzShop : getOrder()
-EzShop -> Order : setState()
 activate Order
+EzShop -> Order : o.setState()
+EzShop <-- Order : true
 deactivate Order
-EzShop -> BalanceOperation ** : new
+EzShop -> BalanceOperation : BalanceOperation()
+activate BalanceOperation
+EzShop <-- BalanceOperation : balanceOperation
+deactivate BalanceOperation
 ShopManager <-- EzShop : true 
 deactivate EzShop
 
@@ -457,12 +461,15 @@ actor ShopManager
 ShopManager -> EzShop: recordOrderArrival()
 activate EzShop
 EzShop -> EzShop : getOrder()
-EzShop -> Order : setState()
 activate Order
+EzShop -> Order : o.setState()
+EzShop <-- Order : true
+
 deactivate Order
 EzShop -> EzShop : getProductType()
-EzShop -> Product : setUnits()
 activate Product
+EzShop -> Product : p.setUnits()
+EzShop <-- Product : true
 deactivate Product
 ShopManager <-- EzShop : true 
 deactivate EzShop
@@ -499,8 +506,7 @@ EzShop <-- Card : return Card
 deactivate Card
 User <-- EzShop : card.getId()
 User -> EzShop : getCustomer()
-User <-- EzShop : customer.getId()
-User -> EzShop : attachCardToCustomer()
+EzShop -> EzShop : attachCardToCustomer()
 EzShop -> EzShop : modifyCustomer()
 EzShop -> Customer : c.setCardNumber()
 activate Customer
@@ -511,7 +517,7 @@ deactivate EzShop
 
 ```
 
-## Scenario 4.3 - Detach Loyalty card from customer record
+## Scenario 4.3/4.4 - Detach Loyalty card from customer record / Update customer record
 
 ```plantuml
 
@@ -520,26 +526,7 @@ note over User: User ="Admin or\nShop Manager or\nCashier"
 User -> EzShop : getCustomer()
 activate EzShop
 User <-- EzShop : customer.getId()
-User <-- EzShop : customer.getCustomerName()
-User -> EzShop : modifyCustomer()
-EzShop -> Customer : c.setCardNumber()
-activate Customer
-EzShop <-- Customer : return true
-deactivate Customer
-User <-- EzShop : return true
-deactivate EzShop
-
-```
-
-## Scenario 4.4 - Update customer record
-
-```plantuml
-
-actor User
-note over User: User ="Admin or\nShop Manager or\nCashier"
-User -> EzShop : getCustomer()
-activate EzShop
-User <-- EzShop : customer.getId()
+User <-- EzShop : customer.getName()
 User -> EzShop : modifyCustomer()
 EzShop -> Customer : c.setCardNumber()
 activate Customer
@@ -551,6 +538,7 @@ User <-- EzShop : return true
 deactivate EzShop
 
 ```
+
 
 ## Scenario 5.1 - Login
 
@@ -594,10 +582,10 @@ activate EzShop
 EzShop -> SaleTransaction : SaleTransaction()
 activate SaleTransaction
 EzShop <-- SaleTransaction : return SaleTransaction
+Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : addProductToSale
-EzShop -> ProductType : ProductType()
+EzShop -> EzShop : getProductTypeByBarCode()
 activate ProductType
-EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
 EzShop <-- ProductType : return true
 deactivate ProductType
@@ -609,7 +597,6 @@ EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <-- SaleTransaction : return true
 deactivate SaleTransaction
 Cashier <-- EzShop : return true
-Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
 Cashier <-- EzShop : return true
 deactivate EzShop
@@ -626,10 +613,10 @@ activate EzShop
 EzShop -> SaleTransaction : SaleTransaction()
 activate SaleTransaction
 EzShop <-- SaleTransaction : return SaleTransaction
+Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : addProductToSale
-EzShop -> ProductType : ProductType()
+EzShop -> EzShop : getProductTypeByBarCode()
 activate ProductType
-EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
 EzShop <-- ProductType : return true
 deactivate ProductType
@@ -639,11 +626,16 @@ EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
 deactivate SaleTransactionRecord
 EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <-- SaleTransaction : return true
-deactivate SaleTransaction
 Cashier <-- EzShop : return true
 Cashier -> EzShop : applyDiscountRateToProduct (id, code, discount)
+EzShop -> ProductDiscount : ProductDiscount()
+activate ProductDiscount
+EzShop <-- ProductDiscount : productDiscount
+deactivate ProductDiscount
+EzShop -> SaleTransaction : t.addProductDiscount(pD)
+EzShop <-- SaleTransaction : return true
+deactivate SaleTransaction
 Cashier <-- EzShop : return true
-Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
 Cashier <-- EzShop : return true
 deactivate EzShop
@@ -660,10 +652,10 @@ activate EzShop
 EzShop -> SaleTransaction : SaleTransaction()
 activate SaleTransaction
 EzShop <-- SaleTransaction : return SaleTransaction
+Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : addProductToSale
-EzShop -> ProductType : ProductType()
+EzShop -> EzShop : getProductTypeByBarCode()
 activate ProductType
-EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
 EzShop <-- ProductType : return true
 deactivate ProductType
@@ -673,11 +665,12 @@ EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
 deactivate SaleTransactionRecord
 EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <-- SaleTransaction : return true
-deactivate SaleTransaction
 Cashier <-- EzShop : return true
 Cashier -> EzShop : applyDiscountRateToSale (id, discount)
+EzShop -> SaleTransaction : t.setDiscountRateAmount()
+EzShop <-- SaleTransaction : return true
+deactivate SaleTransaction
 Cashier <-- EzShop : return true
-Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
 Cashier <-- EzShop : return true
 deactivate EzShop
@@ -695,10 +688,10 @@ activate EzShop
 EzShop -> SaleTransaction : SaleTransaction()
 activate SaleTransaction
 EzShop <-- SaleTransaction : return SaleTransaction
+Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : addProductToSale
-EzShop -> ProductType : ProductType()
+EzShop -> EzShop : getProductTypeByBarCode()
 activate ProductType
-EzShop <-- ProductType : return ProductType
 EzShop -> ProductType : p.updateQuantity()
 EzShop <-- ProductType : return true
 deactivate ProductType
@@ -708,15 +701,13 @@ EzShop <-- SaleTransactionRecord : return SaleTransactionRecord
 deactivate SaleTransactionRecord
 EzShop -> SaleTransaction : t.addSaleTransactionRecord(r)
 EzShop <-- SaleTransaction : return true
-deactivate SaleTransaction
 Cashier <-- EzShop : return true
-Cashier -> EzShop : applyDiscountRateToSale (id, discount)
-Cashier <-- EzShop : return true
-Cashier <-- EzShop : return t.getId()
 Cashier -> EzShop : endSaleTransaction (id)
+deactivate SaleTransaction
 Cashier <-- EzShop : return true
 Cashier -> Cashier : Manage payment (UC7)
 Cashier -> EzShop : deleteSaleTransaction (id)
+EzShop ->x SaleTransaction :
 Cashier <-- EzShop : return true
 deactivate EzShop
 ```
@@ -816,17 +807,31 @@ actor User
 note over User : User = "Admin,\nShop Manager,\nCashier"
 User -> EzShop : startReturnTransaction()
 activate EzShop
-User <-- EzShop : return t.Id
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> ReturnTransaction  : ReturnTransaction()
+activate ReturnTransaction
+EzShop <-- ReturnTransaction  : return ReturnTransaction
+User <-- EzShop : return r.getId()
 User -> EzShop : returnProduct()
 note left : N = return \nproduct quantity
-EzShop -> ProductType : updateQuantity()
+EzShop -> EzShop : getProductTypeByBarCode()
+EzShop -> ProductType : p.updateQuantity()
 activate ProductType
 note right : p.quantity + N
-EzShop <- ProductType : return true
+EzShop <-- ProductType : return true
 deactivate ProductType
+EzShop -> ReturnTransactionRecord : returnTransactionRecord(r.getId, p.getId)
+activate ReturnTransactionRecord
+EzShop <-- ReturnTransactionRecord : return returnTransactionRecord
+deactivate ReturnTransactionRecord
+EzShop -> ReturnTransaction : t.addReturnTransactionRecord(r)
+EzShop <-- ReturnTransaction : return true
+deactivate ProductType
+deactivate ReturnTransaction
+User <-- EzShop : return true
 User -> User : Manage payment(UC 10)
 User -> EzShop : EndReturnTransaction()
-User <- EzShop : return true
+User <-- EzShop : return true
 deactivate EzShop
 
 ```
@@ -834,12 +839,14 @@ deactivate EzShop
 ## Scenario 9.1 - List credits and debits
 ```plantuml
 actor ShopManager
-ShopManager -> EzShop : getCreditsAndDebits()
+ShopManager -> EzShop : getCreditsAndDebits(startDate, endDate)
 activate EzShop
-deactivate EzShop
-ShopManager <--  BalanceOperation  : List<BalanceOperation>
+EzShop ->  BalanceOperation  : select from db where in daterange
 activate BalanceOperation
+EzShop <--  BalanceOperation  : List<BalanceOperation>
 deactivate BalanceOperation
+ShopManager <--  EzShop  : List<BalanceOperation>
+deactivate EzShop
 ```
 
 ## Scenario 10.1 - Return payment by credit card
