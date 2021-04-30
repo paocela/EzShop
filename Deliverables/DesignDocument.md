@@ -219,6 +219,7 @@ package it.polito.ezshop.model {
         productId: Integer
         quantity: int
         totalPrice : double
+        + addReturnTransactionRecord()
 
     }
     class ProductDiscount {
@@ -816,14 +817,29 @@ actor User
 note over User : User = "Admin,\nShop Manager,\nCashier"
 User -> EzShop : startReturnTransaction()
 activate EzShop
-User <-- EzShop : return t.Id
+EzShop -> EzShop : getSaleTransaction()
+EzShop -> ReturnTransaction  : ReturnTransaction()
+activate ReturnTransaction
+EzShop <-- ReturnTransaction  : return ReturnTransaction
 User -> EzShop : returnProduct()
 note left : N = return \nproduct quantity
-EzShop -> ProductType : updateQuantity()
 activate ProductType
+EzShop -> ProductType : ProductType()
+EzShop <-- ProductType : return ProductType
+EzShop -> ProductType : p.updateQuantity()
 note right : p.quantity + N
-EzShop <- ProductType : return true
+EzShop <-- ProductType : return true
 deactivate ProductType
+EzShop -> ReturnTransactionRecord : returnTransactionRecord(r.getId, p.getId)
+activate ReturnTransactionRecord
+EzShop <-- ReturnTransactionRecord : return returnTransactionRecord
+deactivate ReturnTransactionRecord
+EzShop -> ReturnTransaction : t.addReturnTransactionRecord(r)
+EzShop <-- ReturnTransaction : return true
+deactivate ProductType
+deactivate ReturnTransaction
+User <-- EzShop : return true
+User <-- EzShop : return r.getId()
 User -> User : Manage payment(UC 10)
 User -> EzShop : EndReturnTransaction()
 User <- EzShop : return true
