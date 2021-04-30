@@ -257,6 +257,7 @@ ProductType -- Order
 BalanceOperation ^- SaleTransaction
 BalanceOperation ^- ReturnTransaction
 BalanceOperation ^- Order
+SaleTransaction -- ReturnTransaction
 
 ```
 
@@ -329,9 +330,9 @@ hide members
 | FR6.10 | X | | | | | X
 | FR6.11 | X | | | | | X
 | FR6.12 | X | | | | | | | X
-| FR6.13 | X | | | | X | X | X
+| FR6.13 | X | | | | X | X | X | X | X
 | FR6.14 | X | | | | | | | X
-| FR6.15 | X | | | | | | | X
+| FR6.15 | X | | | | | | | X | X
 | FR7.1 | X | | | | | X | | | | | | X
 | FR7.2 | X | | | | | X | | | | | | X
 | FR7.3 | X | | | | | | | X | | | | X
