@@ -211,7 +211,8 @@ package it.polito.ezshop.model {
         returnId : Integer
         transactionId: Integer
         returnedValue: double
-        recordList : List <ReturnTransactionRecord>
+        recordList : List <ReturnTransactionRecord>        
+        + addReturnTransactionRecord()
 
     }
     class ReturnTransactionRecord {
@@ -219,7 +220,6 @@ package it.polito.ezshop.model {
         productId: Integer
         quantity: int
         totalPrice : double
-        + addReturnTransactionRecord()
 
     }
     class ProductDiscount {
