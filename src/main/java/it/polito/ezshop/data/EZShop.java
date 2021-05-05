@@ -4,12 +4,15 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import it.polito.ezshop.exceptions.*;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import it.polito.ezshop.model.User;
@@ -23,6 +26,16 @@ public class EZShop implements EZShopInterface {
     Dao<User, Integer> userDao;
     Dao<ProductType, Integer> productTypeDao;
 
+    private User userLogged;
+
+    public User getUserLogged() {
+        return userLogged;
+    }
+
+    public void setUserLogged(User userLogged) {
+        this.userLogged = userLogged;
+    }
+
     public EZShop() {
         try {
             connectionSource = new JdbcConnectionSource(DATABASE_URL);
@@ -31,7 +44,7 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, ProductType.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
-            productTypeDao= DaoManager.createDao(connectionSource, ProductType.class);
+            productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
 
         } catch (SQLException e) {
             // TODO DEFINE LOGGING STRATEGY
@@ -60,7 +73,6 @@ public class EZShop implements EZShopInterface {
     @Override
     public Integer createUser(String username, String password, String role) throws InvalidUsernameException, InvalidPasswordException, InvalidRoleException {
 
-        Integer returnId = -1;
         User.RoleEnum roleEnum = null;
 
         // Verify role validity
@@ -80,13 +92,15 @@ public class EZShop implements EZShopInterface {
             throw new InvalidPasswordException();
         }
 
+        Integer returnId = -1;
+
         // Verify username is free
         try {
-            QueryBuilder<User, Integer> usernameFreeQueryBuilder = userDao.queryBuilder().setCountOf(true);
+            QueryBuilder<User, Integer> usernameFreeQueryBuilder = userDao.queryBuilder();
 
-            usernameFreeQueryBuilder.where().eq("username", username);
+            usernameFreeQueryBuilder.setCountOf(true).where().eq("username", username);
 
-            boolean isUsernameAvailable = userDao.countOf(usernameFreeQueryBuilder.prepare()) == 0;
+            boolean isUsernameAvailable = usernameFreeQueryBuilder.countOf() == 0;
 
             if (isUsernameAvailable) {
                 // Create user
@@ -109,26 +123,25 @@ public class EZShop implements EZShopInterface {
      * logged in.
      *
      * @param id the user id, this value should not be less than or equal to 0 or null.
-     *
-     * @return  true if the user was deleted
-     *          false if the user cannot be deleted
-     *
+     * @return true if the user was deleted
+     * false if the user cannot be deleted
      * @throws InvalidUserIdException if id is less than or equal to 0 or if it is null.
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException  if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public boolean deleteUser(Integer id) throws InvalidUserIdException, UnauthorizedException {
 
         authorize(User.RoleEnum.Administrator);
 
-        boolean isDeleted = false;
-
-        if(id == null || id <= 0){
+        // Verify id validity
+        if (id == null || id <= 0) {
             throw new InvalidUserIdException();
         }
 
+        boolean isDeleted = false;
+
         try {
-            if(userDao.idExists(id)){
+            if (userDao.idExists(id)) {
                 isDeleted = userDao.deleteById(id) == 1;
             }
         } catch (SQLException e) {
@@ -136,31 +149,164 @@ public class EZShop implements EZShopInterface {
             e.printStackTrace();
         }
 
+        if (isDeleted && getUserLogged().getId().equals(id)) {
+            logout();
+        }
+
         return isDeleted;
     }
 
+    /**
+     * This method returns the list of all registered users. It can be invoked only after a user with role "Administrator" is
+     * logged in.
+     *
+     * @return a list of all registered users. If there are no users the list should be empty
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
-    public List<it.polito.ezshop.data.User> getAllUsers() throws UnauthorizedException {
-        return null;
+    public List<User> getAllUsers() throws UnauthorizedException {
+
+        authorize(User.RoleEnum.Administrator);
+
+        List<User> allUsers = new ArrayList<User>();
+        try {
+            allUsers = userDao.queryForAll();
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+
+        return allUsers;
     }
 
+    /**
+     * This method returns a User object with given id. It can be invoked only after a user with role "Administrator" is
+     * logged in.
+     *
+     * @param id the id of the user
+     * @return the requested user if it exists, null otherwise
+     * @throws InvalidUserIdException if id is less than or equal to zero or if it is null
+     * @throws UnauthorizedException  if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public it.polito.ezshop.data.User getUser(Integer id) throws InvalidUserIdException, UnauthorizedException {
-        return null;
+
+        authorize(User.RoleEnum.Administrator);
+
+        User returnUser = null;
+
+        try {
+            returnUser = userDao.queryForId(id);
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+
+        return returnUser;
     }
 
+    /**
+     * This method updates the role of a user with given id. It can be invoked only after a user with role "Administrator" is
+     * logged in.
+     *
+     * @param id   the id of the user
+     * @param role the new role the user should be assigned to
+     * @return true if the update was successful, false if the user does not exist
+     * @throws InvalidUserIdException if the user Id is less than or equal to 0 or if it is null
+     * @throws InvalidRoleException   if the new role is empty, null or not among one of the following : {"Administrator", "Cashier", "ShopManager"}
+     * @throws UnauthorizedException  if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean updateUserRights(Integer id, String role) throws InvalidUserIdException, InvalidRoleException, UnauthorizedException {
-        return false;
+
+        authorize(User.RoleEnum.Administrator);
+
+        // Verify id validity
+        if (id == null || id <= 0) {
+            throw new InvalidUserIdException();
+        }
+
+        User.RoleEnum roleEnum;
+
+        // Verify role validity
+        try {
+            roleEnum = User.RoleEnum.valueOf(role);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRoleException();
+        }
+
+        boolean isUpdated = false;
+
+        try {
+            UpdateBuilder<User, Integer> updateUserQueryBuilder = userDao.updateBuilder();
+            updateUserQueryBuilder.updateColumnValue("role", roleEnum.toString())
+                    .where().eq("id", id);
+
+            updateUserQueryBuilder.update();
+            isUpdated = true;
+
+            // TODO REFRESH THE LOGGED USER IF HE IS THE UPDATED ONE
+
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+
+        return isUpdated;
     }
 
+    /**
+     * This method lets a user with given username and password login into the system
+     *
+     * @param username the username of the user
+     * @param password the password of the user
+     * @return an object of class User filled with the logged user's data if login is successful, null otherwise ( wrong credentials or db problems)
+     * @throws InvalidUsernameException if the username is empty or null
+     * @throws InvalidPasswordException if the password is empty or null
+     */
     @Override
     public it.polito.ezshop.data.User login(String username, String password) throws InvalidUsernameException, InvalidPasswordException {
-        return null;
+
+        User returnUser = null;
+
+        // Verify username validity
+        if (username == null || username.equals("")) {
+            throw new InvalidUsernameException();
+        }
+
+        // Verify password validity
+        if (password == null || password.equals("")) {
+            throw new InvalidPasswordException();
+        }
+
+        try {
+            QueryBuilder<User, Integer> loginQueryBuilder = userDao.queryBuilder();
+            loginQueryBuilder.where().eq("username", username).and().eq("password", hashPassword(password));
+
+            returnUser = loginQueryBuilder.queryForFirst();
+            setUserLogged(returnUser);
+
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+
+        return returnUser;
     }
 
+    /**
+     * This method makes a user to logout from the system
+     *
+     * @return true if the logout is successful, false otherwise (there is no logged user)
+     */
     @Override
     public boolean logout() {
+        User loggedUser = getUserLogged();
+
+        if (loggedUser != null) {
+            setUserLogged(null);
+            return true;
+        }
         return false;
     }
 
@@ -168,24 +314,22 @@ public class EZShop implements EZShopInterface {
      * This method creates a product type and returns its unique identifier. It can be invoked only after a user with role "Administrator"
      * or "ShopManager" is logged in.
      *
-     * @param description the description of product to be created
+     * @param description  the description of product to be created
      * @param productCode  the unique barcode of the product
      * @param pricePerUnit the price per single unit of product
-     * @param note the notes on the product (if null an empty string should be saved as description)
-     *
+     * @param note         the notes on the product (if null an empty string should be saved as description)
      * @return The unique identifier of the new product type ( > 0 ).
-     *         -1 if there is an error while saving the product type or if it exists a product with the same barcode
-     *
+     * -1 if there is an error while saving the product type or if it exists a product with the same barcode
      * @throws InvalidProductDescriptionException if the product description is null or empty
-     * @throws InvalidProductCodeException if the product code is null or empty, if it is not a number or if it is not a valid barcode
-     * @throws InvalidPricePerUnitException if the price per unit si less than or equal to 0
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws InvalidProductCodeException        if the product code is null or empty, if it is not a number or if it is not a valid barcode
+     * @throws InvalidPricePerUnitException       if the price per unit si less than or equal to 0
+     * @throws UnauthorizedException              if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public Integer createProductType(String description, String productCode, double pricePerUnit, String note) throws InvalidProductDescriptionException, InvalidProductCodeException, InvalidPricePerUnitException, UnauthorizedException {
         Integer returnId = -1;
 
-        if(note == null){
+        if (note == null) {
             note = "";
         }
 
@@ -195,8 +339,8 @@ public class EZShop implements EZShopInterface {
             usernameFreeQueryBuilder.where().eq("code", productCode);
             boolean isProductCodeAvailable = productTypeDao.countOf(usernameFreeQueryBuilder.prepare()) == 0;
 
-            if(isProductCodeAvailable){
-                ProductType productType = new ProductType(description, productCode,  pricePerUnit, note);
+            if (isProductCodeAvailable) {
+                ProductType productType = new ProductType(description, productCode, pricePerUnit, note);
                 productTypeDao.create(productType);
 
                 returnId = productType.getId();
@@ -410,10 +554,14 @@ public class EZShop implements EZShopInterface {
         return 0;
     }
 
-    private void authorize(User.RoleEnum ... roles) throws UnauthorizedException {
-        // TODO AUTHORIZE LOGGED USER, THROW EXCEPTION IF UNAUTHORIZED
-        if(false){
+    private void authorize(User.RoleEnum... roles) throws UnauthorizedException {
+        if (userLogged == null || !Arrays.asList(roles).contains(User.RoleEnum.valueOf(userLogged.getRole()))) {
             throw new UnauthorizedException();
         }
+    }
+
+    private String hashPassword(String password) {
+        // TODO DEFINE HASHING ALGORITHM
+        return password;
     }
 }
