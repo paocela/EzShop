@@ -83,12 +83,12 @@ public class EZShop implements EZShopInterface {
         }
 
         // Verify password validity
-        if (password == null || password.equals("")) {
+        if (password == null || password.isEmpty()) {
             throw new InvalidUsernameException();
         }
 
         // Verify username validity
-        if (username == null || username.equals("")) {
+        if (username == null || username.isEmpty()) {
             throw new InvalidPasswordException();
         }
 
@@ -271,12 +271,12 @@ public class EZShop implements EZShopInterface {
         User returnUser = null;
 
         // Verify username validity
-        if (username == null || username.equals("")) {
+        if (username == null || username.isEmpty()) {
             throw new InvalidUsernameException();
         }
 
         // Verify password validity
-        if (password == null || password.equals("")) {
+        if (password == null || password.isEmpty()) {
             throw new InvalidPasswordException();
         }
 
