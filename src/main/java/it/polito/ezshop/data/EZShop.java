@@ -28,11 +28,11 @@ public class EZShop implements EZShopInterface {
 
     private User userLogged;
 
-    public User getUserLogged() {
+    private User getUserLogged() {
         return userLogged;
     }
 
-    public void setUserLogged(User userLogged) {
+    private void setUserLogged(User userLogged) {
         this.userLogged = userLogged;
     }
 
@@ -73,7 +73,7 @@ public class EZShop implements EZShopInterface {
     @Override
     public Integer createUser(String username, String password, String role) throws InvalidUsernameException, InvalidPasswordException, InvalidRoleException {
 
-        User.RoleEnum roleEnum = null;
+        User.RoleEnum roleEnum;
 
         // Verify role validity
         try {
@@ -164,7 +164,7 @@ public class EZShop implements EZShopInterface {
 
         authorize(User.RoleEnum.Administrator);
 
-        List<User> allUsers = new ArrayList<User>();
+        List<User> allUsers = new ArrayList<>();
         try {
             allUsers = userDao.queryForAll();
         } catch (SQLException e) {
