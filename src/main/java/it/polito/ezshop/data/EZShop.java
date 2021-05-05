@@ -193,6 +193,11 @@ public class EZShop implements EZShopInterface {
 
         authorize(User.RoleEnum.Administrator);
 
+        // Verify id validity
+        if (id == null || id <= 0) {
+            throw new InvalidUserIdException();
+        }
+
         User returnUser = null;
 
         try {
