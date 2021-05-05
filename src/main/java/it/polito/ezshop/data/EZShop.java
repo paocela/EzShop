@@ -371,7 +371,7 @@ public class EZShop implements EZShopInterface {
 
     @Override
     public List<it.polito.ezshop.data.ProductType> getAllProductTypes() throws UnauthorizedException {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
