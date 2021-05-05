@@ -1,22 +1,103 @@
 package it.polito.ezshop.data;
 
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
 import it.polito.ezshop.exceptions.*;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
+import it.polito.ezshop.model.User;
 
 public class EZShop implements EZShopInterface {
 
+    private final static String DATABASE_URL = "jdbc:sqlite:data/db.sqlite";
 
-    @Override
-    public void reset() {
+    ConnectionSource connectionSource;
+    Dao<User, String> userDao;
 
+    public EZShop() {
+        try {
+            connectionSource = new JdbcConnectionSource(DATABASE_URL);
+
+            TableUtils.createTableIfNotExists(connectionSource, User.class);
+
+            userDao = DaoManager.createDao(connectionSource, User.class);
+
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
     }
 
     @Override
+    public void reset() {
+    }
+
+    /**
+     * This method creates a new user with given username, password and role. The returned value is a unique identifier
+     * for the new user.
+     *
+     * @param username the username of the new user. This value should be unique and not empty.
+     * @param password the password of the new user. This value should not be empty.
+     * @param role     the role of the new user. This value should not be empty and it should assume
+     *                 one of the following values : "Administrator", "Cashier", "ShopManager"
+     * @return The id of the new user ( > 0 ).
+     * -1 if there is an error while saving the user or if another user with the same username exists
+     * @throws InvalidUsernameException If the username has an invalid value (empty or null)
+     * @throws InvalidPasswordException If the password has an invalid value (empty or null)
+     * @throws InvalidRoleException     If the role has an invalid value (empty, null or not among the set of admissible values)
+     */
+    @Override
     public Integer createUser(String username, String password, String role) throws InvalidUsernameException, InvalidPasswordException, InvalidRoleException {
-        return null;
+
+        Integer returnId = -1;
+        User.RoleEnum roleEnum = null;
+
+        // Verify role validity
+        try {
+            roleEnum = User.RoleEnum.valueOf(role);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRoleException();
+        }
+
+        // Verify password validity
+        if (password == null || password.equals("")) {
+            throw new InvalidUsernameException();
+        }
+
+        // Verify username validity
+        if (username == null || username.equals("")) {
+            throw new InvalidPasswordException();
+        }
+
+        // Verify username is free
+        try {
+            QueryBuilder<User, String> usernameFreeQueryBuilder = userDao.queryBuilder().setCountOf(true);
+
+            usernameFreeQueryBuilder.where().eq("username", username);
+
+            boolean isUsernameAvailable = userDao.countOf(usernameFreeQueryBuilder.prepare()) == 0;
+
+            if (isUsernameAvailable) {
+                // Create user
+                User user = new User(username, password, roleEnum);
+                userDao.create(user);
+
+                returnId = user.getId();
+            }
+
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+
+        return returnId;
     }
 
     @Override
@@ -25,12 +106,12 @@ public class EZShop implements EZShopInterface {
     }
 
     @Override
-    public List<User> getAllUsers() throws UnauthorizedException {
+    public List<it.polito.ezshop.data.User> getAllUsers() throws UnauthorizedException {
         return null;
     }
 
     @Override
-    public User getUser(Integer id) throws InvalidUserIdException, UnauthorizedException {
+    public it.polito.ezshop.data.User getUser(Integer id) throws InvalidUserIdException, UnauthorizedException {
         return null;
     }
 
@@ -40,7 +121,7 @@ public class EZShop implements EZShopInterface {
     }
 
     @Override
-    public User login(String username, String password) throws InvalidUsernameException, InvalidPasswordException {
+    public it.polito.ezshop.data.User login(String username, String password) throws InvalidUsernameException, InvalidPasswordException {
         return null;
     }
 
