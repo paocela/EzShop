@@ -20,8 +20,8 @@ public class EZShop implements EZShopInterface {
     private final static String DATABASE_URL = "jdbc:sqlite:data/db.sqlite";
 
     ConnectionSource connectionSource;
-    Dao<User, String> userDao;
-    Dao<ProductType, String> productTypeDao;
+    Dao<User, Integer> userDao;
+    Dao<ProductType, Integer> productTypeDao;
 
     public EZShop() {
         try {
@@ -82,7 +82,7 @@ public class EZShop implements EZShopInterface {
 
         // Verify username is free
         try {
-            QueryBuilder<User, String> usernameFreeQueryBuilder = userDao.queryBuilder().setCountOf(true);
+            QueryBuilder<User, Integer> usernameFreeQueryBuilder = userDao.queryBuilder().setCountOf(true);
 
             usernameFreeQueryBuilder.where().eq("username", username);
 
@@ -104,9 +104,39 @@ public class EZShop implements EZShopInterface {
         return returnId;
     }
 
+    /**
+     * This method deletes the user with given id. It can be invoked only after a user with role "Administrator" is
+     * logged in.
+     *
+     * @param id the user id, this value should not be less than or equal to 0 or null.
+     *
+     * @return  true if the user was deleted
+     *          false if the user cannot be deleted
+     *
+     * @throws InvalidUserIdException if id is less than or equal to 0 or if it is null.
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean deleteUser(Integer id) throws InvalidUserIdException, UnauthorizedException {
-        return false;
+
+        authorize(User.RoleEnum.Administrator);
+
+        boolean isDeleted = false;
+
+        if(id == null || id <= 0){
+            throw new InvalidUserIdException();
+        }
+
+        try {
+            if(userDao.idExists(id)){
+                isDeleted = userDao.deleteById(id) == 1;
+            }
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+
+        return isDeleted;
     }
 
     @Override
@@ -159,7 +189,7 @@ public class EZShop implements EZShopInterface {
             note = "";
         }
 
-        QueryBuilder<ProductType, String> usernameFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+        QueryBuilder<ProductType, Integer> usernameFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
 
         try {
             usernameFreeQueryBuilder.where().eq("code", productCode);
@@ -171,8 +201,8 @@ public class EZShop implements EZShopInterface {
 
                 returnId = productType.getId();
             }
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
             // TODO LOG
         }
 
@@ -378,5 +408,12 @@ public class EZShop implements EZShopInterface {
     @Override
     public double computeBalance() throws UnauthorizedException {
         return 0;
+    }
+
+    private void authorize(User.RoleEnum ... roles) throws UnauthorizedException {
+        // TODO AUTHORIZE LOGGED USER, THROW EXCEPTION IF UNAUTHORIZED
+        if(false){
+            throw new UnauthorizedException();
+        }
     }
 }
