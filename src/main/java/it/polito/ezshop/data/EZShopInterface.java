@@ -75,7 +75,7 @@ public interface EZShopInterface {
      *
      * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
      */
-    public List<User> getAllUsers() throws UnauthorizedException;
+    public List<? extends User> getAllUsers() throws UnauthorizedException;
 
     /**
      * This method returns a User object with given id. It can be invoked only after a user with role "Administrator" is
