@@ -149,10 +149,6 @@ public class EZShop implements EZShopInterface {
             e.printStackTrace();
         }
 
-        if (isDeleted && getUserLogged().getId().equals(id)) {
-            logout();
-        }
-
         return isDeleted;
     }
 
