@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import it.polito.ezshop.model.User;
+import it.polito.ezshop.model.ProductType;
 
 public class EZShop implements EZShopInterface {
 
@@ -20,14 +21,17 @@ public class EZShop implements EZShopInterface {
 
     ConnectionSource connectionSource;
     Dao<User, String> userDao;
+    Dao<ProductType, String> productTypeDao;
 
     public EZShop() {
         try {
             connectionSource = new JdbcConnectionSource(DATABASE_URL);
 
             TableUtils.createTableIfNotExists(connectionSource, User.class);
+            TableUtils.createTableIfNotExists(connectionSource, ProductType.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
+            productTypeDao= DaoManager.createDao(connectionSource, ProductType.class);
 
         } catch (SQLException e) {
             // TODO DEFINE LOGGING STRATEGY
@@ -130,9 +134,50 @@ public class EZShop implements EZShopInterface {
         return false;
     }
 
+    /**
+     * This method creates a product type and returns its unique identifier. It can be invoked only after a user with role "Administrator"
+     * or "ShopManager" is logged in.
+     *
+     * @param description the description of product to be created
+     * @param productCode  the unique barcode of the product
+     * @param pricePerUnit the price per single unit of product
+     * @param note the notes on the product (if null an empty string should be saved as description)
+     *
+     * @return The unique identifier of the new product type ( > 0 ).
+     *         -1 if there is an error while saving the product type or if it exists a product with the same barcode
+     *
+     * @throws InvalidProductDescriptionException if the product description is null or empty
+     * @throws InvalidProductCodeException if the product code is null or empty, if it is not a number or if it is not a valid barcode
+     * @throws InvalidPricePerUnitException if the price per unit si less than or equal to 0
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public Integer createProductType(String description, String productCode, double pricePerUnit, String note) throws InvalidProductDescriptionException, InvalidProductCodeException, InvalidPricePerUnitException, UnauthorizedException {
-        return null;
+        Integer returnId = -1;
+
+        if(note == null){
+            note = "";
+        }
+
+        QueryBuilder<ProductType, String> usernameFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+
+        try {
+            usernameFreeQueryBuilder.where().eq("code", productCode);
+            boolean isProductCodeAvailable = productTypeDao.countOf(usernameFreeQueryBuilder.prepare()) == 0;
+
+            if(isProductCodeAvailable){
+                ProductType productType = new ProductType(description, productCode,  pricePerUnit, note);
+                productTypeDao.create(productType);
+
+                returnId = productType.getId();
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            // TODO LOG
+        }
+
+
+        return returnId;
     }
 
     @Override
@@ -146,17 +191,17 @@ public class EZShop implements EZShopInterface {
     }
 
     @Override
-    public List<ProductType> getAllProductTypes() throws UnauthorizedException {
+    public List<it.polito.ezshop.data.ProductType> getAllProductTypes() throws UnauthorizedException {
         return null;
     }
 
     @Override
-    public ProductType getProductTypeByBarCode(String barCode) throws InvalidProductCodeException, UnauthorizedException {
+    public it.polito.ezshop.data.ProductType getProductTypeByBarCode(String barCode) throws InvalidProductCodeException, UnauthorizedException {
         return null;
     }
 
     @Override
-    public List<ProductType> getProductTypesByDescription(String description) throws UnauthorizedException {
+    public List<it.polito.ezshop.data.ProductType> getProductTypesByDescription(String description) throws UnauthorizedException {
         return null;
     }
 
