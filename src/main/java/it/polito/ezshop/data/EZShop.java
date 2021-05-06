@@ -17,6 +17,7 @@ import java.util.List;
 
 import it.polito.ezshop.model.User;
 import it.polito.ezshop.model.ProductType;
+import it.polito.ezshop.model.Customer;
 
 public class EZShop implements EZShopInterface {
 
@@ -25,6 +26,7 @@ public class EZShop implements EZShopInterface {
     ConnectionSource connectionSource;
     Dao<User, Integer> userDao;
     Dao<ProductType, Integer> productTypeDao;
+    Dao<Customer, Integer> customerDao;
 
     private User userLogged;
 
@@ -42,9 +44,11 @@ public class EZShop implements EZShopInterface {
 
             TableUtils.createTableIfNotExists(connectionSource, User.class);
             TableUtils.createTableIfNotExists(connectionSource, ProductType.class);
+            TableUtils.createTableIfNotExists(connectionSource, Customer.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
+            customerDao = DaoManager.createDao(connectionSource, Customer.class);
 
         } catch (SQLException e) {
             // TODO DEFINE LOGGING STRATEGY
@@ -419,12 +423,93 @@ public class EZShop implements EZShopInterface {
 
     @Override
     public Integer defineCustomer(String customerName) throws InvalidCustomerNameException, UnauthorizedException {
-        return null;
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
+
+        Integer customerId = -1;
+
+        // verify customer name validity
+        if(customerName == null || customerName.isEmpty()) {
+            throw new InvalidCustomerNameException();
+        }
+
+        // verify if logged in user
+        if(getUserLogged() == null) {
+            throw new UnauthorizedException();
+        }
+
+        // create customer in db
+        try {
+            QueryBuilder<Customer, Integer> customerQueryBuilder = customerDao.queryBuilder();
+            Customer customer = new Customer(customerName);
+            customerDao.create(customer);
+            customerId = customer.getId();
+
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+
+        return customerId;
     }
 
     @Override
     public boolean modifyCustomer(Integer id, String newCustomerName, String newCustomerCard) throws InvalidCustomerNameException, InvalidCustomerCardException, InvalidCustomerIdException, UnauthorizedException {
-        return false;
+        boolean isUpdated = false;
+        // TODO how is the card number generated in the GUI?
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
+
+        // verify name validity
+        if(newCustomerName == null || newCustomerName.isEmpty()) {
+            throw new InvalidCustomerNameException();
+        }
+
+        // verify card validity
+        if(newCustomerCard.length() != 10) {
+            throw new InvalidCustomerCardException(); // TODO check other conditions on card
+        }
+
+        if(newCustomerCard == null) {
+            // update only name
+            try {
+                UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
+                updateCustomerQueryBuilder.updateColumnValue("name", newCustomerName)
+                        .where().eq("id", id);
+                updateCustomerQueryBuilder.update();
+                isUpdated = true;
+            } catch (SQLException e) {
+                // TODO DEFINE LOGGING STRATEGY
+                e.printStackTrace();
+            }
+        } else if(newCustomerCard.isEmpty()) {
+            // update name and remove card
+            try {
+                UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
+                updateCustomerQueryBuilder.updateColumnValue("name", newCustomerName)
+                        .updateColumnValue("card", "")
+                        .where().eq("id", id);
+                updateCustomerQueryBuilder.update();
+                isUpdated = true;
+            } catch (SQLException e) {
+                // TODO DEFINE LOGGING STRATEGY
+                e.printStackTrace();
+            }
+        } else {
+            // update both
+            try {
+                UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
+                updateCustomerQueryBuilder.updateColumnValue("name", newCustomerName)
+                        .updateColumnValue("card", newCustomerCard)
+                        .where().eq("id", id);
+                updateCustomerQueryBuilder.update();
+                isUpdated = true;
+            } catch (SQLException e) {
+                // TODO DEFINE LOGGING STRATEGY
+                e.printStackTrace();
+            }
+        }
+        return isUpdated;
     }
 
     @Override
@@ -434,12 +519,51 @@ public class EZShop implements EZShopInterface {
 
     @Override
     public Customer getCustomer(Integer id) throws InvalidCustomerIdException, UnauthorizedException {
-        return null;
+        Customer returnCustomer = null;
+
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
+
+        // verify id validity
+        if(id == null || id < 1) {
+            throw new InvalidCustomerIdException();
+        }
+
+        // verify if logged in user
+        if(getUserLogged() == null) {
+            throw new UnauthorizedException();
+        }
+
+        // get customer by id
+        try {
+            returnCustomer = customerDao.queryForId(id);
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+        return returnCustomer;
     }
 
     @Override
-    public List<Customer> getAllCustomers() throws UnauthorizedException {
-        return null;
+    public List<it.polito.ezshop.data.Customer> getAllCustomers() throws UnauthorizedException {
+        List<it.polito.ezshop.data.Customer> customerList = new ArrayList<>();
+
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
+
+        // verify if logged in user
+        if(getUserLogged() == null) {
+            throw new UnauthorizedException();
+        }
+
+        // get customer list
+        try {
+            customerList.addAll(customerDao.queryForAll());
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+        return customerList;
     }
 
     @Override
