@@ -567,4 +567,26 @@ public class EZShop implements EZShopInterface {
         // TODO DEFINE HASHING ALGORITHM
         return password;
     }
+
+    public static boolean validateCreditCard(String creditCard) {
+        boolean result;
+        boolean alternate = false;
+        int sum = 0;
+        int n;
+
+        // validate through Luhn's algorithm
+        for(int i = creditCard.length() - 1; i >= 0; i--) {
+            n = Integer.parseInt(creditCard.substring(i, i+1));
+            if(alternate) {
+                n *= 2;
+                if(n >= 10) {
+                    n = (n % 10) + 1;
+                }
+            }
+            sum += n;
+            alternate = !alternate;
+        }
+        result = ((sum % 10) == 0);
+        return result;
+    }
 }
