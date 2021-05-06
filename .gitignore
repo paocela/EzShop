@@ -14,6 +14,8 @@ local.properties
 .loadpath
 .recommenders
 data/*
+.idea
+ezshop.iml
 
 
 # External tool builders
