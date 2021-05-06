@@ -160,19 +160,21 @@ public class EZShop implements EZShopInterface {
      * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
-    public List<User> getAllUsers() throws UnauthorizedException {
+    public List<it.polito.ezshop.data.User> getAllUsers() throws UnauthorizedException {
 
         authorize(User.RoleEnum.Administrator);
 
-        List<User> allUsers = new ArrayList<>();
+        List<it.polito.ezshop.data.User> returnUsers = new ArrayList<>();
         try {
-            allUsers = userDao.queryForAll();
+
+           List<User> allUsers = userDao.queryForAll();
+            returnUsers.addAll(allUsers);
         } catch (SQLException e) {
             // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
 
-        return allUsers;
+        return returnUsers;
     }
 
     /**
