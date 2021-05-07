@@ -195,7 +195,7 @@ public interface EZShopInterface {
      *
      * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
      */
-    public List<ProductType> getAllProductTypes() throws UnauthorizedException;
+    public List<? extends ProductType> getAllProductTypes() throws UnauthorizedException;
 
     /**
      * This method returns a product type with given barcode. It can be invoked only after a user with role "Administrator"
@@ -221,7 +221,7 @@ public interface EZShopInterface {
      *
      * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
      */
-    public List<ProductType> getProductTypesByDescription(String description) throws UnauthorizedException;
+    public List<? extends ProductType> getProductTypesByDescription(String description) throws UnauthorizedException;
 
     // -------------------- FR4 ------------------- //
     // ------------------- ADMIN ------------------ //

@@ -334,17 +334,39 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public Integer createProductType(String description, String productCode, double pricePerUnit, String note) throws InvalidProductDescriptionException, InvalidProductCodeException, InvalidPricePerUnitException, UnauthorizedException {
-        Integer returnId = -1;
 
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        authorize(roles);
+
+        //(if null an empty string should be saved as description
         if (note == null) {
             note = "";
         }
 
-        QueryBuilder<ProductType, Integer> usernameFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+        //return -1 if there is an error while saving the product type or if it exists a product with the same barcode
+        Integer returnId = -1;
+
+        // Verify description validity
+        if (description == null || description.isEmpty()) {
+            throw new InvalidProductDescriptionException();
+        }
+
+        // Verify code validity             ????    if it is not a number or if it is not a valid barcode   ????
+        if (productCode == null || productCode.isEmpty()) {
+            throw new InvalidProductCodeException();
+        }
+
+        // Verify pricePerUnit validity
+        if (pricePerUnit <= 0 ) {
+            throw new InvalidPricePerUnitException();
+        }
+
+        // Create ProductType
+        QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
 
         try {
-            usernameFreeQueryBuilder.where().eq("code", productCode);
-            boolean isProductCodeAvailable = productTypeDao.countOf(usernameFreeQueryBuilder.prepare()) == 0;
+            productFreeQueryBuilder.where().eq("code", productCode);
+            boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
 
             if (isProductCodeAvailable) {
                 ProductType productType = new ProductType(description, productCode, pricePerUnit, note);
@@ -357,43 +379,282 @@ public class EZShop implements EZShopInterface {
             // TODO LOG
         }
 
-
         return returnId;
     }
 
     @Override
     public boolean updateProduct(Integer id, String newDescription, String newCode, double newPrice, String newNote) throws InvalidProductIdException, InvalidProductDescriptionException, InvalidProductCodeException, InvalidPricePerUnitException, UnauthorizedException {
-        return false;
+
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        authorize(roles);
+
+        boolean isUpdated = false;
+
+
+        // Verify id validity
+        if (id<=0 || id == null) {
+            throw new InvalidProductIdException();
+        }
+
+        // Verify description validity
+        if (newDescription == null || newDescription.isEmpty()) {
+            throw new InvalidProductDescriptionException();
+        }
+
+        // Verify code validity             ????    if it is not a number or if it is not a valid barcode   ????
+        if (newCode == null || newCode.isEmpty()) {
+            throw new InvalidProductCodeException();
+        }
+
+        // Verify pricePerUnit validity
+        if (newPrice <= 0 ) {
+            throw new InvalidPricePerUnitException();
+        }
+
+
+        // Update ProductType
+        QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+
+        try {
+
+            productFreeQueryBuilder.where().eq("id", id);
+            boolean isProductIdvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+            if (!isProductIdvailable) {
+
+                    productFreeQueryBuilder.where().eq("code", newCode);
+                    boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+                    if (!isProductCodeAvailable){
+
+                            UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
+                            updateProductQueryBuilder.updateColumnValue("code", newCode)
+                                    .updateColumnValue("description", newDescription)
+                                    .updateColumnValue("pricePerUnit", newPrice)
+                                    .updateColumnValue("notes", newNote)
+                                    .where().eq("id", id);
+
+                            updateProductQueryBuilder.update();
+                            isUpdated = true;
+                    }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // TODO LOG
+        }
+
+        return isUpdated;
     }
 
     @Override
     public boolean deleteProductType(Integer id) throws InvalidProductIdException, UnauthorizedException {
-        return false;
+
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        authorize(roles);
+
+        // Verify id validity
+        if (id<=0 || id == null) {
+            throw new InvalidProductIdException();
+        }
+
+        boolean isDeleted= false;
+
+        // delete ProductType
+        QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+        try {
+            productFreeQueryBuilder.where().eq("id", id);
+            boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+
+            if (!isProductCodeAvailable) {
+                productTypeDao.deleteById(id);
+                isDeleted = true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // TODO LOG
+        }
+
+        return isDeleted;
     }
 
     @Override
-    public List<it.polito.ezshop.data.ProductType> getAllProductTypes() throws UnauthorizedException {
-        return new ArrayList<>();
+    public List<ProductType> getAllProductTypes() throws UnauthorizedException {
+
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier};
+        authorize(roles);
+
+        List<ProductType> allProducts = new ArrayList<>();
+        try {
+            allProducts = productTypeDao.queryForAll();
+        } catch (SQLException e) {
+            // TODO DEFINE LOGGING STRATEGY
+            e.printStackTrace();
+        }
+        return allProducts;
     }
 
     @Override
-    public it.polito.ezshop.data.ProductType getProductTypeByBarCode(String barCode) throws InvalidProductCodeException, UnauthorizedException {
-        return null;
+    public ProductType getProductTypeByBarCode(String barCode) throws InvalidProductCodeException, UnauthorizedException {
+
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
+        authorize(roles);
+
+        ProductType product= null;
+
+        // Verify code validity             ????    if it is not a number or if it is not a valid barcode   ????
+        if (barCode == null || barCode.isEmpty()) {
+            throw new InvalidProductCodeException();
+        }
+
+        QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+
+        try {
+            productFreeQueryBuilder.where().eq("code", barCode);
+            boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+
+            if (!isProductCodeAvailable) {
+                List <ProductType> products = productTypeDao.queryForEq("code", barCode);
+                if (products.size()==1){
+                    product = products.get(0);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // TODO LOG
+        }
+
+        return product;
     }
 
     @Override
-    public List<it.polito.ezshop.data.ProductType> getProductTypesByDescription(String description) throws UnauthorizedException {
-        return null;
+    public List<ProductType> getProductTypesByDescription(String description) throws UnauthorizedException {
+
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
+        authorize(roles);
+
+        List<ProductType> products= null;
+
+        // Verify description validity
+        if (description == null) {
+            description= "";
+        }
+
+        QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+
+        try {
+            productFreeQueryBuilder.where().eq("description", description);
+            boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+
+            if (!isProductCodeAvailable) {
+                products = productTypeDao.queryForEq("description", description);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // TODO LOG
+        }
+
+        return products;
     }
 
     @Override
     public boolean updateQuantity(Integer productId, int toBeAdded) throws InvalidProductIdException, UnauthorizedException {
-        return false;
+
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        authorize(roles);
+
+        boolean isUpdated = false;
+
+        // Verify id validity
+        if (productId<=0 || productId == null) {
+            throw new InvalidProductIdException();
+        }
+
+
+        // Update quantity
+        QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+
+        try {
+
+            productFreeQueryBuilder.where().eq("id", productId);
+            boolean isProductIdvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+            if (!isProductIdvailable) {
+
+                it.polito.ezshop.data.ProductType product = productTypeDao.queryForId(productId);
+                int quantity = product.getQuantity();
+                int new_quantity = quantity + toBeAdded;
+
+
+                //if <toBeAdded> is negative and the resulting amount would be
+                //     *          negative too or if the product type has not an assigned location
+                if (new_quantity>=0 && !product.getLocation().isEmpty()){
+
+                    UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
+                    updateProductQueryBuilder.updateColumnValue("quantity", new_quantity)
+                            .where().eq("id", productId);
+
+                    updateProductQueryBuilder.update();
+                    isUpdated = true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // TODO LOG
+        }
+
+        return isUpdated;
     }
 
     @Override
     public boolean updatePosition(Integer productId, String newPos) throws InvalidProductIdException, InvalidLocationException, UnauthorizedException {
-        return false;
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        authorize(roles);
+
+        boolean isUpdated = false;
+
+        // Verify id validity
+        if (productId<=0 || productId == null) {
+            throw new InvalidProductIdException();
+        }
+
+        // Verify location validity     format :
+        //     * <aisleNumber>-<rackAlphabeticIdentifier>-<levelNumber>
+        //      If <newPos> is null or empty it should reset the position of given product type.
+
+        if (newPos.isEmpty() || newPos==null){
+            newPos="";
+        }else {
+            String[] pos=newPos.split("-");
+            if (pos.length<3){
+                throw new InvalidLocationException();
+            }
+        }
+
+
+        // Update location
+        QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+
+        try {
+            boolean isProductLocationvailable = true;
+
+            //If <newPos> is null or empty it should reset the position of given product type.
+            if (!newPos.isEmpty()){
+                productFreeQueryBuilder.where().eq("location", newPos);
+                isProductLocationvailable= productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+            }
+
+            if (isProductLocationvailable) {
+
+                UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
+                updateProductQueryBuilder.updateColumnValue("location", newPos)
+                        .where().eq("id", productId);
+
+                updateProductQueryBuilder.update();
+                isUpdated = true;
+                }
+            }catch (SQLException e) {
+            e.printStackTrace();
+            // TODO LOG
+            }
+
+        return isUpdated;
     }
 
     @Override

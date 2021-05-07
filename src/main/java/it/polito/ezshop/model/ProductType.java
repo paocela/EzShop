@@ -15,19 +15,53 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
     @DatabaseField()
     private double salePrice;
     @DatabaseField()
-    private int quantity;
+    private Integer quantity;
     @DatabaseField()
     private String notes;
-    @DatabaseField()
+    @DatabaseField(unique = true)
     private String position;
     @DatabaseField()
-    private double pricePerUnit;
+    private Double pricePerUnit;
 
     ProductType() { }
 
-    public ProductType(String description, String productCode, double pricePerUnit, String note) {
-
+    public ProductType(String description, String code, Double pricePerUnit, String notes) {
+        this.code = code;
+        this.description = description;
+        this.notes = notes;
+        this.pricePerUnit = pricePerUnit;
     }
+
+    @Override
+    public Integer getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @Override
+    public String getBarCode() {
+        return code;
+    }
+
+    @Override
+    public void setBarCode(String code) {
+        this.code = code;
+    }
+
+    @Override
+    public String getProductDescription() {
+        return description;
+    }
+
+    @Override
+    public void setProductDescription(String description) {
+        this.description = description;
+    }
+
 
     @Override
     public Integer getQuantity() {
@@ -36,66 +70,45 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
 
     @Override
     public void setQuantity(Integer quantity) {
-
-    }
-
-    @Override
-    public String getLocation() {
-        return null;
-    }
-
-    @Override
-    public void setLocation(String location) {
-
+        this.quantity = quantity;
     }
 
     @Override
     public String getNote() {
-        return null;
+        return notes;
     }
 
     @Override
-    public void setNote(String note) {
-
+    public void setNote(String notes) {
+        this.notes = notes;
     }
 
     @Override
-    public String getProductDescription() {
-        return null;
+    public String getLocation() {
+        return position;
     }
 
     @Override
-    public void setProductDescription(String productDescription) {
-
-    }
-
-    @Override
-    public String getBarCode() {
-        return null;
-    }
-
-    @Override
-    public void setBarCode(String barCode) {
-
+    public void setLocation(String position) {
+        this.position = position;
     }
 
     @Override
     public Double getPricePerUnit() {
-        return null;
+        return pricePerUnit;
     }
 
     @Override
     public void setPricePerUnit(Double pricePerUnit) {
-
+        this.pricePerUnit = pricePerUnit;
     }
 
-    @Override
-    public Integer getId() {
-        return null;
+
+    public double getSalePrice() {
+        return salePrice;
     }
 
-    @Override
-    public void setId(Integer id) {
-
+    public void setSalePrice(double salePrice) {
+        this.salePrice = salePrice;
     }
 }
