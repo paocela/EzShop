@@ -51,7 +51,6 @@ public class EZShop implements EZShopInterface {
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
 
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
     }
@@ -115,7 +114,6 @@ public class EZShop implements EZShopInterface {
             }
 
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
 
@@ -149,7 +147,6 @@ public class EZShop implements EZShopInterface {
                 isDeleted = userDao.deleteById(id) == 1;
             }
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
 
@@ -171,10 +168,9 @@ public class EZShop implements EZShopInterface {
         List<it.polito.ezshop.data.User> returnUsers = new ArrayList<>();
         try {
 
-           List<User> allUsers = userDao.queryForAll();
+            List<User> allUsers = userDao.queryForAll();
             returnUsers.addAll(allUsers);
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
 
@@ -205,7 +201,6 @@ public class EZShop implements EZShopInterface {
         try {
             returnUser = userDao.queryForId(id);
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
 
@@ -252,10 +247,7 @@ public class EZShop implements EZShopInterface {
             updateUserQueryBuilder.update();
             isUpdated = true;
 
-            // TODO REFRESH THE LOGGED USER IF HE IS THE UPDATED ONE
-
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
 
@@ -294,7 +286,6 @@ public class EZShop implements EZShopInterface {
             setUserLogged(returnUser);
 
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
 
@@ -335,7 +326,7 @@ public class EZShop implements EZShopInterface {
     @Override
     public Integer createProductType(String description, String productCode, double pricePerUnit, String note) throws InvalidProductDescriptionException, InvalidProductCodeException, InvalidPricePerUnitException, UnauthorizedException {
 
-        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
         //(if null an empty string should be saved as description
@@ -357,7 +348,7 @@ public class EZShop implements EZShopInterface {
         }
 
         // Verify pricePerUnit validity
-        if (pricePerUnit <= 0 ) {
+        if (pricePerUnit <= 0) {
             throw new InvalidPricePerUnitException();
         }
 
@@ -385,14 +376,14 @@ public class EZShop implements EZShopInterface {
     @Override
     public boolean updateProduct(Integer id, String newDescription, String newCode, double newPrice, String newNote) throws InvalidProductIdException, InvalidProductDescriptionException, InvalidProductCodeException, InvalidPricePerUnitException, UnauthorizedException {
 
-        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
         boolean isUpdated = false;
 
 
         // Verify id validity
-        if (id==null || id <= 0) {
+        if (id == null || id <= 0) {
             throw new InvalidProductIdException();
         }
 
@@ -407,7 +398,7 @@ public class EZShop implements EZShopInterface {
         }
 
         // Verify pricePerUnit validity
-        if (newPrice <= 0 ) {
+        if (newPrice <= 0) {
             throw new InvalidPricePerUnitException();
         }
 
@@ -421,20 +412,20 @@ public class EZShop implements EZShopInterface {
             boolean isProductIdavailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
             if (!isProductIdavailable) {
 
-                    productFreeQueryBuilder.where().eq("code", newCode);
-                    boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
-                    if (!isProductCodeAvailable){
+                productFreeQueryBuilder.where().eq("code", newCode);
+                boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+                if (!isProductCodeAvailable) {
 
-                            UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
-                            updateProductQueryBuilder.updateColumnValue("code", newCode)
-                                    .updateColumnValue("description", newDescription)
-                                    .updateColumnValue("pricePerUnit", newPrice)
-                                    .updateColumnValue("notes", newNote)
-                                    .where().eq("id", id);
+                    UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
+                    updateProductQueryBuilder.updateColumnValue("code", newCode)
+                            .updateColumnValue("description", newDescription)
+                            .updateColumnValue("pricePerUnit", newPrice)
+                            .updateColumnValue("notes", newNote)
+                            .where().eq("id", id);
 
-                            updateProductQueryBuilder.update();
-                            isUpdated = true;
-                    }
+                    updateProductQueryBuilder.update();
+                    isUpdated = true;
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -447,15 +438,15 @@ public class EZShop implements EZShopInterface {
     @Override
     public boolean deleteProductType(Integer id) throws InvalidProductIdException, UnauthorizedException {
 
-        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
         // Verify id validity
-        if (id==null || id <= 0) {
+        if (id == null || id <= 0) {
             throw new InvalidProductIdException();
         }
 
-        boolean isDeleted= false;
+        boolean isDeleted = false;
 
         // delete ProductType
         QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
@@ -476,7 +467,7 @@ public class EZShop implements EZShopInterface {
     }
 
     @Override
-    public List<ProductType> getAllProductTypes() throws UnauthorizedException {
+    public List<it.polito.ezshop.data.ProductType> getAllProductTypes() throws UnauthorizedException {
 
         User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier};
         authorize(roles);
@@ -485,7 +476,6 @@ public class EZShop implements EZShopInterface {
         try {
             allProducts = productTypeDao.queryForAll();
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
         return allProducts;
@@ -497,10 +487,10 @@ public class EZShop implements EZShopInterface {
         User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
-        ProductType product= null;
+        ProductType product = null;
 
-        // Verify code validity             ????    if it is not a number or if it is not a valid barcode   ????
-        if (barCode == null || barCode.isEmpty()) {
+        // Verify code validity
+        if (barCode == null || barCode.isEmpty() || !validateBarcode(barCode)) {
             throw new InvalidProductCodeException();
         }
 
@@ -511,8 +501,8 @@ public class EZShop implements EZShopInterface {
             boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
 
             if (!isProductCodeAvailable) {
-                List <ProductType> products = productTypeDao.queryForEq("code", barCode);
-                if (products.size()==1){
+                List<ProductType> products = productTypeDao.queryForEq("code", barCode);
+                if (products.size() == 1) {
                     product = products.get(0);
                 }
             }
@@ -525,16 +515,16 @@ public class EZShop implements EZShopInterface {
     }
 
     @Override
-    public List<ProductType> getProductTypesByDescription(String description) throws UnauthorizedException {
+    public List<it.polito.ezshop.data.ProductType> getProductTypesByDescription(String description) throws UnauthorizedException {
 
         User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
-        List<ProductType> products= null;
+        List<it.polito.ezshop.data.ProductType> products= null;
 
         // Verify description validity
         if (description == null) {
-            description= "";
+            description = "";
         }
 
         QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
@@ -554,16 +544,31 @@ public class EZShop implements EZShopInterface {
         return products;
     }
 
+    /**
+     * This method updates the quantity of product available in store. <toBeAdded> can be negative but the final updated
+     * quantity cannot be negative. The product should have a location assigned to it.
+     * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
+     *
+     * @param productId the id of the product to be updated
+     * @param toBeAdded the quantity to be added. If negative it decrease the available quantity of <toBeAdded> elements.
+     *
+     * @return  true if the update was successful
+     *          false if the product does not exists, if <toBeAdded> is negative and the resulting amount would be
+     *          negative too or if the product type has not an assigned location.
+     *
+     * @throws InvalidProductIdException if the product id is less than or equal to 0 or if it is null
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean updateQuantity(Integer productId, int toBeAdded) throws InvalidProductIdException, UnauthorizedException {
 
-        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
         boolean isUpdated = false;
 
         // Verify id validity
-        if (productId==null || productId <= 0) {
+        if (productId == null || productId <= 0) {
             throw new InvalidProductIdException();
         }
 
@@ -584,7 +589,7 @@ public class EZShop implements EZShopInterface {
 
                 //if <toBeAdded> is negative and the resulting amount would be
                 //     *          negative too or if the product type has not an assigned location
-                if (new_quantity>=0 && !product.getLocation().isEmpty()){
+                if (new_quantity >= 0 && !product.getLocation().isEmpty()) {
 
                     UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
                     updateProductQueryBuilder.updateColumnValue("quantity", new_quantity)
@@ -602,27 +607,48 @@ public class EZShop implements EZShopInterface {
         return isUpdated;
     }
 
+    /**
+     * This method assign a new position to the product with given product id. The position has the following format :
+     * <aisleNumber>-<rackAlphabeticIdentifier>-<levelNumber>
+     * The position should be unique (unless it is an empty string, in this case this means that the product type
+     * has not an assigned location). If <newPos> is null or empty it should reset the position of given product type.
+     * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
+     *
+     * @param productId the id of the product to be updated
+     * @param newPos the new position the product should be placed to.
+     *
+     * @return true if the update was successful
+     *          false if the product does not exists or if <newPos> is already assigned to another product
+     *
+     * @throws InvalidProductIdException if the product id is less than or equal to 0 or if it is null
+     * @throws InvalidLocationException if the product location is in an invalid format (not <aisleNumber>-<rackAlphabeticIdentifier>-<levelNumber>)
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean updatePosition(Integer productId, String newPos) throws InvalidProductIdException, InvalidLocationException, UnauthorizedException {
-        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager };
+        User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
         boolean isUpdated = false;
 
         // Verify id validity
-        if (productId==null || productId <= 0) {
+        if (productId == null || productId <= 0) {
             throw new InvalidProductIdException();
         }
 
-        // Verify location validity     format :
-        //     * <aisleNumber>-<rackAlphabeticIdentifier>-<levelNumber>
-        //      If <newPos> is null or empty it should reset the position of given product type.
+        if (newPos == null || newPos.isEmpty()) {
+            newPos = "";
+        } else {
+            String[] pos = newPos.split("-");
 
-        if (newPos==null || newPos.isEmpty()){
-            newPos="";
-        }else {
-            String[] pos=newPos.split("-");
-            if (pos.length<3){
+            if (pos.length < 3) {
+                throw new InvalidLocationException();
+            }
+
+            try {
+                Integer.parseInt(pos[0]);
+                Integer.parseInt(pos[2]);
+            } catch (NumberFormatException nfe) {
                 throw new InvalidLocationException();
             }
         }
@@ -636,24 +662,23 @@ public class EZShop implements EZShopInterface {
         try {
 
             //If <newPos> is null or empty it should reset the position of given product type.
-            if (!newPos.isEmpty()){
-                productFreeQueryBuilder.where().eq("location", newPos);
-                isProductLocationvailable= productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+            if (!newPos.isEmpty()) {
+                productFreeQueryBuilder.where().eq("position", newPos);
+                isProductLocationvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
             }
 
             if (isProductLocationvailable) {
 
                 UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
-                updateProductQueryBuilder.updateColumnValue("location", newPos)
+                updateProductQueryBuilder.updateColumnValue("position", newPos)
                         .where().eq("id", productId);
 
                 updateProductQueryBuilder.update();
                 isUpdated = true;
-                }
-            }catch (SQLException e) {
-            e.printStackTrace();
-            // TODO LOG
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         return isUpdated;
     }
@@ -691,12 +716,12 @@ public class EZShop implements EZShopInterface {
         Integer customerId = -1;
 
         // verify customer name validity
-        if(customerName == null || customerName.isEmpty()) {
+        if (customerName == null || customerName.isEmpty()) {
             throw new InvalidCustomerNameException();
         }
 
         // verify if logged in user
-        if(getUserLogged() == null) {
+        if (getUserLogged() == null) {
             throw new UnauthorizedException();
         }
 
@@ -708,13 +733,30 @@ public class EZShop implements EZShopInterface {
             customerId = customer.getId();
 
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
 
         return customerId;
     }
 
+    /**
+     * This method updates the data of a customer with given <id>. This method can be used to assign/delete a card to a
+     * customer. If <newCustomerCard> has a numeric value than this value will be assigned as new card code, if it is an
+     * empty string then any existing card code connected to the customer will be removed and, finally, it it assumes the
+     * null value then the card code related to the customer should not be affected from the update. The card code should
+     * be unique and should be a string of 10 digits.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param id              the id of the customer to be updated
+     * @param newCustomerName the new name to be assigned
+     * @param newCustomerCard the new card code to be assigned. If it is empty it means that the card must be deleted,
+     *                        if it is null then we don't want to update the cardNumber
+     * @return true if the update is successful
+     * false if the update fails ( cardCode assigned to another user, db unreacheable)
+     * @throws InvalidCustomerNameException if the customer name is empty or null
+     * @throws InvalidCustomerCardException if the customer card is empty, null or if it is not in a valid format (string with 10 digits)
+     * @throws UnauthorizedException        if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean modifyCustomer(Integer id, String newCustomerName, String newCustomerCard) throws InvalidCustomerNameException, InvalidCustomerCardException, InvalidCustomerIdException, UnauthorizedException {
         boolean isUpdated = false;
@@ -723,16 +765,21 @@ public class EZShop implements EZShopInterface {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
         // verify name validity
-        if(newCustomerName == null || newCustomerName.isEmpty()) {
+        if (newCustomerName == null || newCustomerName.isEmpty()) {
             throw new InvalidCustomerNameException();
         }
 
-        // verify card validity
-        if(newCustomerCard.length() != 10) {
-            throw new InvalidCustomerCardException(); // TODO check other conditions on card
+        // verify id validity
+        if (id == null || id < 1) {
+            throw new InvalidCustomerIdException();
         }
 
-        if(newCustomerCard == null) {
+        // verify card validity
+        if (newCustomerCard != null && !Arrays.asList(10, 0).contains(newCustomerCard.length())) {
+            throw new InvalidCustomerCardException();
+        }
+
+        if (newCustomerCard == null) {
             // update only name
             try {
                 UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
@@ -741,23 +788,9 @@ public class EZShop implements EZShopInterface {
                 updateCustomerQueryBuilder.update();
                 isUpdated = true;
             } catch (SQLException e) {
-                // TODO DEFINE LOGGING STRATEGY
                 e.printStackTrace();
             }
-        } else if(newCustomerCard.isEmpty()) {
-            // update name and remove card
-            try {
-                UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
-                updateCustomerQueryBuilder.updateColumnValue("name", newCustomerName)
-                        .updateColumnValue("card", "")
-                        .where().eq("id", id);
-                updateCustomerQueryBuilder.update();
-                isUpdated = true;
-            } catch (SQLException e) {
-                // TODO DEFINE LOGGING STRATEGY
-                e.printStackTrace();
-            }
-        } else {
+        } else if (newCustomerCard.length() == 0) {
             // update both
             try {
                 UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
@@ -767,7 +800,18 @@ public class EZShop implements EZShopInterface {
                 updateCustomerQueryBuilder.update();
                 isUpdated = true;
             } catch (SQLException e) {
-                // TODO DEFINE LOGGING STRATEGY
+                e.printStackTrace();
+            }
+        } else {
+            // update name and remove card
+            try {
+                UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
+                updateCustomerQueryBuilder.updateColumnValue("name", newCustomerName)
+                        .updateColumnValue("card", "")
+                        .where().eq("id", id);
+                updateCustomerQueryBuilder.update();
+                isUpdated = true;
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
@@ -787,12 +831,12 @@ public class EZShop implements EZShopInterface {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
         // verify id validity
-        if(id == null || id < 1) {
+        if (id == null || id < 1) {
             throw new InvalidCustomerIdException();
         }
 
         // verify if logged in user
-        if(getUserLogged() == null) {
+        if (getUserLogged() == null) {
             throw new UnauthorizedException();
         }
 
@@ -800,7 +844,6 @@ public class EZShop implements EZShopInterface {
         try {
             returnCustomer = customerDao.queryForId(id);
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
         return returnCustomer;
@@ -814,15 +857,14 @@ public class EZShop implements EZShopInterface {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
         // verify if logged in user
-        if(getUserLogged() == null) {
+
+        if (getUserLogged() == null) {
             throw new UnauthorizedException();
         }
-
         // get customer list
         try {
             customerList.addAll(customerDao.queryForAll());
         } catch (SQLException e) {
-            // TODO DEFINE LOGGING STRATEGY
             e.printStackTrace();
         }
         return customerList;
@@ -961,11 +1003,11 @@ public class EZShop implements EZShopInterface {
         int n;
 
         // validate through Luhn's algorithm
-        for(int i = creditCard.length() - 1; i >= 0; i--) {
-            n = Integer.parseInt(creditCard.substring(i, i+1));
-            if(alternate) {
+        for (int i = creditCard.length() - 1; i >= 0; i--) {
+            n = Integer.parseInt(creditCard.substring(i, i + 1));
+            if (alternate) {
                 n *= 2;
-                if(n >= 10) {
+                if (n >= 10) {
                     n = (n % 10) + 1;
                 }
             }
@@ -974,5 +1016,10 @@ public class EZShop implements EZShopInterface {
         }
         result = ((sum % 10) == 0);
         return result;
+    }
+
+    private boolean validateBarcode(String barCode){
+        // TODO IMPLEMENT
+        return true;
     }
 }
