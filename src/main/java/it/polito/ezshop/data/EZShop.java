@@ -1299,5 +1299,4 @@ public class EZShop implements EZShopInterface {
         return check == last;
     }
 
-
 }
