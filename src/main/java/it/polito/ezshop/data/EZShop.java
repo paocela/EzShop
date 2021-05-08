@@ -342,8 +342,8 @@ public class EZShop implements EZShopInterface {
             throw new InvalidProductDescriptionException();
         }
 
-        // Verify code validity             ????    if it is not a number or if it is not a valid barcode   ????
-        if (productCode == null || productCode.isEmpty()) {
+        // Verify code validity
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode)) {
             throw new InvalidProductCodeException();
         }
 
@@ -367,7 +367,6 @@ public class EZShop implements EZShopInterface {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // TODO LOG
         }
 
         return returnId;
@@ -392,8 +391,8 @@ public class EZShop implements EZShopInterface {
             throw new InvalidProductDescriptionException();
         }
 
-        // Verify code validity             ????    if it is not a number or if it is not a valid barcode   ????
-        if (newCode == null || newCode.isEmpty()) {
+        // Verify code validity
+        if (newCode == null || newCode.isEmpty() || !validateBarcode(newCode)) {
             throw new InvalidProductCodeException();
         }
 
@@ -429,7 +428,6 @@ public class EZShop implements EZShopInterface {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // TODO LOG
         }
 
         return isUpdated;
@@ -460,7 +458,6 @@ public class EZShop implements EZShopInterface {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // TODO LOG
         }
 
         return isDeleted;
@@ -472,13 +469,13 @@ public class EZShop implements EZShopInterface {
         User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier};
         authorize(roles);
 
-        List<ProductType> allProducts = new ArrayList<>();
+        List<it.polito.ezshop.data.ProductType> products= null;
         try {
-            allProducts = productTypeDao.queryForAll();
+            products= new ArrayList<>(productTypeDao.queryForAll());
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return allProducts;
+        return products;
     }
 
     @Override
@@ -508,7 +505,6 @@ public class EZShop implements EZShopInterface {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // TODO LOG
         }
 
         return product;
@@ -534,11 +530,10 @@ public class EZShop implements EZShopInterface {
             boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
 
             if (!isProductCodeAvailable) {
-                products = productTypeDao.queryForEq("description", description);
+                products = new ArrayList<>(productTypeDao.queryForEq("description", description));
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // TODO LOG
         }
 
         return products;
@@ -583,8 +578,7 @@ public class EZShop implements EZShopInterface {
             if (!isProductIdvailable) {
 
                 it.polito.ezshop.data.ProductType product = productTypeDao.queryForId(productId);
-                int quantity = product.getQuantity();
-                int new_quantity = quantity + toBeAdded;
+                int new_quantity = product.getQuantity() + toBeAdded;
 
 
                 //if <toBeAdded> is negative and the resulting amount would be
@@ -601,7 +595,6 @@ public class EZShop implements EZShopInterface {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            // TODO LOG
         }
 
         return isUpdated;
