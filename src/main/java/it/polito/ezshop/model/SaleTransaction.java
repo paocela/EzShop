@@ -9,6 +9,7 @@ import it.polito.ezshop.data.TicketEntry;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -98,6 +99,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
     public void setDiscountRateAmount(double discountRateAmount) {
         this.discountRateAmount = discountRateAmount;
+        refreshAmount();
     }
 
     public String getPaymentType() {
@@ -144,7 +146,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
     @Override
     public List<TicketEntry> getEntries() {
-        return null;
+        return new ArrayList<>(this.records);
     }
 
     @Override
@@ -175,18 +177,29 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
     public boolean addSaleTransactionRecord(ProductType product, int quantity) throws SQLException {
         // First check for an existing record for this product
         SaleTransactionRecord transactionRecord = this.records.getDao().queryBuilder()
-                .where().eq("product_type_id", product.getId()).queryForFirst();
+                .where().eq("product_type_id", product.getId()).and()
+                .eq("sale_transaction_id", this.id).queryForFirst();
 
         if (transactionRecord == null) {
             // No existing record for this product, creating a new one
             transactionRecord = new SaleTransactionRecord(product, quantity);
             this.records.add(transactionRecord);
+            refreshAmount();
         } else {
             // There is an existing record for this product, increasing quantity
             transactionRecord.setQuantity(transactionRecord.getQuantity() + quantity);
             this.records.update(transactionRecord);
+            refreshAmount();
         }
 
         return true;
+    }
+
+    private void refreshAmount() {
+        double updatedAmount = 0;
+        for (SaleTransactionRecord record : this.records) {
+            updatedAmount += record.getTotalPrice();
+        }
+        this.amount = updatedAmount * this.discountRateAmount;
     }
 }

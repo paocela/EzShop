@@ -870,6 +870,7 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public Integer startSaleTransaction() throws UnauthorizedException {
+        System.out.println("[DEBUG] startSaleTransaction()");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -911,6 +912,7 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public boolean addProductToSale(Integer transactionId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
+        System.out.println("[DEBUG] addProductToSale(" + transactionId + "," + productCode + "," + amount + ")");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -929,11 +931,6 @@ public class EZShop implements EZShopInterface {
         SaleTransaction transaction = ongoingTransaction;
         if (transaction == null || !transaction.getId().equals(transactionId)) {
             // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
-            transaction = getSaleTransaction(transactionId);
-
-            if (transaction.getStatus() != SaleTransaction.StatusEnum.STARTED) {
-                transaction = null;
-            }
         }
 
         if (transaction != null) {
@@ -964,14 +961,87 @@ public class EZShop implements EZShopInterface {
         return false;
     }
 
+    /**
+     * This method applies a discount rate to the whole sale transaction.
+     * The discount rate should be greater than or equal to 0 and less than 1.
+     * The sale transaction can be either started or closed but not already payed.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the Sale transaction
+     * @param discountRate  the discount rate of the sale
+     * @return true if the operation is successful
+     * false if the transaction does not exists
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws InvalidDiscountRateException  if the discount rate is less than 0 or if it greater than or equal to 1.00
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean applyDiscountRateToSale(Integer transactionId, double discountRate) throws InvalidTransactionIdException, InvalidDiscountRateException, UnauthorizedException {
-        return false;
+
+        System.out.println("[DEBUG] applyDiscountRateToSale(" + transactionId + "," + discountRate + ")");
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify transaction id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        // Verify discount rate validity
+        if (discountRate < 0 || discountRate >= 1) {
+            throw new InvalidDiscountRateException();
+        }
+
+        boolean isDiscountApplied = false;
+
+        SaleTransaction transaction = ongoingTransaction;
+        if (transaction == null || !transaction.getId().equals(transactionId)) {
+            // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
+        }
+
+        if (transaction != null) {
+            transaction.setDiscountRateAmount(discountRate);
+            isDiscountApplied = true;
+        }
+
+        return isDiscountApplied;
     }
 
+    /**
+     * This method returns the number of points granted by a specific sale transaction.
+     * Every 10€ the number of points is increased by 1 (i.e. 19.99€ returns 1 point, 20.00€ returns 2 points).
+     * If the transaction with given id does not exist then the number of points returned should be -1.
+     * The transaction may be in any state (open, closed, payed).
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the Sale transaction
+     * @return the points of the sale (1 point for each 10€) or -1 if the transaction does not exists
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public int computePointsForSale(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
-        return 0;
+
+        System.out.println("[DEBUG] computePointsForSale(" + transactionId + ")");
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        int returnPoints = -1;
+
+        try {
+            SaleTransaction transaction = saleTransactionDao.queryForId(transactionId);
+
+            if (transaction != null) {
+                returnPoints = (int) Math.floor(transaction.getAmount() / 10);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return returnPoints;
     }
 
     /**
@@ -990,6 +1060,7 @@ public class EZShop implements EZShopInterface {
     @Override
     public boolean endSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
 
+        System.out.println("[DEBUG] endSaleTransaction(" + transactionId + ")");
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
         // Verify id validity
@@ -1003,7 +1074,6 @@ public class EZShop implements EZShopInterface {
 
         if (ongoingTransaction == null || !ongoingTransaction.getId().equals(transactionId)) {
             // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
-            ongoingTransaction = getSaleTransaction(transactionId);
         }
 
         if (ongoingTransaction != null && ongoingTransaction.getStatus() == SaleTransaction.StatusEnum.STARTED) {
@@ -1011,7 +1081,7 @@ public class EZShop implements EZShopInterface {
             ongoingTransaction.setStatus(SaleTransaction.StatusEnum.CLOSED);
 
             try {
-                saleTransactionDao.create(ongoingTransaction);
+                saleTransactionDao.update(ongoingTransaction);
                 this.ongoingTransaction = ongoingTransaction;
                 transactionStatusChanged = true;
 
@@ -1037,6 +1107,7 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public boolean deleteSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
+        System.out.println("[DEBUG] deleteSaleTransaction(" + transactionId + ")");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -1078,6 +1149,8 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public SaleTransaction getSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
+        System.out.println("[DEBUG] getSaleTransaction(" + transactionId + ")");
+
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
         // Verify id validity
@@ -1091,7 +1164,7 @@ public class EZShop implements EZShopInterface {
             QueryBuilder<SaleTransaction, Integer> closedTransactionByIdQueryBuilder = saleTransactionDao.queryBuilder();
 
             closedTransactionByIdQueryBuilder.where().eq("id", transactionId)
-                    .and().eq("status", SaleTransaction.StatusEnum.STARTED);
+                    .and().eq("status", SaleTransaction.StatusEnum.CLOSED);
 
             returnTransaction = closedTransactionByIdQueryBuilder.queryForFirst();
 

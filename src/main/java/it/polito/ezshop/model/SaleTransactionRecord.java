@@ -15,13 +15,13 @@ public class SaleTransactionRecord implements TicketEntry {
     @DatabaseField(canBeNull = false, columnName = "total_price")
     private double totalPrice = 0;
 
-    @DatabaseField(canBeNull = false, foreign = true, columnName = "product_type_id")
+    @DatabaseField(canBeNull = false, foreign = true, columnName = "product_type_id", foreignAutoRefresh = true)
     private ProductType productType;
 
     @DatabaseField(canBeNull = false, columnName = "discount_rate")
     private double discountRate = 0;
 
-    @DatabaseField(canBeNull = false, foreign = true)
+    @DatabaseField(canBeNull = false, foreign = true, columnName = "sale_transaction_id")
     private SaleTransaction saleTransaction;
 
     SaleTransactionRecord() {
@@ -89,6 +89,7 @@ public class SaleTransactionRecord implements TicketEntry {
 
     @Override
     public double getPricePerUnit() {
+
         return productType.getPricePerUnit();
     }
 
