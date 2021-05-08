@@ -392,7 +392,7 @@ public class EZShop implements EZShopInterface {
 
 
         // Verify id validity
-        if (id<=0 || id == null) {
+        if (id==null || id <= 0) {
             throw new InvalidProductIdException();
         }
 
@@ -418,8 +418,8 @@ public class EZShop implements EZShopInterface {
         try {
 
             productFreeQueryBuilder.where().eq("id", id);
-            boolean isProductIdvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
-            if (!isProductIdvailable) {
+            boolean isProductIdavailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+            if (!isProductIdavailable) {
 
                     productFreeQueryBuilder.where().eq("code", newCode);
                     boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
@@ -451,7 +451,7 @@ public class EZShop implements EZShopInterface {
         authorize(roles);
 
         // Verify id validity
-        if (id<=0 || id == null) {
+        if (id==null || id <= 0) {
             throw new InvalidProductIdException();
         }
 
@@ -563,7 +563,7 @@ public class EZShop implements EZShopInterface {
         boolean isUpdated = false;
 
         // Verify id validity
-        if (productId<=0 || productId == null) {
+        if (productId==null || productId <= 0) {
             throw new InvalidProductIdException();
         }
 
@@ -610,7 +610,7 @@ public class EZShop implements EZShopInterface {
         boolean isUpdated = false;
 
         // Verify id validity
-        if (productId<=0 || productId == null) {
+        if (productId==null || productId <= 0) {
             throw new InvalidProductIdException();
         }
 
@@ -618,7 +618,7 @@ public class EZShop implements EZShopInterface {
         //     * <aisleNumber>-<rackAlphabeticIdentifier>-<levelNumber>
         //      If <newPos> is null or empty it should reset the position of given product type.
 
-        if (newPos.isEmpty() || newPos==null){
+        if (newPos==null || newPos.isEmpty()){
             newPos="";
         }else {
             String[] pos=newPos.split("-");
@@ -631,8 +631,9 @@ public class EZShop implements EZShopInterface {
         // Update location
         QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
 
+        boolean isProductLocationvailable = true;
+
         try {
-            boolean isProductLocationvailable = true;
 
             //If <newPos> is null or empty it should reset the position of given product type.
             if (!newPos.isEmpty()){
