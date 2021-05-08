@@ -3,6 +3,7 @@ package it.polito.ezshop.data;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.support.ConnectionSource;
@@ -15,9 +16,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import it.polito.ezshop.model.User;
-import it.polito.ezshop.model.ProductType;
+import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
+import it.polito.ezshop.model.ProductType;
+import it.polito.ezshop.model.SaleTransaction;
+import it.polito.ezshop.model.User;
 
 public class EZShop implements EZShopInterface {
 
@@ -27,16 +30,10 @@ public class EZShop implements EZShopInterface {
     Dao<User, Integer> userDao;
     Dao<ProductType, Integer> productTypeDao;
     Dao<Customer, Integer> customerDao;
+    Dao<SaleTransaction, Integer> saleTransactionDao;
 
-    private User userLogged;
-
-    private User getUserLogged() {
-        return userLogged;
-    }
-
-    private void setUserLogged(User userLogged) {
-        this.userLogged = userLogged;
-    }
+    private User userLogged = null;
+    private SaleTransaction ongoingTransaction = null;
 
     public EZShop() {
         try {
@@ -45,10 +42,13 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, User.class);
             TableUtils.createTableIfNotExists(connectionSource, ProductType.class);
             TableUtils.createTableIfNotExists(connectionSource, Customer.class);
+            TableUtils.createTableIfNotExists(connectionSource, SaleTransaction.class);
+            TableUtils.createTableIfNotExists(connectionSource, SaleTransactionRecord.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
+            saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -283,7 +283,7 @@ public class EZShop implements EZShopInterface {
             loginQueryBuilder.where().eq("username", username).and().eq("password", hashPassword(password));
 
             returnUser = loginQueryBuilder.queryForFirst();
-            setUserLogged(returnUser);
+            userLogged = returnUser;
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -299,10 +299,8 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public boolean logout() {
-        User loggedUser = getUserLogged();
-
-        if (loggedUser != null) {
-            setUserLogged(null);
+        if (userLogged != null) {
+            userLogged = null;
             return true;
         }
         return false;
@@ -469,9 +467,9 @@ public class EZShop implements EZShopInterface {
         User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier};
         authorize(roles);
 
-        List<it.polito.ezshop.data.ProductType> products= null;
+        List<it.polito.ezshop.data.ProductType> products = null;
         try {
-            products= new ArrayList<>(productTypeDao.queryForAll());
+            products = new ArrayList<>(productTypeDao.queryForAll());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -516,7 +514,7 @@ public class EZShop implements EZShopInterface {
         User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
-        List<it.polito.ezshop.data.ProductType> products= null;
+        List<it.polito.ezshop.data.ProductType> products = null;
 
         // Verify description validity
         if (description == null) {
@@ -546,13 +544,11 @@ public class EZShop implements EZShopInterface {
      *
      * @param productId the id of the product to be updated
      * @param toBeAdded the quantity to be added. If negative it decrease the available quantity of <toBeAdded> elements.
-     *
-     * @return  true if the update was successful
-     *          false if the product does not exists, if <toBeAdded> is negative and the resulting amount would be
-     *          negative too or if the product type has not an assigned location.
-     *
+     * @return true if the update was successful
+     * false if the product does not exists, if <toBeAdded> is negative and the resulting amount would be
+     * negative too or if the product type has not an assigned location.
      * @throws InvalidProductIdException if the product id is less than or equal to 0 or if it is null
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException     if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public boolean updateQuantity(Integer productId, int toBeAdded) throws InvalidProductIdException, UnauthorizedException {
@@ -608,14 +604,12 @@ public class EZShop implements EZShopInterface {
      * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
      *
      * @param productId the id of the product to be updated
-     * @param newPos the new position the product should be placed to.
-     *
+     * @param newPos    the new position the product should be placed to.
      * @return true if the update was successful
-     *          false if the product does not exists or if <newPos> is already assigned to another product
-     *
+     * false if the product does not exists or if <newPos> is already assigned to another product
      * @throws InvalidProductIdException if the product id is less than or equal to 0 or if it is null
-     * @throws InvalidLocationException if the product location is in an invalid format (not <aisleNumber>-<rackAlphabeticIdentifier>-<levelNumber>)
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws InvalidLocationException  if the product location is in an invalid format (not <aisleNumber>-<rackAlphabeticIdentifier>-<levelNumber>)
+     * @throws UnauthorizedException     if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public boolean updatePosition(Integer productId, String newPos) throws InvalidProductIdException, InvalidLocationException, UnauthorizedException {
@@ -714,7 +708,7 @@ public class EZShop implements EZShopInterface {
         }
 
         // verify if logged in user
-        if (getUserLogged() == null) {
+        if (userLogged == null) {
             throw new UnauthorizedException();
         }
 
@@ -828,11 +822,6 @@ public class EZShop implements EZShopInterface {
             throw new InvalidCustomerIdException();
         }
 
-        // verify if logged in user
-        if (getUserLogged() == null) {
-            throw new UnauthorizedException();
-        }
-
         // get customer by id
         try {
             returnCustomer = customerDao.queryForId(id);
@@ -849,11 +838,6 @@ public class EZShop implements EZShopInterface {
         // check privileges
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
-        // verify if logged in user
-
-        if (getUserLogged() == null) {
-            throw new UnauthorizedException();
-        }
         // get customer list
         try {
             customerList.addAll(customerDao.queryForAll());
@@ -878,14 +862,96 @@ public class EZShop implements EZShopInterface {
         return false;
     }
 
+    /**
+     * This method starts a new sale transaction and returns its unique identifier.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @return the id of the transaction (greater than or equal to 0)
+     */
     @Override
     public Integer startSaleTransaction() throws UnauthorizedException {
-        return null;
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        Integer returnId = -1;
+
+        SaleTransaction newSaleTransaction = new SaleTransaction();
+
+        // Transaction must be persisted into the database to have a valid id
+        try {
+            saleTransactionDao.create(newSaleTransaction);
+            saleTransactionDao.assignEmptyForeignCollection(newSaleTransaction, "records");
+            returnId = newSaleTransaction.getId();
+
+            ongoingTransaction = newSaleTransaction;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return returnId;
     }
 
+    /**
+     * This method adds a product to a sale transaction decreasing the temporary amount of product available on the
+     * shelves for other customers.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the Sale transaction
+     * @param productCode   the barcode of the product to be added
+     * @param amount        the quantity of product to be added
+     * @return true if the operation is successful
+     * false   if the product code does not exist,
+     * if the quantity of product cannot satisfy the request,
+     * if the transaction id does not identify a started and open transaction.
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws InvalidProductCodeException   if the product code is empty, null or invalid
+     * @throws InvalidQuantityException      if the quantity is less than 0
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean addProductToSale(Integer transactionId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
-        return false;
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        // Verify amount validity (I included zero as it makes no sense excluding it)
+        if (amount <= 0) {
+            throw new InvalidQuantityException();
+        }
+
+        boolean isRecordAdded = false;
+
+        SaleTransaction transaction = ongoingTransaction;
+        if (transaction == null || !transaction.getId().equals(transactionId)) {
+            // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
+            transaction = getSaleTransaction(transactionId);
+
+            if (transaction.getStatus() != SaleTransaction.StatusEnum.STARTED) {
+                transaction = null;
+            }
+        }
+
+        if (transaction != null) {
+            try {
+                QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
+                ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
+
+                if (product == null) {
+                    throw new InvalidProductCodeException();
+                }
+
+                isRecordAdded = transaction.addSaleTransactionRecord(product, amount);
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
+
+        return isRecordAdded;
     }
 
     @Override
@@ -908,19 +974,132 @@ public class EZShop implements EZShopInterface {
         return 0;
     }
 
+    /**
+     * This method closes an opened transaction. After this operation the
+     * transaction is persisted in the system's memory.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the Sale transaction
+     * @return true    if the transaction was successfully closed
+     * false   if the transaction does not exist,
+     * if it has already been closed,
+     * if there was a problem in registering the data
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean endSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
-        return false;
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        boolean transactionStatusChanged = false;
+
+        SaleTransaction ongoingTransaction = this.ongoingTransaction;
+
+        if (ongoingTransaction == null || !ongoingTransaction.getId().equals(transactionId)) {
+            // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
+            ongoingTransaction = getSaleTransaction(transactionId);
+        }
+
+        if (ongoingTransaction != null && ongoingTransaction.getStatus() == SaleTransaction.StatusEnum.STARTED) {
+            // Close the transaction
+            ongoingTransaction.setStatus(SaleTransaction.StatusEnum.CLOSED);
+
+            try {
+                saleTransactionDao.create(ongoingTransaction);
+                this.ongoingTransaction = ongoingTransaction;
+                transactionStatusChanged = true;
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return transactionStatusChanged;
     }
 
+    /**
+     * This method deletes a sale transaction with given unique identifier from the system's data store.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the number of the transaction to be deleted
+     * @return true if the transaction has been successfully deleted,
+     * false   if the transaction doesn't exist,
+     * if it has been payed,
+     * if there are some problems with the db
+     * @throws InvalidTransactionIdException if the transaction id number is less than or equal to 0 or if it is null
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
-    public boolean deleteSaleTransaction(Integer saleNumber) throws InvalidTransactionIdException, UnauthorizedException {
-        return false;
+    public boolean deleteSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        boolean isDeleted = false;
+
+        try {
+            DeleteBuilder<SaleTransaction, Integer> deleteTransactionQueryBuilder = saleTransactionDao.deleteBuilder();
+
+            deleteTransactionQueryBuilder.where().eq("id", transactionId)
+                    .and().not().eq("status", SaleTransaction.StatusEnum.PAID);
+
+            isDeleted = deleteTransactionQueryBuilder.delete() == 1;
+
+            // Unset the ongoing transaction if it is the deleted one
+            if (isDeleted && ongoingTransaction.getId().equals(transactionId)) {
+                ongoingTransaction = null;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isDeleted;
     }
 
+    /**
+     * This method returns  a closed sale transaction.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the CLOSED Sale transaction
+     * @return the transaction if it is available (transaction closed), null otherwise
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public SaleTransaction getSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
-        return null;
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        SaleTransaction returnTransaction = null;
+
+        try {
+            QueryBuilder<SaleTransaction, Integer> closedTransactionByIdQueryBuilder = saleTransactionDao.queryBuilder();
+
+            closedTransactionByIdQueryBuilder.where().eq("id", transactionId)
+                    .and().eq("status", SaleTransaction.StatusEnum.STARTED);
+
+            returnTransaction = closedTransactionByIdQueryBuilder.queryForFirst();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return returnTransaction;
     }
 
     @Override
@@ -1011,7 +1190,7 @@ public class EZShop implements EZShopInterface {
         return result;
     }
 
-    private boolean validateBarcode(String barCode){
+    private boolean validateBarcode(String barCode) {
         // TODO IMPLEMENT
         return true;
     }
