@@ -5,7 +5,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        TestJUnit1.class
+        TestJUnit1.class, barCodeValidationTest.class
 })
 
 

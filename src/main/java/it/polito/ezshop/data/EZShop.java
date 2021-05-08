@@ -1011,8 +1011,41 @@ public class EZShop implements EZShopInterface {
         return result;
     }
 
-    private boolean validateBarcode(String barCode){
-        // TODO IMPLEMENT
-        return true;
+    public static boolean validateBarcode(String barCode) {
+
+        /*The barcode number related to a product type should be a string
+         of digits of either 12, 13 or 14 numbers validated following this algorithm
+         https://www.gs1.org/services/how-calculate-check-digit-manually
+         */
+
+        switch (barCode.length()) {
+            case 12:
+                barCode = "00"+ barCode;
+                break;
+            case 13:
+                barCode = "0"+ barCode;
+                break;
+            case 14:
+                break;
+            default:
+                //wrong number of digits
+                return false;
+        }
+
+        int sum = 0;
+        for(int i=0; i<barCode.length()-1; i++){
+            if(i % 2 == 0){
+                sum += Character.getNumericValue(barCode.charAt(i)) * 3;
+            }else{
+                sum +=  Character.getNumericValue(barCode.charAt(i));
+            }
+        }
+
+        int last = Character.getNumericValue(barCode.charAt(barCode.length()-1));
+        int check = (10 - (sum % 10)) % 10;
+
+        return check == last;
     }
+
+
 }
