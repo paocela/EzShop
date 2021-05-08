@@ -97,6 +97,8 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
 
     @Override
     public Double getPricePerUnit() {
+        System.out.println("Id: " + this.id + ", barcode: " + code + ", pricePerUnit: " + pricePerUnit);
+
         return pricePerUnit;
     }
 
