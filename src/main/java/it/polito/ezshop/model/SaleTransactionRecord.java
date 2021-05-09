@@ -10,7 +10,7 @@ public class SaleTransactionRecord implements TicketEntry {
     private Integer id;
 
     @DatabaseField(canBeNull = false)
-    private int quantity = 0;
+    private int amount = 0;
 
     @DatabaseField(canBeNull = false, columnName = "total_price")
     private double totalPrice = 0;
@@ -24,22 +24,14 @@ public class SaleTransactionRecord implements TicketEntry {
     @DatabaseField(canBeNull = false, foreign = true, columnName = "sale_transaction_id")
     private SaleTransaction saleTransaction;
 
-    SaleTransactionRecord() {
-    }
+    SaleTransactionRecord() {}
 
-    public SaleTransactionRecord(ProductType productType, int quantity) {
+    public SaleTransactionRecord(ProductType productType, int amount) {
         setProductType(productType);
-        setQuantity(quantity);
-        setTotalPrice(productType.getSalePrice() * quantity);
+        setAmount(amount);
+        setTotalPrice(productType.getPricePerUnit() * amount);
     }
 
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
 
     public double getTotalPrice() {
         return totalPrice;
@@ -59,12 +51,12 @@ public class SaleTransactionRecord implements TicketEntry {
 
     @Override
     public String getBarCode() {
-        return null;
+        return productType.getBarCode();
     }
 
     @Override
     public void setBarCode(String barCode) {
-        // TODO WHAT THE FUCK SHOULD THIS DO?!
+        // Appears unused by manual testing, ask for removal
     }
 
     @Override
@@ -74,17 +66,17 @@ public class SaleTransactionRecord implements TicketEntry {
 
     @Override
     public void setProductDescription(String productDescription) {
-        // TODO WHAT THE FUCK SHOULD THIS DO?!
+        // Appears unused by manual testing, ask for removal
     }
 
     @Override
     public int getAmount() {
-        return getQuantity();
+        return amount;
     }
 
     @Override
     public void setAmount(int amount) {
-        setQuantity(amount);
+        this.amount = amount;
     }
 
     @Override
@@ -95,7 +87,7 @@ public class SaleTransactionRecord implements TicketEntry {
 
     @Override
     public void setPricePerUnit(double pricePerUnit) {
-        // TODO WHAT THE FUCK SHOULD THIS DO?!
+        // Appears unused by manual testing, ask for removal
     }
 
     @Override

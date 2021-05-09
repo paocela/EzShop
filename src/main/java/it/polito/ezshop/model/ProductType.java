@@ -13,8 +13,6 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
     @DatabaseField(canBeNull = false)
     private String description;
     @DatabaseField()
-    private double salePrice;
-    @DatabaseField()
     private Integer quantity;
     @DatabaseField()
     private String notes;
@@ -97,8 +95,6 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
 
     @Override
     public Double getPricePerUnit() {
-        System.out.println("Id: " + this.id + ", barcode: " + code + ", pricePerUnit: " + pricePerUnit);
-
         return pricePerUnit;
     }
 
@@ -107,12 +103,4 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
         this.pricePerUnit = pricePerUnit;
     }
 
-
-    public double getSalePrice() {
-        return salePrice;
-    }
-
-    public void setSalePrice(double salePrice) {
-        this.salePrice = salePrice;
-    }
 }
