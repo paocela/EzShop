@@ -7,11 +7,13 @@ import com.j256.ormlite.table.DatabaseTable;
 import it.polito.ezshop.data.TicketEntry;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 @DatabaseTable(tableName = "sale_transactions")
 public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
@@ -22,12 +24,6 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
     @DatabaseField(canBeNull = false)
     private StatusEnum status = StatusEnum.STARTED;
-
-    @DatabaseField(canBeNull = false)
-    private Date date = new Date(LocalDate.now().toEpochDay());
-
-    @DatabaseField(canBeNull = false)
-    private String time = LocalTime.now().toString();
 
     @DatabaseField(canBeNull = false)
     private double amount = 0;
@@ -46,6 +42,9 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
     @DatabaseField(columnName = "credit_card")
     private String creditCard;
+
+    @DatabaseField(canBeNull = false, columnName = "created_at")
+    private final long createdAt = new Date().getTime();
 
     @ForeignCollectionField(eager = true)
     ForeignCollection<SaleTransactionRecord> records;
@@ -70,19 +69,12 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
     }
 
     public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
+        return new Date(createdAt);
     }
 
     public LocalTime getTime() {
-        return LocalTime.parse(time);
-    }
-
-    public void setTime(LocalTime time) {
-        this.time = time.toString();
+        return LocalDateTime.ofEpochSecond(createdAt, 0, ZoneOffset.of("GMT+2"))
+                .toLocalTime();
     }
 
     public double getAmount() {
@@ -99,7 +91,6 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
     public void setDiscountRateAmount(double discountRateAmount) {
         this.discountRateAmount = discountRateAmount;
-        refreshAmount();
     }
 
     public String getPaymentType() {
@@ -184,22 +175,21 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
             // No existing record for this product, creating a new one
             transactionRecord = new SaleTransactionRecord(product, quantity);
             this.records.add(transactionRecord);
-            refreshAmount();
         } else {
             // There is an existing record for this product, increasing quantity
-            transactionRecord.setQuantity(transactionRecord.getQuantity() + quantity);
+            transactionRecord.setAmount(transactionRecord.getAmount() + quantity);
+            transactionRecord.setTotalPrice(transactionRecord.getTotalPrice() + transactionRecord.getPricePerUnit() * quantity);
+
             this.records.update(transactionRecord);
-            refreshAmount();
         }
 
         return true;
     }
 
-    private void refreshAmount() {
-        double updatedAmount = 0;
-        for (SaleTransactionRecord record : this.records) {
-            updatedAmount += record.getTotalPrice();
-        }
-        this.amount = updatedAmount * this.discountRateAmount;
+    public void refreshAmount() {
+        double updatedAmount = this.records.stream().mapToDouble(SaleTransactionRecord::getTotalPrice).sum();
+        System.out.println("Updated amount is " + updatedAmount);
+
+        this.amount = Math.round(updatedAmount * (1 - discountRateAmount) * 100.0) / 100.0;
     }
 }

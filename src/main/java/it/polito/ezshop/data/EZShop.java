@@ -10,10 +10,14 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import it.polito.ezshop.exceptions.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Formatter;
 import java.util.List;
 
 import it.polito.ezshop.model.*;
@@ -107,7 +111,7 @@ public class EZShop implements EZShopInterface {
 
             if (isUsernameAvailable) {
                 // Create user
-                User user = new User(username, password, roleEnum);
+                User user = new User(username, hashPassword(password), roleEnum);
                 userDao.create(user);
 
                 returnId = user.getId();
@@ -870,7 +874,7 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public Integer startSaleTransaction() throws UnauthorizedException {
-        System.out.println("[DEBUG] startSaleTransaction()");
+        System.out.println("[DEV] startSaleTransaction()");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -912,7 +916,7 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public boolean addProductToSale(Integer transactionId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
-        System.out.println("[DEBUG] addProductToSale(" + transactionId + "," + productCode + "," + amount + ")");
+        System.out.println("[DEV] addProductToSale(" + transactionId + "," + productCode + "," + amount + ")");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -942,9 +946,19 @@ public class EZShop implements EZShopInterface {
                     throw new InvalidProductCodeException();
                 }
 
+                // TODO VERIFY SUFFICIENT PRODUCT AVAILABILITY
+
+                // TODO ADD DB TRANSACTION
                 isRecordAdded = transaction.addSaleTransactionRecord(product, amount);
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
+                if (isRecordAdded) {
+                    transaction.refreshAmount();
+                    saleTransactionDao.update(transaction);
+                }
+
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                isRecordAdded = false;
             }
         }
 
@@ -978,7 +992,7 @@ public class EZShop implements EZShopInterface {
     @Override
     public boolean applyDiscountRateToSale(Integer transactionId, double discountRate) throws InvalidTransactionIdException, InvalidDiscountRateException, UnauthorizedException {
 
-        System.out.println("[DEBUG] applyDiscountRateToSale(" + transactionId + "," + discountRate + ")");
+        System.out.println("[DEV] applyDiscountRateToSale(" + transactionId + "," + discountRate + ")");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -1001,7 +1015,15 @@ public class EZShop implements EZShopInterface {
 
         if (transaction != null) {
             transaction.setDiscountRateAmount(discountRate);
-            isDiscountApplied = true;
+            transaction.refreshAmount();
+
+            try {
+                saleTransactionDao.update(transaction);
+                isDiscountApplied = true;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
         }
 
         return isDiscountApplied;
@@ -1022,7 +1044,7 @@ public class EZShop implements EZShopInterface {
     @Override
     public int computePointsForSale(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
 
-        System.out.println("[DEBUG] computePointsForSale(" + transactionId + ")");
+        System.out.println("[DEV] computePointsForSale(" + transactionId + ")");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -1060,7 +1082,7 @@ public class EZShop implements EZShopInterface {
     @Override
     public boolean endSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
 
-        System.out.println("[DEBUG] endSaleTransaction(" + transactionId + ")");
+        System.out.println("[DEV] endSaleTransaction(" + transactionId + ")");
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
         // Verify id validity
@@ -1082,7 +1104,6 @@ public class EZShop implements EZShopInterface {
 
             try {
                 saleTransactionDao.update(ongoingTransaction);
-                this.ongoingTransaction = ongoingTransaction;
                 transactionStatusChanged = true;
 
             } catch (SQLException e) {
@@ -1107,7 +1128,7 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public boolean deleteSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
-        System.out.println("[DEBUG] deleteSaleTransaction(" + transactionId + ")");
+        System.out.println("[DEV] deleteSaleTransaction(" + transactionId + ")");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -1149,7 +1170,7 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public SaleTransaction getSaleTransaction(Integer transactionId) throws InvalidTransactionIdException, UnauthorizedException {
-        System.out.println("[DEBUG] getSaleTransaction(" + transactionId + ")");
+        System.out.println("[DEV] getSaleTransaction(" + transactionId + ")");
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
@@ -1195,14 +1216,111 @@ public class EZShop implements EZShopInterface {
         return false;
     }
 
+    /**
+     * This method record the payment of a sale transaction with cash and returns the change (if present).
+     * This method affects the balance of the system.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the number of the transaction that the customer wants to pay
+     * @param cash          the cash received by the cashier
+     * @return the change (cash - sale price)
+     * -1   if the sale does not exists,
+     * if the cash is not enough,
+     * if there is some problemi with the db
+     * @throws InvalidTransactionIdException if the  number is less than or equal to 0 or if it is null
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     * @throws InvalidPaymentException       if the cash is less than or equal to 0
+     */
     @Override
-    public double receiveCashPayment(Integer ticketNumber, double cash) throws InvalidTransactionIdException, InvalidPaymentException, UnauthorizedException {
-        return 0;
+    public double receiveCashPayment(Integer transactionId, double cash) throws InvalidTransactionIdException, InvalidPaymentException, UnauthorizedException {
+
+        System.out.println("[DEV] receiveCashPayment(" + transactionId + ", " + cash + ")");
+
+        // Validate cash
+        if (cash <= 0) {
+            throw new InvalidPaymentException();
+        }
+
+        double returnChange = -1;
+
+        // Validate and retrieve transaction by id
+        SaleTransaction transaction = getSaleTransaction(transactionId);
+
+        if (transaction != null) {
+            if (cash >= transaction.getAmount()) {
+                transaction.setCash(cash);
+                double change = cash - transaction.getAmount();
+                transaction.setChange(change);
+                transaction.setStatus(SaleTransaction.StatusEnum.PAID);
+                transaction.setPaymentType("cash");
+
+                try {
+                    saleTransactionDao.update(transaction);
+
+                    // TODO UPDATE DAILY BALANCEOPERATION
+                    returnChange = change;
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return returnChange;
     }
 
+    /**
+     * This method record the payment of a sale with credit card. If the card has not enough money the payment should
+     * be refused.
+     * The credit card number validity should be checked. It should follow the luhn algorithm.
+     * The credit card should be registered in the system.
+     * This method affects the balance of the system.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the number of the sale that the customer wants to pay
+     * @param creditCard    the credit card number of the customer
+     * @return true if the operation is successful
+     * false   if the sale does not exists,
+     * if the card has not enough money,
+     * if the card is not registered,
+     * if there is some problem with the db connection
+     * @throws InvalidTransactionIdException if the sale number is less than or equal to 0 or if it is null
+     * @throws InvalidCreditCardException    if the credit card number is empty, null or if luhn algorithm does not
+     *                                       validate the credit card
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
-    public boolean receiveCreditCardPayment(Integer ticketNumber, String creditCard) throws InvalidTransactionIdException, InvalidCreditCardException, UnauthorizedException {
-        return false;
+    public boolean receiveCreditCardPayment(Integer transactionId, String creditCard) throws InvalidTransactionIdException, InvalidCreditCardException, UnauthorizedException {
+
+        System.out.println("[DEV] receiveCreditCardPayment(" + transactionId + ", " + creditCard + ")");
+
+
+        boolean isSuccessful = false;
+
+        // Validate credit card
+        if (creditCard == null || creditCard.isEmpty() || !validateCreditCard(creditCard)) {
+            throw new InvalidCreditCardException();
+        }
+
+        // Validate and retrieve transaction by id
+        SaleTransaction transaction = getSaleTransaction(transactionId);
+
+        // TODO CHECK IF CREDIT CARD IS REGISTERED && HAS ENOUGH MONEY
+
+        transaction.setPaymentType("card");
+        transaction.setCreditCard(creditCard);
+        transaction.setStatus(SaleTransaction.StatusEnum.PAID);
+
+        try {
+            saleTransactionDao.update(transaction);
+            // TODO UPDATE DAILY BALANCEOPERATION
+
+            isSuccessful = true;
+            this.ongoingTransaction = null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isSuccessful;
     }
 
     @Override
@@ -1237,8 +1355,26 @@ public class EZShop implements EZShopInterface {
     }
 
     private String hashPassword(String password) {
-        // TODO DEFINE HASHING ALGORITHM
-        return password;
+        String hashedPassword = null;
+        try {
+            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+            hashedPassword  = byteToHex(sha1.digest(password.getBytes(StandardCharsets.UTF_8)));
+        }
+        catch(NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return hashedPassword;
+    }
+
+    private String byteToHex(final byte[] hash){
+        Formatter formatter = new Formatter();
+        for (byte b : hash)
+        {
+            formatter.format("%02x", b);
+        }
+        String result = formatter.toString();
+        formatter.close();
+        return result;
     }
 
     public static boolean validateCreditCard(String creditCard) {
@@ -1272,10 +1408,10 @@ public class EZShop implements EZShopInterface {
 
         switch (barCode.length()) {
             case 12:
-                barCode = "00"+ barCode;
+                barCode = "00" + barCode;
                 break;
             case 13:
-                barCode = "0"+ barCode;
+                barCode = "0" + barCode;
                 break;
             case 14:
                 break;
@@ -1285,15 +1421,15 @@ public class EZShop implements EZShopInterface {
         }
 
         int sum = 0;
-        for(int i=0; i<barCode.length()-1; i++){
-            if(i % 2 == 0){
+        for (int i = 0; i < barCode.length() - 1; i++) {
+            if (i % 2 == 0) {
                 sum += Character.getNumericValue(barCode.charAt(i)) * 3;
-            }else{
-                sum +=  Character.getNumericValue(barCode.charAt(i));
+            } else {
+                sum += Character.getNumericValue(barCode.charAt(i));
             }
         }
 
-        int last = Character.getNumericValue(barCode.charAt(barCode.length()-1));
+        int last = Character.getNumericValue(barCode.charAt(barCode.length() - 1));
         int check = (10 - (sum % 10)) % 10;
 
         return check == last;
