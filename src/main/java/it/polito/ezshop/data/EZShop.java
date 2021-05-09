@@ -23,6 +23,7 @@ import java.util.List;
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
 import it.polito.ezshop.model.ProductType;
+import it.polito.ezshop.model.ReturnTransaction;
 import it.polito.ezshop.model.SaleTransaction;
 import it.polito.ezshop.model.User;
 
@@ -35,6 +36,7 @@ public class EZShop implements EZShopInterface {
     Dao<ProductType, Integer> productTypeDao;
     Dao<Customer, Integer> customerDao;
     Dao<SaleTransaction, Integer> saleTransactionDao;
+    Dao<ReturnTransaction, Integer> returnTransactionDao;
 
     private User userLogged = null;
     private SaleTransaction ongoingTransaction = null;
@@ -48,11 +50,15 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, Customer.class);
             TableUtils.createTableIfNotExists(connectionSource, SaleTransaction.class);
             TableUtils.createTableIfNotExists(connectionSource, SaleTransactionRecord.class);
+            TableUtils.createTableIfNotExists(connectionSource, ReturnTransaction.class);
+            TableUtils.createTableIfNotExists(connectionSource, ReturnTransactionRecord.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
+            returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
+
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1198,12 +1204,89 @@ public class EZShop implements EZShopInterface {
 
     @Override
     public Integer startReturnTransaction(Integer saleNumber) throws /*InvalidTicketNumberException,*/InvalidTransactionIdException, UnauthorizedException {
-        return null;
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        Integer returnId = -1;
+
+        if (saleNumber == null || saleNumber<=0) throw new InvalidTransactionIdException();
+
+        SaleTransaction transaction = getSaleTransaction(saleNumber);
+
+        if (transaction !=null){
+            ReturnTransaction newReturnTransaction = new ReturnTransaction(saleNumber);
+
+            try {
+                returnTransactionDao.create(newReturnTransaction);
+                returnTransactionDao.assignEmptyForeignCollection(newReturnTransaction, "records");
+                returnId = newReturnTransaction.getReturnId();
+
+            }catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return returnId;
     }
 
     @Override
     public boolean returnProduct(Integer returnId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        boolean productadded = false;
+
+        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+        if ( productCode==null || productCode.isEmpty() || !validateBarcode(productCode)) throw new InvalidProductCodeException();
+        if (amount<=0 ) throw new InvalidQuantityException();
+
+
+        ProductType product = getProductTypeByBarCode(productCode);
+        if (product== null) return false;
+
+        ReturnTransaction returnTransaction = getReturnTransaction (returnId);
+        if (returnTransaction ==null) return false;
+
+        SaleTransaction transaction = getSaleTransaction(returnTransaction.getTicketNumber());
+        if (transaction == null) return false;
+
+        for (TicketEntry salerecord : transaction.getEntries()){
+
+            if (salerecord.getBarCode().equals(productCode)) {
+
+                int saleAmount= salerecord.getAmount();
+                if (amount> saleAmount) return false;
+
+                try {
+                    ReturnTransactionRecord returnRecord = new it.polito.ezshop.model.ReturnTransactionRecord(productCode, amount, product.getPricePerUnit()*amount);
+                    productadded= returnTransaction.addReturnTransactionRecord(returnRecord);
+
+                    if (productadded){
+                        returnTransactionDao.update(returnTransaction);
+                    }
+                } catch (SQLException e) {
+                e.printStackTrace();
+
+                }
+                return productadded;
+            }
+        }
+
         return false;
+    }
+
+    private ReturnTransaction getReturnTransaction(Integer returnId) {
+
+        ReturnTransaction returnTransaction = null;
+
+        try {
+            returnTransaction = returnTransactionDao.queryForId(returnId);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return returnTransaction;
     }
 
     @Override
