@@ -25,6 +25,7 @@ import it.polito.ezshop.model.Customer;
 import it.polito.ezshop.model.ProductType;
 import it.polito.ezshop.model.SaleTransaction;
 import it.polito.ezshop.model.User;
+import it.polito.ezshop.model.Order;
 
 public class EZShop implements EZShopInterface {
 
@@ -35,6 +36,7 @@ public class EZShop implements EZShopInterface {
     Dao<ProductType, Integer> productTypeDao;
     Dao<Customer, Integer> customerDao;
     Dao<SaleTransaction, Integer> saleTransactionDao;
+    Dao<Order, Integer> orderDao;
 
     private User userLogged = null;
     private SaleTransaction ongoingTransaction = null;
@@ -48,11 +50,13 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, Customer.class);
             TableUtils.createTableIfNotExists(connectionSource, SaleTransaction.class);
             TableUtils.createTableIfNotExists(connectionSource, SaleTransactionRecord.class);
+            TableUtils.createTableIfNotExists(connectionSource, Order.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
+            orderDao = DaoManager.createDao(connectionSource, Order.class);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -674,29 +678,254 @@ public class EZShop implements EZShopInterface {
         return isUpdated;
     }
 
+    /**
+     * This method issues an order of <quantity> units of product with given <productCode>, each unit will be payed
+     * <pricePerUnit> to the supplier. <pricePerUnit> can differ from the re-selling price of the same product. The
+     * product might have no location assigned in this step.
+     * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
+     *
+     * @param productCode the code of the product that we should order as soon as possible
+     * @param quantity the quantity of product that we should order
+     * @param pricePerUnit the price to correspond to the supplier (!= than the resale price of the shop) per unit of
+     *                     product
+     *
+     * @return  the id of the order (> 0)
+     *          -1 if the product does not exists, if there are problems with the db
+     *
+     * @throws InvalidProductCodeException if the productCode is not a valid bar code, if it is null or if it is empty
+     * @throws InvalidQuantityException if the quantity is less than or equal to 0
+     * @throws InvalidPricePerUnitException if the price per unit of product is less than or equal to 0
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public Integer issueOrder(String productCode, int quantity, double pricePerUnit) throws InvalidProductCodeException, InvalidQuantityException, InvalidPricePerUnitException, UnauthorizedException {
-        return null;
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
+
+        //return -1 if the product does not exists, if there are problems with the db
+        Integer orderId = -1;
+
+        // Verify code validity
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode)) {
+            throw new InvalidProductCodeException();
+        }
+        //Verify quantity validity
+        if( quantity<= 0){
+            throw new InvalidQuantityException();
+        }
+
+        // Verify pricePerUnit validity
+        if (pricePerUnit <= 0) {
+            throw new InvalidPricePerUnitException();
+        }
+
+        //Create order in db
+        try{
+            QueryBuilder<Order, Integer> orderQueryBuilder = orderDao.queryBuilder();
+            Order order = new Order(productCode, quantity, pricePerUnit);
+            orderDao.create(order);
+            orderId = order.getOrderId();
+
+        }catch(SQLException e) {
+            e.printStackTrace();
+        }
+
+        return orderId;
+
     }
 
+    /**
+     * This method directly orders and pays <quantity> units of product with given <productCode>, each unit will be payed
+     * <pricePerUnit> to the supplier. <pricePerUnit> can differ from the re-selling price of the same product. The
+     * product might have no location assigned in this step.
+     * This method affects the balance of the system.
+     * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
+     *
+     * @param productCode the code of the product to be ordered
+     * @param quantity the quantity of product to be ordered
+     * @param pricePerUnit the price to correspond to the supplier (!= than the resale price of the shop) per unit of
+     *                     product
+     *
+     * @return  the id of the order (> 0)
+     *          -1 if the product does not exists, if the balance is not enough to satisfy the order, if there are some
+     *          problems with the db
+     *
+     * @throws InvalidProductCodeException if the productCode is not a valid bar code, if it is null or if it is empty
+     * @throws InvalidQuantityException if the quantity is less than or equal to 0
+     * @throws InvalidPricePerUnitException if the price per unit of product is less than or equal to 0
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public Integer payOrderFor(String productCode, int quantity, double pricePerUnit) throws InvalidProductCodeException, InvalidQuantityException, InvalidPricePerUnitException, UnauthorizedException {
-        return null;
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
+
+        //return -1 if the product does not exists, if there are problems with the db
+        Integer orderId = -1;
+
+        // Verify code validity
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode)) {
+            throw new InvalidProductCodeException();
+        }
+
+        //Verify quantity validity
+        if( quantity<= 0){
+            throw new InvalidQuantityException();
+        }
+
+        // Verify pricePerUnit validity
+        if (pricePerUnit <= 0) {
+            throw new InvalidPricePerUnitException();
+        }
+
+        //Create order in db
+        try{
+            //TODO if-statement with balance validation
+            QueryBuilder<Order, Integer> orderQueryBuilder = orderDao.queryBuilder();
+            Order order = new Order(productCode, quantity, pricePerUnit);
+            order.setStatus("PAYED");
+            orderDao.create(order);
+            orderId = order.getOrderId();
+            //TODO balance update
+            //TODO else-statement with return = -1 if the balance is not enough to satisfy the order
+        }catch(SQLException e) {
+            e.printStackTrace();
+        }
+
+        return orderId;
     }
 
+    /**
+     * This method change the status the order with given <orderId> into the "PAYED" state. The order should be either
+     * issued (in this case the status changes) or payed (in this case the method has no effect).
+     * This method affects the balance of the system.
+     * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
+     *
+     * @param orderId the id of the order to be ORDERED
+     *
+     * @return  true if the order has been successfully ordered
+     *          false if the order does not exist or if it was not in an ISSUED/ORDERED state
+     *
+     * @throws InvalidOrderIdException if the order id is less than or equal to 0 or if it is null.
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean payOrder(Integer orderId) throws InvalidOrderIdException, UnauthorizedException {
-        return false;
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
+
+        //if the order does not exist or if it was not in an ISSUED/ORDERED state
+        boolean isPayed = false;
+
+        //check orderId validity
+        if(orderId == null || orderId <= 0 ){
+            throw new InvalidOrderIdException();
+        }
+        //TODO if-statement with balance validation
+        Order orderToUpdate = (Order) getAllOrders().stream().filter(
+                order -> orderId.equals(order.getOrderId())).
+                findAny()
+                .orElse(null);
+
+        if(orderToUpdate != null && orderToUpdate.getStatus().equals("ISSUED")) {
+            try {
+                Order.StatusEnum status = Order.StatusEnum.PAYED;
+
+                UpdateBuilder<Order, Integer> updateOrderQueryBuilder = orderDao.updateBuilder();
+                updateOrderQueryBuilder.updateColumnValue("status", status)
+                        .where().eq("orderId", orderId);
+                updateOrderQueryBuilder.update();
+                isPayed = true;
+                //TODO balance update
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }else if(orderToUpdate != null && orderToUpdate.getStatus().equals("ISSUED")){
+            isPayed = true;
+        }else{
+            isPayed = false;
+        }
+        return isPayed;
     }
 
+    /**
+     * This method records the arrival of an order with given <orderId>. This method changes the quantity of available product.
+     * The product type affected must have a location registered. The order should be either in the PAYED state (in this
+     * case the state will change to the COMPLETED one and the quantity of product type will be updated) or in the
+     * COMPLETED one (in this case this method will have no effect at all).
+     * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
+     *
+     * @param orderId the id of the order that has arrived
+     *
+     * @return  true if the operation was successful
+     *          false if the order does not exist or if it was not in an ORDERED/COMPLETED state
+     *
+     * @throws InvalidOrderIdException if the order id is less than or equal to 0 or if it is null.
+     * @throws InvalidLocationException if the ordered product type has not an assigned location.
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean recordOrderArrival(Integer orderId) throws InvalidOrderIdException, UnauthorizedException, InvalidLocationException {
-        return false;
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
+
+        //return false if the order does not exist or if it was not in an ORDERED/COMPLETED state
+        boolean isRecorded = false;
+
+        //check orderId validity
+        if(orderId == null || orderId <= 0 ){
+            throw new InvalidOrderIdException();
+        }
+
+        Order orderToUpdate = (Order) getAllOrders().stream().filter(
+                order -> orderId.equals(order.getOrderId())).
+                findAny()
+                .orElse(null);
+
+        if(orderToUpdate != null && orderToUpdate.getStatus().equals("PAYED")) {
+            try {
+                ProductType productToUpdate = getProductTypeByBarCode(orderToUpdate.getProductCode());
+
+                if(productToUpdate != null && !productToUpdate.getLocation().isEmpty()){
+
+                    updateQuantity(productToUpdate.getId(), orderToUpdate.getQuantity());
+
+                    Order.StatusEnum status = Order.StatusEnum.COMPLETED;
+
+                    UpdateBuilder<Order, Integer> updateOrderQueryBuilder = orderDao.updateBuilder();
+                    updateOrderQueryBuilder.updateColumnValue("status", status)
+                            .where().eq("orderId", orderId);
+                    updateOrderQueryBuilder.update();
+
+                    isRecorded = true;
+
+                }else{
+                    isRecorded = false;
+                }
+
+            } catch (SQLException | InvalidProductCodeException | InvalidProductIdException e) {
+                e.printStackTrace();
+            }
+        }else if(orderToUpdate != null && orderToUpdate.getStatus().equals("COMPLETED")){
+            isRecorded = true;
+        }else{
+            isRecorded = false;
+        }
+
+        return isRecorded;
     }
 
     @Override
-    public List<Order> getAllOrders() throws UnauthorizedException {
-        return null;
+    public List<it.polito.ezshop.data.Order> getAllOrders() throws UnauthorizedException {
+        List<it.polito.ezshop.data.Order> orderList = new ArrayList<>();
+
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
+
+        // get order list
+        try {
+            orderList.addAll(orderDao.queryForAll());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderList;
+
     }
 
     @Override
