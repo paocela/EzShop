@@ -4,21 +4,21 @@ import java.util.List;
 
 public interface ReturnTransaction {
 
-    Integer getreturnId();
+    Integer getReturnId();
 
-    void setreturnId(Integer id);
+    void setReturnId(Integer id);
 
     Integer getTicketNumber();
 
     void setTicketNumber(Integer ticketNumber);
 
-    double getreturnValue();
+    double getReturnValue();
 
-    void setreturnValue(double value);
+    void setReturnValue(double value);
 
-    List<ReturnTransactionRecord> getEntries();
+    List<ReturnTransactionRecord> getRecords();
 
-    void setEntries(List<ReturnTransactionRecord> entries);
+    //void setRecords(List<ReturnTransactionRecord> record);
 
 
 }

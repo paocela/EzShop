@@ -23,6 +23,7 @@ import java.util.List;
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
 import it.polito.ezshop.model.ProductType;
+import it.polito.ezshop.model.ReturnTransaction;
 import it.polito.ezshop.model.SaleTransaction;
 import it.polito.ezshop.model.User;
 import it.polito.ezshop.model.Order;
@@ -36,6 +37,7 @@ public class EZShop implements EZShopInterface {
     Dao<ProductType, Integer> productTypeDao;
     Dao<Customer, Integer> customerDao;
     Dao<SaleTransaction, Integer> saleTransactionDao;
+    Dao<ReturnTransaction, Integer> returnTransactionDao;
     Dao<Order, Integer> orderDao;
 
     private User userLogged = null;
@@ -50,12 +52,16 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, Customer.class);
             TableUtils.createTableIfNotExists(connectionSource, SaleTransaction.class);
             TableUtils.createTableIfNotExists(connectionSource, SaleTransactionRecord.class);
+            TableUtils.createTableIfNotExists(connectionSource, ReturnTransaction.class);
+            TableUtils.createTableIfNotExists(connectionSource, ReturnTransactionRecord.class);
             TableUtils.createTableIfNotExists(connectionSource, Order.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
+            returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
+
             orderDao = DaoManager.createDao(connectionSource, Order.class);
 
         } catch (SQLException e) {
@@ -928,6 +934,17 @@ public class EZShop implements EZShopInterface {
 
     }
 
+    /**
+     * This method saves a new customer into the system. The customer's name should be unique.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param customerName the name of the customer to be registered
+     *
+     * @return the id (>0) of the new customer if successful, -1 otherwise
+     *
+     * @throws InvalidCustomerNameException if the customer name is empty or null
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public Integer defineCustomer(String customerName) throws InvalidCustomerNameException, UnauthorizedException {
         // check privileges
@@ -1010,7 +1027,7 @@ public class EZShop implements EZShopInterface {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        } else if (newCustomerCard.length() == 0) {
+        } else if (newCustomerCard.length() != 0) {
             // update both
             try {
                 UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
@@ -1038,11 +1055,52 @@ public class EZShop implements EZShopInterface {
         return isUpdated;
     }
 
+    /**
+     * This method deletes a customer with given id from the system.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param id the id of the customer to be deleted
+     * @return true if the customer was successfully deleted
+     *          false if the user does not exists or if we have problems to reach the db
+     *
+     * @throws InvalidCustomerIdException if the id is null, less than or equal to 0.
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean deleteCustomer(Integer id) throws InvalidCustomerIdException, UnauthorizedException {
-        return false;
+        boolean isDeleted = false;
+
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
+
+        // Verify id validity
+        if (id == null || id <= 0) {
+            throw new InvalidCustomerIdException();
+        }
+
+        // delete customer
+        try {
+            if(customerDao.idExists(id)) {
+                isDeleted = customerDao.deleteById(id) == 1;
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        return isDeleted;
     }
 
+    /**
+     * This method returns a customer with given id.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param id the id of the customer
+     *
+     * @return the customer with given id
+     *          null if that user does not exists
+     *
+     * @throws InvalidCustomerIdException if the id is null, less than or equal to 0.
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public Customer getCustomer(Integer id) throws InvalidCustomerIdException, UnauthorizedException {
         Customer returnCustomer = null;
@@ -1064,6 +1122,14 @@ public class EZShop implements EZShopInterface {
         return returnCustomer;
     }
 
+    /**
+     * This method returns a list containing all registered users.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @return the list of all the customers registered
+     *
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public List<it.polito.ezshop.data.Customer> getAllCustomers() throws UnauthorizedException {
         List<it.polito.ezshop.data.Customer> customerList = new ArrayList<>();
@@ -1080,19 +1146,137 @@ public class EZShop implements EZShopInterface {
         return customerList;
     }
 
+    /**
+     * This method returns a string containing the code of a new assignable card.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @return the code of a new available card. An empty string if the db is unreachable
+     *
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public String createCard() throws UnauthorizedException {
-        return null;
+        String cardCode;
+
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
+
+        // create card code
+        long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
+        cardCode = Long.toString(number);
+
+        return cardCode;
     }
 
+    /**
+     * This method assigns a card with given card code to a customer with given identifier. A card with given card code
+     * can be assigned to one customer only.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param customerCard the number of the card to be attached to a customer
+     * @param customerId the id of the customer the card should be assigned to
+     *
+     * @return true if the operation was successful
+     *          false if the card is already assigned to another user, if there is no customer with given id, if the db is unreachable
+     *
+     * @throws InvalidCustomerIdException if the id is null, less than or equal to 0.
+     * @throws InvalidCustomerCardException if the card is null, empty or in an invalid format
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean attachCardToCustomer(String customerCard, Integer customerId) throws InvalidCustomerIdException, InvalidCustomerCardException, UnauthorizedException {
-        return false;
+        boolean isAttached = false;
+
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
+
+        // Verify id validity
+        if (customerId == null || customerId <= 0) {
+            throw new InvalidCustomerIdException();
+        }
+
+        // verify customer card validity
+        if (customerCard == null || customerCard.length() != 10) {
+            throw new InvalidCustomerCardException();
+        }
+
+        // attach card to customer
+        try {
+            UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
+            updateCustomerQueryBuilder.updateColumnValue("card", customerCard)
+                    .where().eq("id", customerId);
+
+            updateCustomerQueryBuilder.update();
+            isAttached = true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isAttached;
     }
 
+    /**
+     * This method updates the points on a card adding to the number of points available on the card the value assumed by
+     * <pointsToBeAdded>. The points on a card should always be greater than or equal to 0.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param customerCard the card the points should be added to
+     * @param pointsToBeAdded the points to be added or subtracted ( this could assume a negative value)
+     *
+     * @return true if the operation is successful
+     *          false   if there is no card with given code,
+     *                  if pointsToBeAdded is negative and there were not enough points on that card before this operation,
+     *                  if we cannot reach the db.
+     *
+     * @throws InvalidCustomerCardException if the card is null, empty or in an invalid format
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean modifyPointsOnCard(String customerCard, int pointsToBeAdded) throws InvalidCustomerCardException, UnauthorizedException {
-        return false;
+        Customer customer;
+        boolean isUpdated = false;
+        boolean isCardAvailable;
+        Integer initPoints;
+        Integer finalPoints;
+
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
+
+        // verify customer card validity
+        if (customerCard == null || customerCard.length() != 10) {
+            throw new InvalidCustomerCardException();
+        }
+
+        // prepare query builder for customer-card existence
+        QueryBuilder<Customer, Integer> customerFreeQueryBuilder = customerDao.queryBuilder().setCountOf(true);
+
+        try {
+            // check if card is attached to any customer
+            customerFreeQueryBuilder.where().eq("card", customerCard);
+            isCardAvailable = customerDao.countOf(customerFreeQueryBuilder.prepare()) == 1;
+
+            if(isCardAvailable) {
+                // query for customer card
+                customer = customerDao.queryForEq("card", customerCard).get(0);
+                initPoints = customer.getPoints();
+
+                // update points
+                finalPoints = initPoints + pointsToBeAdded;
+
+                // check points value and save if correct
+                if (finalPoints >= 0) {
+                    UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
+                    updateCustomerQueryBuilder.updateColumnValue("points", finalPoints)
+                            .where().eq("id", customer.getId());
+
+                    updateCustomerQueryBuilder.update();
+                    isUpdated = true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return isUpdated;
     }
 
     /**
@@ -1427,12 +1611,89 @@ public class EZShop implements EZShopInterface {
 
     @Override
     public Integer startReturnTransaction(Integer saleNumber) throws /*InvalidTicketNumberException,*/InvalidTransactionIdException, UnauthorizedException {
-        return null;
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        Integer returnId = -1;
+
+        if (saleNumber == null || saleNumber<=0) throw new InvalidTransactionIdException();
+
+        SaleTransaction transaction = getSaleTransaction(saleNumber);
+
+        if (transaction !=null){
+            ReturnTransaction newReturnTransaction = new ReturnTransaction(saleNumber);
+
+            try {
+                returnTransactionDao.create(newReturnTransaction);
+                returnTransactionDao.assignEmptyForeignCollection(newReturnTransaction, "records");
+                returnId = newReturnTransaction.getReturnId();
+
+            }catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return returnId;
     }
 
     @Override
     public boolean returnProduct(Integer returnId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        boolean productadded = false;
+
+        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+        if ( productCode==null || productCode.isEmpty() || !validateBarcode(productCode)) throw new InvalidProductCodeException();
+        if (amount<=0 ) throw new InvalidQuantityException();
+
+
+        ProductType product = getProductTypeByBarCode(productCode);
+        if (product== null) return false;
+
+        ReturnTransaction returnTransaction = getReturnTransaction (returnId);
+        if (returnTransaction ==null) return false;
+
+        SaleTransaction transaction = getSaleTransaction(returnTransaction.getTicketNumber());
+        if (transaction == null) return false;
+
+        for (TicketEntry salerecord : transaction.getEntries()){
+
+            if (salerecord.getBarCode().equals(productCode)) {
+
+                int saleAmount= salerecord.getAmount();
+                if (amount> saleAmount) return false;
+
+                try {
+                    ReturnTransactionRecord returnRecord = new it.polito.ezshop.model.ReturnTransactionRecord(productCode, amount, product.getPricePerUnit()*amount);
+                    productadded= returnTransaction.addReturnTransactionRecord(returnRecord);
+
+                    if (productadded){
+                        returnTransactionDao.update(returnTransaction);
+                    }
+                } catch (SQLException e) {
+                e.printStackTrace();
+
+                }
+                return productadded;
+            }
+        }
+
         return false;
+    }
+
+    private ReturnTransaction getReturnTransaction(Integer returnId) {
+
+        ReturnTransaction returnTransaction = null;
+
+        try {
+            returnTransaction = returnTransactionDao.queryForId(returnId);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return returnTransaction;
     }
 
     @Override

@@ -2,20 +2,20 @@ package it.polito.ezshop.data;
 
 public interface ReturnTransactionRecord {
 
-    Integer getrecordId();
+    Integer getRecordId();
 
-    void setrecordId(Integer id);
+    void setRecordId(Integer id);
 
-    Integer getproductId();
+    String getProductId();
 
-    void setproductId(Integer id);
+    void setProductId(String id);
 
     int getQuantity();
 
-    void setQuantity(int amount);
+    void setQuantity(int quantity);
 
-    int getTotalPrice();
+    double getTotalPrice();
 
-    void setTotalPrice(int amount);
+    void setTotalPrice(double amount);
 
 }
