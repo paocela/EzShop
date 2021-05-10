@@ -63,7 +63,7 @@ public class EZShop implements EZShopInterface {
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
-            //returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
+            returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
             orderDao = DaoManager.createDao(connectionSource, Order.class);
             balanceOperationDao = DaoManager.createDao(connectionSource, BalanceOperation.class);
 
@@ -1865,9 +1865,9 @@ public class EZShop implements EZShopInterface {
     }
 
     @Override
-    public List<BalanceOperation> getCreditsAndDebits(LocalDate from, LocalDate to) throws UnauthorizedException {
+    public List<it.polito.ezshop.data.BalanceOperation> getCreditsAndDebits(LocalDate from, LocalDate to) throws UnauthorizedException {
 
-        List<BalanceOperation> balanceList = new ArrayList<>();
+        List<it.polito.ezshop.data.BalanceOperation> balanceList = new ArrayList<>();
 
         // check privileges
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
