@@ -27,6 +27,7 @@ import it.polito.ezshop.model.ReturnTransaction;
 import it.polito.ezshop.model.SaleTransaction;
 import it.polito.ezshop.model.User;
 import it.polito.ezshop.model.Order;
+import it.polito.ezshop.model.BalanceOperation;
 
 public class EZShop implements EZShopInterface {
 
@@ -39,6 +40,7 @@ public class EZShop implements EZShopInterface {
     Dao<SaleTransaction, Integer> saleTransactionDao;
     Dao<ReturnTransaction, Integer> returnTransactionDao;
     Dao<Order, Integer> orderDao;
+    Dao<BalanceOperation, Integer> balanceOperationDao;
 
     private User userLogged = null;
     private SaleTransaction ongoingTransaction = null;
@@ -55,14 +57,15 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, ReturnTransaction.class);
             TableUtils.createTableIfNotExists(connectionSource, ReturnTransactionRecord.class);
             TableUtils.createTableIfNotExists(connectionSource, Order.class);
+            TableUtils.createTableIfNotExists(connectionSource, BalanceOperation.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
-            returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
-
+            //returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
             orderDao = DaoManager.createDao(connectionSource, Order.class);
+            balanceOperationDao = DaoManager.createDao(connectionSource, BalanceOperation.class);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -782,16 +785,21 @@ public class EZShop implements EZShopInterface {
             throw new InvalidPricePerUnitException();
         }
 
+        double currentBalance = computeBalance();
+        double orderCost = pricePerUnit * quantity;
+
         //Create order in db
         try{
-            //TODO if-statement with balance validation
-            QueryBuilder<Order, Integer> orderQueryBuilder = orderDao.queryBuilder();
-            Order order = new Order(productCode, quantity, pricePerUnit);
-            order.setStatus("PAYED");
-            orderDao.create(order);
-            orderId = order.getOrderId();
-            //TODO balance update
-            //TODO else-statement with return = -1 if the balance is not enough to satisfy the order
+            if(Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
+                QueryBuilder<Order, Integer> orderQueryBuilder = orderDao.queryBuilder();
+                Order order = new Order(productCode, quantity, pricePerUnit);
+                order.setStatus("PAYED");
+                orderDao.create(order);
+                //update balance
+                recordBalanceUpdate(-orderCost);
+                //set the orderId to return
+                orderId = order.getOrderId();
+            }
         }catch(SQLException e) {
             e.printStackTrace();
         }
@@ -824,29 +832,32 @@ public class EZShop implements EZShopInterface {
         if(orderId == null || orderId <= 0 ){
             throw new InvalidOrderIdException();
         }
-        //TODO if-statement with balance validation
+        //search for the order to pay
         Order orderToUpdate = (Order) getAllOrders().stream().filter(
-                order -> orderId.equals(order.getOrderId())).
-                findAny()
+                order -> orderId.equals(order.getOrderId())).findAny()
                 .orElse(null);
 
-        if(orderToUpdate != null && orderToUpdate.getStatus().equals("ISSUED")) {
-            try {
-                Order.StatusEnum status = Order.StatusEnum.PAYED;
+        try {
+            if(orderToUpdate != null && orderToUpdate.getStatus().equals("ISSUED")) {
 
-                UpdateBuilder<Order, Integer> updateOrderQueryBuilder = orderDao.updateBuilder();
-                updateOrderQueryBuilder.updateColumnValue("status", status)
-                        .where().eq("orderId", orderId);
-                updateOrderQueryBuilder.update();
-                isPayed = true;
-                //TODO balance update
-            } catch (SQLException e) {
-                e.printStackTrace();
+                double currentBalance = computeBalance();
+                double orderCost = orderToUpdate.getPricePerUnit() * orderToUpdate.getQuantity();
+
+                if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
+                    Order.StatusEnum status = Order.StatusEnum.PAYED;
+                    //update order state
+                    UpdateBuilder<Order, Integer> updateOrderQueryBuilder = orderDao.updateBuilder();
+                    updateOrderQueryBuilder.updateColumnValue("status", status)
+                            .where().eq("orderId", orderId);
+                    updateOrderQueryBuilder.update();
+                    //update balance
+                    recordBalanceUpdate(-orderCost);
+
+                    isPayed = true;
+                }
             }
-        }else if(orderToUpdate != null && orderToUpdate.getStatus().equals("ISSUED")){
-            isPayed = true;
-        }else{
-            isPayed = false;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return isPayed;
     }
@@ -884,11 +895,13 @@ public class EZShop implements EZShopInterface {
                 findAny()
                 .orElse(null);
 
-        if(orderToUpdate != null && orderToUpdate.getStatus().equals("PAYED")) {
-            try {
+
+        try {
+            if(orderToUpdate != null && orderToUpdate.getStatus().equals("PAYED")) {
+
                 ProductType productToUpdate = getProductTypeByBarCode(orderToUpdate.getProductCode());
 
-                if(productToUpdate != null && !productToUpdate.getLocation().isEmpty()){
+                if(productToUpdate != null && !productToUpdate.getLocation().isEmpty()) {
 
                     updateQuantity(productToUpdate.getId(), orderToUpdate.getQuantity());
 
@@ -900,18 +913,11 @@ public class EZShop implements EZShopInterface {
                     updateOrderQueryBuilder.update();
 
                     isRecorded = true;
-
-                }else{
-                    isRecorded = false;
                 }
-
-            } catch (SQLException | InvalidProductCodeException | InvalidProductIdException e) {
-                e.printStackTrace();
             }
-        }else if(orderToUpdate != null && orderToUpdate.getStatus().equals("COMPLETED")){
-            isRecorded = true;
-        }else{
-            isRecorded = false;
+
+        } catch (SQLException | InvalidProductCodeException | InvalidProductIdException e) {
+            e.printStackTrace();
         }
 
         return isRecorded;
@@ -1823,19 +1829,87 @@ public class EZShop implements EZShopInterface {
         return 0;
     }
 
+    /**
+     * This method record a balance update. <toBeAdded> can be both positive and negative. If positive the balance entry
+     * should be recorded as CREDIT, if negative as DEBIT. The final balance after this operation should always be
+     * positive.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" is logged in.
+     *
+     * @param toBeAdded the amount of money (positive or negative) to be added to the current balance. If this value
+     *                  is >= 0 than it should be considered as a CREDIT, if it is < 0 as a DEBIT
+     *
+     * @return  true if the balance has been successfully updated
+     *          false if toBeAdded + currentBalance < 0.
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean recordBalanceUpdate(double toBeAdded) throws UnauthorizedException {
-        return false;
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
+
+        boolean isUpdated = false;
+
+        double currentBalance = computeBalance();
+
+        try{
+            if(currentBalance + toBeAdded >= 0){
+                QueryBuilder<BalanceOperation, Integer> balanceOperationQueryBuilder = balanceOperationDao.queryBuilder();
+                BalanceOperation balanceOperation = new BalanceOperation(toBeAdded);
+                balanceOperationDao.create(balanceOperation);
+                isUpdated = true;
+            }
+        }catch(SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isUpdated;
     }
 
     @Override
     public List<BalanceOperation> getCreditsAndDebits(LocalDate from, LocalDate to) throws UnauthorizedException {
-        return null;
+
+        List<BalanceOperation> balanceList = new ArrayList<>();
+
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
+
+        // get order list
+        try {
+
+            if(from == null && to == null) {
+                balanceList.addAll(balanceOperationDao.queryForAll());
+            }else if(from == null) {
+                balanceList.addAll(balanceOperationDao.queryBuilder().where().
+                        le("date_string", java.sql.Date.valueOf(to)).query());
+            }else if(to == null){
+                balanceList.addAll(balanceOperationDao.queryBuilder().where().
+                        ge("date_string", java.sql.Date.valueOf(from)).query());
+            }else{
+                balanceList.addAll(balanceOperationDao.queryBuilder().where().
+                        ge("date_string", java.sql.Date.valueOf(from)).
+                        and().le("date_string", java.sql.Date.valueOf(to)).query());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return balanceList;
+
+
     }
 
     @Override
     public double computeBalance() throws UnauthorizedException {
-        return 0;
+        // check privileges
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
+        
+        double currentBalance = 0.0;
+
+        //currentBalance = balanceOperationDao.queryRawValue("select sum(money) from balance_operations");
+
+        for(int i=0; i<getCreditsAndDebits(null,null).size(); i++){
+             currentBalance += getCreditsAndDebits(null,null).get(i).getMoney();
+        }
+
+        return currentBalance;
     }
 
     private void authorize(User.RoleEnum... roles) throws UnauthorizedException {

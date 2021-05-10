@@ -29,7 +29,7 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
         this.notes = notes;
         this.pricePerUnit = pricePerUnit;
         this.quantity=0;
-        this.position="";
+        this.position=null;
     }
 
     @Override
