@@ -20,7 +20,6 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
@@ -732,7 +731,6 @@ public class EZShop implements EZShopInterface {
 
         //Create order in db
         try {
-            QueryBuilder<Order, Integer> orderQueryBuilder = orderDao.queryBuilder();
             Order order = new Order(productCode, quantity, pricePerUnit);
             orderDao.create(order);
             orderId = order.getOrderId();
@@ -792,7 +790,6 @@ public class EZShop implements EZShopInterface {
         //Create order in db
         try {
             if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
-                QueryBuilder<Order, Integer> orderQueryBuilder = orderDao.queryBuilder();
                 Order order = new Order(productCode, quantity, pricePerUnit);
                 order.setStatus("PAYED");
                 orderDao.create(order);
@@ -965,7 +962,6 @@ public class EZShop implements EZShopInterface {
 
         // create customer in db
         try {
-            QueryBuilder<Customer, Integer> customerQueryBuilder = customerDao.queryBuilder();
             Customer customer = new Customer(customerName);
             customerDao.create(customer);
             customerId = customer.getId();
@@ -1350,62 +1346,60 @@ public class EZShop implements EZShopInterface {
         try {
 
             isAdded = TransactionManager.callInTransaction(connectionSource,
-                    new Callable<Boolean>() {
-                        public Boolean call() throws Exception {
-                            QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
-                            ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
+                    () -> {
+                        QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
+                        ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
 
-                            if (product == null) {
-                                // No valid product found
+                        if (product == null) {
+                            // No valid product found
+                            return false;
+                        }
+
+                        ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+
+                        Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                record -> record.getBarCode().equals(productCode)
+                        ).findFirst();
+
+                        if (optionalRecord.isPresent()) {
+                            SaleTransactionRecord existingRecord = optionalRecord.get();
+
+                            // There is an existing record for input product, updating it
+                            int amountAlreadyInTransaction = existingRecord.getAmount();
+
+                            if (product.getQuantity() < amountAlreadyInTransaction + amount) {
+                                // Not enough products to fulfill
                                 return false;
                             }
 
-                            ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+                            // There is an existing record for input product, increasing quantity
+                            existingRecord.setAmount(amountAlreadyInTransaction + amount);
+                            existingRecord.refreshTotalPrice();
 
-                            Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
-                                    record -> record.getBarCode().equals(productCode)
-                            ).findFirst();
+                            // Update record
+                            transactionRecords.update(existingRecord);
 
-                            if (optionalRecord.isPresent()) {
-                                SaleTransactionRecord existingRecord = optionalRecord.get();
+                        } else {
+                            // No existing record for input product, creating a new one
 
-                                // There is an existing record for input product, updating it
-                                int amountAlreadyInTransaction = existingRecord.getAmount();
-
-                                if (product.getQuantity() < amountAlreadyInTransaction + amount) {
-                                    // Not enough products to fulfill
-                                    return false;
-                                }
-
-                                // There is an existing record for input product, increasing quantity
-                                existingRecord.setAmount(amountAlreadyInTransaction + amount);
-                                existingRecord.refreshTotalPrice();
-
-                                // Update record
-                                transactionRecords.update(existingRecord);
-
-                            } else {
-                                // No existing record for input product, creating a new one
-
-                                if (product.getQuantity() < amount) {
-                                    // Not enough products to fulfill
-                                    return false;
-                                }
-
-                                SaleTransactionRecord newRecord = new SaleTransactionRecord(transaction, product, amount);
-
-                                // Add new record
-                                transactionRecords.add(newRecord);
+                            if (product.getQuantity() < amount) {
+                                // Not enough products to fulfill
+                                return false;
                             }
 
+                            SaleTransactionRecord newRecord = new SaleTransactionRecord(transaction, product, amount);
 
-                            transaction.refreshAmount();
-
-                            saleTransactionDao.update(transaction);
-                            ongoingTransaction = transaction;
-
-                            return true;
+                            // Add new record
+                            transactionRecords.add(newRecord);
                         }
+
+
+                        transaction.refreshAmount();
+
+                        saleTransactionDao.update(transaction);
+                        ongoingTransaction = transaction;
+
+                        return true;
                     });
 
         } catch (SQLException e) {
@@ -1463,54 +1457,52 @@ public class EZShop implements EZShopInterface {
         try {
 
             isRemoved = TransactionManager.callInTransaction(connectionSource,
-                    new Callable<Boolean>() {
-                        public Boolean call() throws Exception {
-                            QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
-                            ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
+                    () -> {
+                        QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
+                        ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
 
-                            if (product == null) {
-                                // No valid product found
-                                return false;
-                            }
-
-                            ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
-
-                            Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
-                                    record -> record.getBarCode().equals(productCode)
-                            ).findFirst();
-
-                            if (!optionalRecord.isPresent()) {
-                                // No transaction record for this product
-                                return false;
-                            }
-
-                            SaleTransactionRecord existingRecord = optionalRecord.get();
-
-                            int amountAlreadyInTransaction = existingRecord.getAmount();
-
-                            if (amount > amountAlreadyInTransaction) {
-                                // The quantity cannot satisfy the request
-                                return false;
-                            } else if (amount == amountAlreadyInTransaction) {
-
-                                // Remove record
-                                transactionRecords.remove(existingRecord);
-                            } else {
-                                existingRecord.setAmount(amountAlreadyInTransaction - amount);
-                                existingRecord.refreshTotalPrice();
-
-                                // Update record
-                                transactionRecords.update(existingRecord);
-                            }
-
-                            transaction.setRecords(transactionRecords);
-                            transaction.refreshAmount();
-
-                            saleTransactionDao.update(transaction);
-                            ongoingTransaction = transaction;
-
-                            return true;
+                        if (product == null) {
+                            // No valid product found
+                            return false;
                         }
+
+                        ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+
+                        Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                record -> record.getBarCode().equals(productCode)
+                        ).findFirst();
+
+                        if (!optionalRecord.isPresent()) {
+                            // No transaction record for this product
+                            return false;
+                        }
+
+                        SaleTransactionRecord existingRecord = optionalRecord.get();
+
+                        int amountAlreadyInTransaction = existingRecord.getAmount();
+
+                        if (amount > amountAlreadyInTransaction) {
+                            // The quantity cannot satisfy the request
+                            return false;
+                        } else if (amount == amountAlreadyInTransaction) {
+
+                            // Remove record
+                            transactionRecords.remove(existingRecord);
+                        } else {
+                            existingRecord.setAmount(amountAlreadyInTransaction - amount);
+                            existingRecord.refreshTotalPrice();
+
+                            // Update record
+                            transactionRecords.update(existingRecord);
+                        }
+
+                        transaction.setRecords(transactionRecords);
+                        transaction.refreshAmount();
+
+                        saleTransactionDao.update(transaction);
+                        ongoingTransaction = transaction;
+
+                        return true;
                     });
 
         } catch (SQLException e) {
@@ -1568,34 +1560,32 @@ public class EZShop implements EZShopInterface {
         try {
 
             isDiscounted = TransactionManager.callInTransaction(connectionSource,
-                    new Callable<Boolean>() {
-                        public Boolean call() throws Exception {
-                            ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+                    () -> {
+                        ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
 
-                            Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
-                                    record -> record.getBarCode().equals(productCode)
-                            ).findFirst();
+                        Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                record -> record.getBarCode().equals(productCode)
+                        ).findFirst();
 
-                            if (!optionalRecord.isPresent()) {
-                                // No transaction record for this product
-                                return false;
-                            }
-
-                            SaleTransactionRecord existingRecord = optionalRecord.get();
-
-                            existingRecord.setDiscountRate(discountRate);
-                            existingRecord.refreshTotalPrice();
-
-                            transactionRecords.update(existingRecord);
-
-                            transaction.setRecords(transactionRecords);
-                            transaction.refreshAmount();
-
-                            saleTransactionDao.update(transaction);
-                            ongoingTransaction = transaction;
-
-                            return true;
+                        if (!optionalRecord.isPresent()) {
+                            // No transaction record for this product
+                            return false;
                         }
+
+                        SaleTransactionRecord existingRecord = optionalRecord.get();
+
+                        existingRecord.setDiscountRate(discountRate);
+                        existingRecord.refreshTotalPrice();
+
+                        transactionRecords.update(existingRecord);
+
+                        transaction.setRecords(transactionRecords);
+                        transaction.refreshAmount();
+
+                        saleTransactionDao.update(transaction);
+                        ongoingTransaction = transaction;
+
+                        return true;
                     });
 
         } catch (SQLException e) {
@@ -1956,16 +1946,14 @@ public class EZShop implements EZShopInterface {
 
             try {
                 TransactionManager.callInTransaction(connectionSource,
-                        new Callable<Void>() {
-                            public Void call() throws Exception {
-                                saleTransactionDao.update(transaction);
+                        () -> {
+                            saleTransactionDao.update(transaction);
 
-                                updateInventoryByPaidTransaction(transaction);
+                            updateInventoryByPaidTransaction(transaction);
 
-                                // TODO BALANCEOPERATION
+                            // TODO BALANCEOPERATION
 
-                                return null;
-                            }
+                            return null;
                         });
 
                 returnChange = change;
@@ -2023,16 +2011,14 @@ public class EZShop implements EZShopInterface {
 
         try {
             TransactionManager.callInTransaction(connectionSource,
-                    new Callable<Void>() {
-                        public Void call() throws Exception {
-                            saleTransactionDao.update(transaction);
+                    () -> {
+                        saleTransactionDao.update(transaction);
 
-                            updateInventoryByPaidTransaction(transaction);
+                        updateInventoryByPaidTransaction(transaction);
 
-                            // TODO BALANCEOPERATION
+                        // TODO BALANCEOPERATION
 
-                            return null;
-                        }
+                        return null;
                     });
 
             isSuccessful = true;
