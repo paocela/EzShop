@@ -1539,7 +1539,70 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public boolean applyDiscountRateToProduct(Integer transactionId, String productCode, double discountRate) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidDiscountRateException, UnauthorizedException {
-        return false;
+        System.out.println("[DEV] applyDiscountRateToProduct(" + transactionId + "," + productCode + "," + discountRate + ")");
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode)) {
+            throw new InvalidProductCodeException();
+        }
+
+        // Verify discountRate validity
+        if (discountRate < 0 || discountRate >= 1) {
+            throw new InvalidDiscountRateException();
+        }
+
+        SaleTransaction transaction = getOngoingTransactionById(transactionId);
+
+        if (transaction == null || transaction.getStatus() != SaleTransaction.StatusEnum.STARTED) {
+            // No valid transaction found
+            return false;
+        }
+
+        boolean isDiscounted = false;
+        try {
+
+            isDiscounted = TransactionManager.callInTransaction(connectionSource,
+                    new Callable<Boolean>() {
+                        public Boolean call() throws Exception {
+                            ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+
+                            Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                    record -> record.getBarCode().equals(productCode)
+                            ).findFirst();
+
+                            if (!optionalRecord.isPresent()) {
+                                // No transaction record for this product
+                                return false;
+                            }
+
+                            SaleTransactionRecord existingRecord = optionalRecord.get();
+
+                            existingRecord.setDiscountRate(discountRate);
+                            existingRecord.refreshTotalPrice();
+
+                            transactionRecords.update(existingRecord);
+
+                            transaction.setRecords(transactionRecords);
+                            transaction.refreshAmount();
+
+                            saleTransactionDao.update(transaction);
+                            ongoingTransaction = transaction;
+
+                            return true;
+                        }
+                    });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isDiscounted;
     }
 
     /**

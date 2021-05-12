@@ -47,7 +47,7 @@ public class SaleTransactionRecord implements TicketEntry {
     }
 
     public void refreshTotalPrice() {
-        this.totalPrice = productType.getPricePerUnit() * amount;
+        this.totalPrice = productType.getPricePerUnit() * amount * (1 - discountRate);
     }
 
     public ProductType getProductType() {
