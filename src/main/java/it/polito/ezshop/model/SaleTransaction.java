@@ -6,14 +6,10 @@ import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import it.polito.ezshop.data.TicketEntry;
 
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 @DatabaseTable(tableName = "sale_transactions")
 public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
@@ -48,7 +44,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
     private final long createdAt = new Date().getTime();
 
     @ForeignCollectionField(eager = true)
-    ForeignCollection<SaleTransactionRecord> records;
+    private ForeignCollection<SaleTransactionRecord> records;
 
     public SaleTransaction() {
     }
@@ -144,6 +140,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
     @Override
     public void setEntries(List<TicketEntry> entries) {
 
+        // TODO EVALUATE USAGES TO DEFINE BEHAVIOUR
     }
 
     @Override
@@ -166,32 +163,20 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
         setAmount(price);
     }
 
-    public boolean addSaleTransactionRecord(ProductType product, int quantity) throws SQLException {
-        // First check for an existing record for this product
-        SaleTransactionRecord transactionRecord = this.records.getDao().queryBuilder()
-                .where().eq("product_type_id", product.getId()).and()
-                .eq("sale_transaction_id", this.id).queryForFirst();
-
-        if (transactionRecord == null) {
-            // No existing record for this product, creating a new one
-            transactionRecord = new SaleTransactionRecord(product, quantity);
-            this.records.add(transactionRecord);
-        } else {
-            // There is an existing record for this product, increasing quantity
-            transactionRecord.setAmount(transactionRecord.getAmount() + quantity);
-            transactionRecord.setTotalPrice(transactionRecord.getTotalPrice() + transactionRecord.getPricePerUnit() * quantity);
-
-            this.records.update(transactionRecord);
-        }
-
-        return true;
-    }
-
     public void refreshAmount() {
         double updatedAmount = this.records.stream().mapToDouble(SaleTransactionRecord::getTotalPrice).sum();
         System.out.println("Updated amount is " + updatedAmount);
 
-        this.amount = Math.round(updatedAmount * (1 - discountRateAmount) * 100.0) / 100.0;
+        this.amount = updatedAmount * (1 - discountRateAmount);
+    }
+
+    public void setRecords(ForeignCollection<SaleTransactionRecord> records) {
+        this.records = records;
+    }
+
+
+    public ForeignCollection<SaleTransactionRecord> getRecords(){
+        return this.records;
     }
 
     public void updateSaleTransactionRecord(ProductType productType, int toaddquantity) {

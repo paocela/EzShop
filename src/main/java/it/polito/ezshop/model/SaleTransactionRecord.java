@@ -24,12 +24,14 @@ public class SaleTransactionRecord implements TicketEntry {
     @DatabaseField(canBeNull = false, foreign = true, columnName = "sale_transaction_id")
     private SaleTransaction saleTransaction;
 
-    SaleTransactionRecord() {}
+    SaleTransactionRecord() {
+    }
 
-    public SaleTransactionRecord(ProductType productType, int amount) {
-        setProductType(productType);
-        setAmount(amount);
-        setTotalPrice(productType.getPricePerUnit() * amount);
+    public SaleTransactionRecord(SaleTransaction saleTransaction, ProductType productType, int amount) {
+        this.saleTransaction = saleTransaction;
+        this.productType = productType;
+        this.amount = amount;
+        refreshTotalPrice();
     }
 
 
@@ -39,6 +41,10 @@ public class SaleTransactionRecord implements TicketEntry {
 
     public void setTotalPrice(double totalPrice) {
         this.totalPrice = totalPrice;
+    }
+
+    public void refreshTotalPrice() {
+        this.totalPrice = productType.getPricePerUnit() * amount;
     }
 
     public ProductType getProductType() {
@@ -56,7 +62,7 @@ public class SaleTransactionRecord implements TicketEntry {
 
     @Override
     public void setBarCode(String barCode) {
-        // Appears unused by manual testing, ask for removal
+        productType.setBarCode(barCode);
     }
 
     @Override
@@ -66,7 +72,7 @@ public class SaleTransactionRecord implements TicketEntry {
 
     @Override
     public void setProductDescription(String productDescription) {
-        // Appears unused by manual testing, ask for removal
+        productType.setProductDescription(productDescription);
     }
 
     @Override
@@ -81,13 +87,12 @@ public class SaleTransactionRecord implements TicketEntry {
 
     @Override
     public double getPricePerUnit() {
-
         return productType.getPricePerUnit();
     }
 
     @Override
     public void setPricePerUnit(double pricePerUnit) {
-        // Appears unused by manual testing, ask for removal
+        productType.setPricePerUnit(pricePerUnit);
     }
 
     @Override
