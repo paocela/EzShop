@@ -1947,22 +1947,32 @@ public class EZShop implements EZShopInterface {
         // Validate and retrieve transaction by id
         SaleTransaction transaction = getSaleTransaction(transactionId);
 
-        if (transaction != null) {
-            if (cash >= transaction.getAmount()) {
-                transaction.setCash(cash);
-                double change = cash - transaction.getAmount();
-                transaction.setChange(change);
-                transaction.setStatus(SaleTransaction.StatusEnum.PAID);
-                transaction.setPaymentType("cash");
+        if (transaction != null && cash >= transaction.getAmount()) {
+            transaction.setCash(cash);
+            double change = cash - transaction.getAmount();
+            transaction.setChange(change);
+            transaction.setStatus(SaleTransaction.StatusEnum.PAID);
+            transaction.setPaymentType("cash");
 
-                try {
-                    saleTransactionDao.update(transaction);
+            try {
+                TransactionManager.callInTransaction(connectionSource,
+                        new Callable<Void>() {
+                            public Void call() throws Exception {
+                                saleTransactionDao.update(transaction);
 
-                    // TODO UPDATE DAILY BALANCEOPERATION
-                    returnChange = change;
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                                updateInventoryByPaidTransaction(transaction);
+
+                                // TODO BALANCEOPERATION
+
+                                return null;
+                            }
+                        });
+
+                returnChange = change;
+                ongoingTransaction = null;
+
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
 
@@ -2012,8 +2022,18 @@ public class EZShop implements EZShopInterface {
         transaction.setStatus(SaleTransaction.StatusEnum.PAID);
 
         try {
-            saleTransactionDao.update(transaction);
-            // TODO UPDATE DAILY BALANCEOPERATION
+            TransactionManager.callInTransaction(connectionSource,
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            saleTransactionDao.update(transaction);
+
+                            updateInventoryByPaidTransaction(transaction);
+
+                            // TODO BALANCEOPERATION
+
+                            return null;
+                        }
+                    });
 
             isSuccessful = true;
             this.ongoingTransaction = null;
@@ -2229,5 +2249,19 @@ public class EZShop implements EZShopInterface {
 
         }
         return returnTransaction;
+    }
+
+    /**
+     * Decreases the inventory availability by the sold amount
+     *
+     * @param transaction The transaction we are updating
+     */
+    private void updateInventoryByPaidTransaction(SaleTransaction transaction) throws SQLException {
+        for (SaleTransactionRecord record : transaction.getRecords()) {
+            ProductType product = record.getProductType();
+            product.setQuantity(product.getQuantity() - record.getAmount());
+            productTypeDao.update(product);
+        }
+
     }
 }
