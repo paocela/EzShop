@@ -17,6 +17,7 @@ import java.util.TimeZone;
 
 @DatabaseTable(tableName = "sale_transactions")
 public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
+
     public enum StatusEnum {STARTED, CLOSED, PAID}
 
     @DatabaseField(generatedId = true)
@@ -191,5 +192,10 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
         System.out.println("Updated amount is " + updatedAmount);
 
         this.amount = Math.round(updatedAmount * (1 - discountRateAmount) * 100.0) / 100.0;
+    }
+
+    public void updateSaleTransactionRecord(ProductType productType, int toaddquantity) {
+        // TODO
+        refreshAmount();
     }
 }
