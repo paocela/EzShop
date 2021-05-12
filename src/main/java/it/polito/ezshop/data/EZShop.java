@@ -4,6 +4,8 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.logger.Log;
+import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
@@ -17,10 +19,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Formatter;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import it.polito.ezshop.model.*;
@@ -49,6 +48,8 @@ public class EZShop implements EZShopInterface {
     private SaleTransaction ongoingTransaction = null;
 
     public EZShop() {
+        Logger.setGlobalLogLevel(Log.Level.ERROR);
+
         try {
             connectionSource = new JdbcConnectionSource(DATABASE_URL);
 
@@ -73,6 +74,7 @@ public class EZShop implements EZShopInterface {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
     }
 
     @Override
@@ -1360,13 +1362,15 @@ public class EZShop implements EZShopInterface {
 
                             ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
 
-                            SaleTransactionRecord existingRecordForInputProduct = transactionRecords.getDao().queryBuilder()
-                                    .where().eq("product_type_id", product.getId()).and()
-                                    .eq("sale_transaction_id", transaction.getId()).queryForFirst();
+                            Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                    record -> record.getBarCode().equals(productCode)
+                            ).findFirst();
 
-                            if (existingRecordForInputProduct != null) {
+                            if (optionalRecord.isPresent()) {
+                                SaleTransactionRecord existingRecord = optionalRecord.get();
+
                                 // There is an existing record for input product, updating it
-                                int amountAlreadyInTransaction = existingRecordForInputProduct.getAmount();
+                                int amountAlreadyInTransaction = existingRecord.getAmount();
 
                                 if (product.getQuantity() < amountAlreadyInTransaction + amount) {
                                     // Not enough products to fulfill
@@ -1374,10 +1378,11 @@ public class EZShop implements EZShopInterface {
                                 }
 
                                 // There is an existing record for input product, increasing quantity
-                                existingRecordForInputProduct.setAmount(amountAlreadyInTransaction + amount);
-                                existingRecordForInputProduct.refreshTotalPrice();
+                                existingRecord.setAmount(amountAlreadyInTransaction + amount);
+                                existingRecord.refreshTotalPrice();
 
-                                transactionRecords.update(existingRecordForInputProduct);
+                                // Update record
+                                transactionRecords.update(existingRecord);
 
                             } else {
                                 // No existing record for input product, creating a new one
@@ -1387,12 +1392,13 @@ public class EZShop implements EZShopInterface {
                                     return false;
                                 }
 
-                                transactionRecords.add(new SaleTransactionRecord(transaction, product, amount));
+                                SaleTransactionRecord newRecord = new SaleTransactionRecord(transaction, product, amount);
+
+                                // Add new record
+                                transactionRecords.add(newRecord);
                             }
 
-                            transactionRecords.refreshAll();
 
-                            transaction.setRecords(transactionRecords);
                             transaction.refreshAmount();
 
                             saleTransactionDao.update(transaction);
@@ -1409,11 +1415,128 @@ public class EZShop implements EZShopInterface {
         return isAdded;
     }
 
+    /**
+     * This method deletes a product from a sale transaction increasing the temporary amount of product available on the
+     * shelves for other customers.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the Sale transaction
+     * @param productCode   the barcode of the product to be deleted
+     * @param amount        the quantity of product to be deleted
+     * @return true if the operation is successful
+     * false   if the product code does not exist,
+     * if the quantity of product cannot satisfy the request,
+     * if the transaction id does not identify a started and open transaction.
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws InvalidProductCodeException   if the product code is empty, null or invalid
+     * @throws InvalidQuantityException      if the quantity is less than 0
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean deleteProductFromSale(Integer transactionId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
-        return false;
+        System.out.println("[DEV] deleteProductFromSale(" + transactionId + "," + productCode + "," + amount + ")");
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode)) {
+            throw new InvalidProductCodeException();
+        }
+
+        // Verify amount validity (I included zero as it makes no sense excluding it)
+        if (amount <= 0) {
+            throw new InvalidQuantityException();
+        }
+
+        SaleTransaction transaction = getOngoingTransactionById(transactionId);
+
+        if (transaction == null || transaction.getStatus() != SaleTransaction.StatusEnum.STARTED) {
+            // No valid transaction found
+            return false;
+        }
+
+        boolean isRemoved = false;
+        try {
+
+            isRemoved = TransactionManager.callInTransaction(connectionSource,
+                    new Callable<Boolean>() {
+                        public Boolean call() throws Exception {
+                            QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
+                            ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
+
+                            if (product == null) {
+                                // No valid product found
+                                return false;
+                            }
+
+                            ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+
+                            Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                    record -> record.getBarCode().equals(productCode)
+                            ).findFirst();
+
+                            if (!optionalRecord.isPresent()) {
+                                // No transaction record for this product
+                                return false;
+                            }
+
+                            SaleTransactionRecord existingRecord = optionalRecord.get();
+
+                            int amountAlreadyInTransaction = existingRecord.getAmount();
+
+                            if (amount > amountAlreadyInTransaction) {
+                                // The quantity cannot satisfy the request
+                                return false;
+                            } else if (amount == amountAlreadyInTransaction) {
+
+                                // Remove record
+                                transactionRecords.remove(existingRecord);
+                            } else {
+                                existingRecord.setAmount(amountAlreadyInTransaction - amount);
+                                existingRecord.refreshTotalPrice();
+
+                                // Update record
+                                transactionRecords.update(existingRecord);
+                            }
+
+                            transaction.setRecords(transactionRecords);
+                            transaction.refreshAmount();
+
+                            saleTransactionDao.update(transaction);
+                            ongoingTransaction = transaction;
+
+                            return true;
+                        }
+                    });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isRemoved;
     }
 
+    /**
+     * This method applies a discount rate to all units of a product type with given type in a sale transaction. The
+     * discount rate should be greater than or equal to 0 and less than 1.
+     * The sale transaction should be started and open.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the Sale transaction
+     * @param productCode   the barcode of the product to be discounted
+     * @param discountRate  the discount rate of the product
+     * @return true if the operation is successful
+     * false   if the product code does not exist,
+     * if the transaction id does not identify a started and open transaction.
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws InvalidProductCodeException   if the product code is empty, null or invalid
+     * @throws InvalidDiscountRateException  if the discount rate is less than 0 or if it greater than or equal to 1.00
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean applyDiscountRateToProduct(Integer transactionId, String productCode, double discountRate) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidDiscountRateException, UnauthorizedException {
         return false;

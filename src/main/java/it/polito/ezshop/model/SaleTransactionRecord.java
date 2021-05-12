@@ -34,6 +34,9 @@ public class SaleTransactionRecord implements TicketEntry {
         refreshTotalPrice();
     }
 
+    public Integer getId() {
+        return id;
+    }
 
     public double getTotalPrice() {
         return totalPrice;
