@@ -1641,7 +1641,7 @@ public class EZShop implements EZShopInterface {
         SaleTransaction transaction = getOngoingTransactionById(transactionId);
 
         if (transaction != null) {
-            transaction.setDiscountRateAmount(discountRate);
+            transaction.setDiscountRate(discountRate);
             transaction.refreshAmount();
 
             try {

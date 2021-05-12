@@ -6,6 +6,7 @@ import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import it.polito.ezshop.data.TicketEntry;
 
+import java.sql.SQLException;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,7 +27,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
     private double amount = 0;
 
     @DatabaseField(canBeNull = false, columnName = "discount_rate")
-    private double discountRateAmount = 0;
+    private double discountRate = 0;
 
     @DatabaseField(columnName = "payment_type")
     private String paymentType;
@@ -82,12 +83,14 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
         this.amount = amount;
     }
 
-    public double getDiscountRateAmount() {
-        return discountRateAmount;
+    @Override
+    public double getDiscountRate() {
+        return discountRate;
     }
 
-    public void setDiscountRateAmount(double discountRateAmount) {
-        this.discountRateAmount = discountRateAmount;
+    @Override
+    public void setDiscountRate(double discountRate) {
+        this.discountRate = discountRate;
     }
 
     public String getPaymentType() {
@@ -139,18 +142,27 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
     @Override
     public void setEntries(List<TicketEntry> entries) {
+        // Unused method required by the teacher-defined interface
+        // Might regret writing this later
+        try {
+            this.records = this.records.getDao().getEmptyForeignCollection("records");
 
-        // TODO EVALUATE USAGES TO DEFINE BEHAVIOUR
-    }
+            for (TicketEntry entry : entries) {
+                SaleTransactionRecord record = new SaleTransactionRecord();
 
-    @Override
-    public double getDiscountRate() {
-        return getDiscountRateAmount();
-    }
+                record.setBarCode(entry.getBarCode());
+                record.setProductDescription(entry.getProductDescription());
+                record.setAmount(entry.getAmount());
+                record.setPricePerUnit(entry.getPricePerUnit());
+                record.setDiscountRate(entry.getDiscountRate());
 
-    @Override
-    public void setDiscountRate(double discountRate) {
-        setDiscountRateAmount(discountRate);
+                this.records.add(record);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     @Override
@@ -167,7 +179,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
         double updatedAmount = this.records.stream().mapToDouble(SaleTransactionRecord::getTotalPrice).sum();
         System.out.println("Updated amount is " + updatedAmount);
 
-        this.amount = updatedAmount * (1 - discountRateAmount);
+        this.amount = updatedAmount * (1 - discountRate);
     }
 
     public void setRecords(ForeignCollection<SaleTransactionRecord> records) {
@@ -175,7 +187,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
     }
 
 
-    public ForeignCollection<SaleTransactionRecord> getRecords(){
+    public ForeignCollection<SaleTransactionRecord> getRecords() {
         return this.records;
     }
 
