@@ -902,6 +902,8 @@ public class EZShop implements EZShopInterface {
     public boolean recordOrderArrival(Integer orderId) throws InvalidOrderIdException, UnauthorizedException, InvalidLocationException {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
 
+        // TODO SHOULD CHECK PRODUCT LOCATION
+
         //return false if the order does not exist or if it was not in an ORDERED/COMPLETED state
         boolean isRecorded = false;
 
@@ -1990,7 +1992,8 @@ public class EZShop implements EZShopInterface {
 
                             updateInventoryByPaidTransaction(transaction);
 
-                            // TODO BALANCEOPERATION
+                            BalanceOperation balanceOperation = new BalanceOperation(transaction.getAmount());
+                            balanceOperationDao.create(balanceOperation);
 
                             return null;
                         });
@@ -2055,7 +2058,8 @@ public class EZShop implements EZShopInterface {
 
                         updateInventoryByPaidTransaction(transaction);
 
-                        // TODO BALANCEOPERATION
+                        BalanceOperation balanceOperation = new BalanceOperation(transaction.getAmount());
+                        balanceOperationDao.create(balanceOperation);
 
                         return null;
                     });
@@ -2101,7 +2105,6 @@ public class EZShop implements EZShopInterface {
 
         try {
             if (currentBalance + toBeAdded >= 0) {
-                QueryBuilder<BalanceOperation, Integer> balanceOperationQueryBuilder = balanceOperationDao.queryBuilder();
                 BalanceOperation balanceOperation = new BalanceOperation(toBeAdded);
                 balanceOperationDao.create(balanceOperation);
                 isUpdated = true;

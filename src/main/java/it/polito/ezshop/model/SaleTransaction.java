@@ -177,7 +177,6 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
     public void refreshAmount() {
         double updatedAmount = this.records.stream().mapToDouble(SaleTransactionRecord::getTotalPrice).sum();
-        System.out.println("Updated amount is " + updatedAmount);
 
         this.amount = updatedAmount * (1 - discountRate);
     }
