@@ -12,7 +12,7 @@ public class Customer implements it.polito.ezshop.data.Customer {
     @DatabaseField()
     private String name;
 
-    @DatabaseField()
+    @DatabaseField(unique = true)
     private String card;
 
     @DatabaseField()

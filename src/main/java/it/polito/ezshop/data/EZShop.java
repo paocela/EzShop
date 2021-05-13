@@ -1174,14 +1174,27 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public String createCard() throws UnauthorizedException {
-        String cardCode;
+        String cardCode = null;
+        boolean found = false;
 
         // check privileges
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
-        // create card code
-        long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
-        cardCode = Long.toString(number);
+        while(!found) {
+            // create card code
+            long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
+            cardCode = Long.toString(number);
+
+            // check if card is already attached to any customer
+            QueryBuilder<Customer, Integer> cardFreeQueryBuilder = customerDao.queryBuilder().setCountOf(true);
+            try {
+                // check if card is attached to any customer
+                cardFreeQueryBuilder.where().eq("card", cardCode);
+                found = customerDao.countOf(cardFreeQueryBuilder.prepare()) == 0;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
         return cardCode;
     }
