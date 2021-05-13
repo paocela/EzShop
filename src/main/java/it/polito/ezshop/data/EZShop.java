@@ -114,7 +114,11 @@ public class EZShop implements EZShopInterface {
             DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
             BalanceOperationDeleteBuilder.delete();
 
-        } catch (SQLException e) {
+            creditCardDao.deleteBuilder().delete();
+            loadCreditCardsFromUtils();
+
+
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
         }
     }
