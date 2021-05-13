@@ -38,8 +38,8 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
     @DatabaseField()
     private double change;
 
-    @DatabaseField(columnName = "credit_card")
-    private String creditCard;
+    @DatabaseField(columnName = "credit_card", foreign = true, foreignAutoRefresh = true)
+    private CreditCard creditCard;
 
     @DatabaseField(canBeNull = false, columnName = "created_at")
     private final long createdAt = new Date().getTime();
@@ -117,11 +117,11 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
         this.change = change;
     }
 
-    public String getCreditCard() {
+    public CreditCard getCreditCard() {
         return creditCard;
     }
 
-    public void setCreditCard(String creditCard) {
+    public void setCreditCard(CreditCard creditCard) {
         this.creditCard = creditCard;
     }
 

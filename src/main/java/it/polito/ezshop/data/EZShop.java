@@ -14,12 +14,17 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import it.polito.ezshop.exceptions.*;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
@@ -33,6 +38,7 @@ import it.polito.ezshop.model.BalanceOperation;
 public class EZShop implements EZShopInterface {
 
     private final static String DATABASE_URL = "jdbc:sqlite:data/db.sqlite";
+    private final static String CREDIT_CARDS_FILE_PATH = "src/main/java/it/polito/ezshop/utils/CreditCards.txt";
 
     ConnectionSource connectionSource;
     Dao<User, Integer> userDao;
@@ -44,6 +50,7 @@ public class EZShop implements EZShopInterface {
     Dao<ReturnTransactionRecord, Integer> returnTransactionRecordDao;
     Dao<Order, Integer> orderDao;
     Dao<BalanceOperation, Integer> balanceOperationDao;
+    Dao<CreditCard, String> creditCardDao;
 
     private User userLogged = null;
     private SaleTransaction ongoingTransaction = null;
@@ -63,6 +70,7 @@ public class EZShop implements EZShopInterface {
 //            TableUtils.createTableIfNotExists(connectionSource, ReturnTransactionRecord.class);
             TableUtils.createTableIfNotExists(connectionSource, Order.class);
             TableUtils.createTableIfNotExists(connectionSource, BalanceOperation.class);
+            TableUtils.createTableIfNotExists(connectionSource, CreditCard.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
@@ -73,12 +81,16 @@ public class EZShop implements EZShopInterface {
 //            returnTransactionRecordDao = DaoManager.createDao(connectionSource, ReturnTransactionRecord.class);
             orderDao = DaoManager.createDao(connectionSource, Order.class);
             balanceOperationDao = DaoManager.createDao(connectionSource, BalanceOperation.class);
+            creditCardDao = DaoManager.createDao(connectionSource, CreditCard.class);
 
-        } catch (SQLException e) {
+            loadCreditCardsFromUtils();
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
+
     /**
      * This method should reset the application to its base state: balance zero, no transacations, no products
      */
@@ -101,7 +113,7 @@ public class EZShop implements EZShopInterface {
             DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
             BalanceOperationDeleteBuilder.delete();
 
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -1182,7 +1194,7 @@ public class EZShop implements EZShopInterface {
         // check privileges
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
-        while(!found) {
+        while (!found) {
             // create card code
             long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
             cardCode = Long.toString(number);
@@ -2034,7 +2046,6 @@ public class EZShop implements EZShopInterface {
 
         System.out.println("[DEV] receiveCreditCardPayment(" + transactionId + ", " + creditCard + ")");
 
-
         boolean isSuccessful = false;
 
         // Validate credit card
@@ -2045,21 +2056,34 @@ public class EZShop implements EZShopInterface {
         // Validate and retrieve transaction by id
         SaleTransaction transaction = getSaleTransaction(transactionId);
 
-        // TODO CHECK IF CREDIT CARD IS REGISTERED && HAS ENOUGH MONEY
-
-        transaction.setPaymentType("card");
-        transaction.setCreditCard(creditCard);
-        transaction.setStatus(SaleTransaction.StatusEnum.PAID);
-
         try {
+
+            // Retrieve credit card
+            CreditCard card = creditCardDao.queryForId(creditCard);
+
+            if(card == null || card.getAmount() < transaction.getAmount()){
+                // Card is not registered or has not enough money
+                return false;
+            }
+
+            transaction.setPaymentType("card");
+            transaction.setCreditCard(card);
+            transaction.setStatus(SaleTransaction.StatusEnum.PAID);
+
             TransactionManager.callInTransaction(connectionSource,
                     () -> {
                         saleTransactionDao.update(transaction);
 
                         updateInventoryByPaidTransaction(transaction);
 
-                        BalanceOperation balanceOperation = new BalanceOperation(transaction.getAmount());
+                        double balanceChange = transaction.getAmount();
+
+                        BalanceOperation balanceOperation = new BalanceOperation(balanceChange);
                         balanceOperationDao.create(balanceOperation);
+
+                        // Reduce credit card balance
+                        card.setAmount(card.getAmount() - balanceChange);
+                        creditCardDao.update(card);
 
                         return null;
                     });
@@ -2291,5 +2315,26 @@ public class EZShop implements EZShopInterface {
             productTypeDao.update(product);
         }
 
+    }
+
+    private void loadCreditCardsFromUtils() throws Exception {
+
+        Stream<String> lines = Files.lines(Paths.get(CREDIT_CARDS_FILE_PATH), Charset.defaultCharset());
+
+        List<CreditCard> creditCards = lines.skip(3)
+                .map(line -> !line.startsWith("#") ? parseCreditCard(line) : null)
+                .filter(Objects::nonNull).collect(Collectors.toList());
+
+        creditCardDao.callBatchTasks(() -> {
+            for (CreditCard creditCard : creditCards) {
+                creditCardDao.create(creditCard);
+            }
+            return null;
+        });
+    }
+
+    private CreditCard parseCreditCard(String line) {
+        String[] lineParts = line.split(";");
+        return new CreditCard(lineParts[0], Double.parseDouble(lineParts[1]));
     }
 }
