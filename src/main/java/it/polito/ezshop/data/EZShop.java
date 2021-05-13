@@ -39,7 +39,9 @@ public class EZShop implements EZShopInterface {
     Dao<ProductType, Integer> productTypeDao;
     Dao<Customer, Integer> customerDao;
     Dao<SaleTransaction, Integer> saleTransactionDao;
+    Dao<SaleTransactionRecord, Integer> saleTransactionRecordDao;
     Dao<ReturnTransaction, Integer> returnTransactionDao;
+    Dao<ReturnTransactionRecord, Integer> returnTransactionRecordDao;
     Dao<Order, Integer> orderDao;
     Dao<BalanceOperation, Integer> balanceOperationDao;
 
@@ -66,7 +68,9 @@ public class EZShop implements EZShopInterface {
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
+            saleTransactionRecordDao = DaoManager.createDao(connectionSource, SaleTransactionRecord.class);
 //            returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
+//            returnTransactionRecordDao = DaoManager.createDao(connectionSource, ReturnTransactionRecord.class);
             orderDao = DaoManager.createDao(connectionSource, Order.class);
             balanceOperationDao = DaoManager.createDao(connectionSource, BalanceOperation.class);
 
@@ -75,9 +79,31 @@ public class EZShop implements EZShopInterface {
         }
 
     }
-
+    /**
+     * This method should reset the application to its base state: balance zero, no transacations, no products
+     */
     @Override
     public void reset() {
+        // need to remove entries from db tables sale_transactions, sale_transaction_records, return_transaction,
+        // return_transaction_records, products, balance_operations
+        try {
+            // TODO REMOVE COMMENT FROM RETURN TRANSACTIONS LINES
+            DeleteBuilder<SaleTransaction, Integer> saleTransactionDeleteBuilder = saleTransactionDao.deleteBuilder();
+            saleTransactionDeleteBuilder.delete();
+            DeleteBuilder<SaleTransactionRecord, Integer> saleTransactionRecordDeleteBuilder = saleTransactionRecordDao.deleteBuilder();
+            saleTransactionRecordDeleteBuilder.delete();
+            //DeleteBuilder<ReturnTransaction, Integer> returnTransactionDeleteBuilder = returnTransactionDao.deleteBuilder();
+            //returnTransactionDeleteBuilder.delete();
+            //DeleteBuilder<ReturnTransactionRecord, Integer> ReturnTransactionRecordDeleteBuilder = saleTransactionDao.deleteBuilder();
+            //deleteBuilder.delete();
+            DeleteBuilder<ProductType, Integer> ProductTypeDeleteBuilder = productTypeDao.deleteBuilder();
+            ProductTypeDeleteBuilder.delete();
+            DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
+            BalanceOperationDeleteBuilder.delete();
+
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
