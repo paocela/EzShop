@@ -14,6 +14,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import it.polito.ezshop.exceptions.*;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -85,7 +86,7 @@ public class EZShop implements EZShopInterface {
 
             loadCreditCardsFromUtils();
 
-        } catch (Exception e) {
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         }
 
@@ -2061,7 +2062,7 @@ public class EZShop implements EZShopInterface {
             // Retrieve credit card
             CreditCard card = creditCardDao.queryForId(creditCard);
 
-            if(card == null || card.getAmount() < transaction.getAmount()){
+            if (card == null || card.getAmount() < transaction.getAmount()) {
                 // Card is not registered or has not enough money
                 return false;
             }
@@ -2317,24 +2318,25 @@ public class EZShop implements EZShopInterface {
 
     }
 
-    private void loadCreditCardsFromUtils() throws Exception {
+    private void loadCreditCardsFromUtils() throws IOException {
 
         Stream<String> lines = Files.lines(Paths.get(CREDIT_CARDS_FILE_PATH), Charset.defaultCharset());
 
-        List<CreditCard> creditCards = lines.skip(3)
-                .map(line -> !line.startsWith("#") ? parseCreditCard(line) : null)
-                .filter(Objects::nonNull).collect(Collectors.toList());
-
-        creditCardDao.callBatchTasks(() -> {
-            for (CreditCard creditCard : creditCards) {
-                creditCardDao.create(creditCard);
-            }
-            return null;
-        });
+        lines.skip(3)
+                .forEachOrdered(line -> {
+                    if (!line.startsWith("#")) loadCreditCard(line);
+                });
     }
 
-    private CreditCard parseCreditCard(String line) {
+    private void loadCreditCard(String line) {
         String[] lineParts = line.split(";");
-        return new CreditCard(lineParts[0], Double.parseDouble(lineParts[1]));
+        CreditCard card = new CreditCard(lineParts[0], Double.parseDouble(lineParts[1]));
+
+        try {
+            if(!creditCardDao.idExists(card.getCode()))
+            creditCardDao.create(card);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
