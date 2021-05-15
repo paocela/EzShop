@@ -10,7 +10,6 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 
-
 @DatabaseTable(tableName = "balance_operations")
 public class BalanceOperation implements it.polito.ezshop.data.BalanceOperation {
 
@@ -18,9 +17,6 @@ public class BalanceOperation implements it.polito.ezshop.data.BalanceOperation 
 
     @DatabaseField(generatedId = true)
     private int balanceId;
-
-    @DatabaseField(canBeNull = false, dataType=DataType.SERIALIZABLE)
-    private LocalDate date;
 
     @DatabaseField(canBeNull = false, columnName = "money")
     private double money;
@@ -31,17 +27,17 @@ public class BalanceOperation implements it.polito.ezshop.data.BalanceOperation 
     @DatabaseField(canBeNull = false, columnName = "date_string")
     private String dateString;
 
-    public BalanceOperation(){}
+    public BalanceOperation() {
+    }
 
-    public BalanceOperation(double money){
+    public BalanceOperation(double money) {
         this.money = money;
-        if(Double.doubleToRawLongBits(money) < 0){
+        if (Double.doubleToRawLongBits(money) < 0) {
             this.type = TypeEnum.DEBIT;
-        }else{
+        } else {
             this.type = TypeEnum.CREDIT;
         }
-        this.date = LocalDate.now();
-        this.dateString = date.toString();
+        this.dateString = LocalDate.now().toString();
     }
 
     @Override
@@ -56,12 +52,12 @@ public class BalanceOperation implements it.polito.ezshop.data.BalanceOperation 
 
     @Override
     public LocalDate getDate() {
-        return date;
+        return LocalDate.parse(dateString);
     }
 
     @Override
     public void setDate(LocalDate date) {
-        this.date = date;
+        this.dateString = date.toString();
     }
 
     @Override

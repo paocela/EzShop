@@ -2,7 +2,11 @@ package it.polito.ezshop.data;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.logger.Log;
+import com.j256.ormlite.logger.Logger;
+import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.UpdateBuilder;
@@ -10,15 +14,18 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import it.polito.ezshop.exceptions.*;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Formatter;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
@@ -32,6 +39,7 @@ import it.polito.ezshop.model.BalanceOperation;
 public class EZShop implements EZShopInterface {
 
     private final static String DATABASE_URL = "jdbc:sqlite:data/db.sqlite";
+    private final static String CREDIT_CARDS_FILE_PATH = "src/main/java/it/polito/ezshop/utils/CreditCards.txt";
 
     ConnectionSource connectionSource;
     Dao<User, Integer> userDao;
@@ -41,12 +49,15 @@ public class EZShop implements EZShopInterface {
     Dao<ReturnTransaction, Integer> returnTransactionDao;
     Dao<Order, Integer> orderDao;
     Dao<BalanceOperation, Integer> balanceOperationDao;
+    Dao<CreditCard, String> creditCardDao;
 
     private User userLogged = null;
     private SaleTransaction ongoingTransaction = null;
     private ReturnTransaction ongoingReturnTransaction = null;
 
     public EZShop() {
+        Logger.setGlobalLogLevel(Log.Level.ERROR);
+
         try {
             connectionSource = new JdbcConnectionSource(DATABASE_URL);
 
@@ -60,6 +71,7 @@ public class EZShop implements EZShopInterface {
 
             TableUtils.createTableIfNotExists(connectionSource, Order.class);
             TableUtils.createTableIfNotExists(connectionSource, BalanceOperation.class);
+            TableUtils.createTableIfNotExists(connectionSource, CreditCard.class);
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
@@ -68,14 +80,44 @@ public class EZShop implements EZShopInterface {
             returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
             orderDao = DaoManager.createDao(connectionSource, Order.class);
             balanceOperationDao = DaoManager.createDao(connectionSource, BalanceOperation.class);
+            creditCardDao = DaoManager.createDao(connectionSource, CreditCard.class);
 
-        } catch (SQLException e) {
+            loadCreditCardsFromUtils();
+
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * This method should reset the application to its base state: balance zero, no transacations, no products
+     */
     @Override
     public void reset() {
+        // need to remove entries from db tables sale_transactions, sale_transaction_records, return_transaction,
+        // return_transaction_records, products, balance_operations
+        try {
+            // TODO REMOVE COMMENT FROM RETURN TRANSACTIONS LINES
+            DeleteBuilder<SaleTransaction, Integer> saleTransactionDeleteBuilder = saleTransactionDao.deleteBuilder();
+            saleTransactionDeleteBuilder.delete();
+            DeleteBuilder<SaleTransactionRecord, Integer> saleTransactionRecordDeleteBuilder = saleTransactionRecordDao.deleteBuilder();
+            saleTransactionRecordDeleteBuilder.delete();
+            //DeleteBuilder<ReturnTransaction, Integer> returnTransactionDeleteBuilder = returnTransactionDao.deleteBuilder();
+            //returnTransactionDeleteBuilder.delete();
+            //DeleteBuilder<ReturnTransactionRecord, Integer> ReturnTransactionRecordDeleteBuilder = saleTransactionDao.deleteBuilder();
+            //deleteBuilder.delete();
+            DeleteBuilder<ProductType, Integer> ProductTypeDeleteBuilder = productTypeDao.deleteBuilder();
+            ProductTypeDeleteBuilder.delete();
+            DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
+            BalanceOperationDeleteBuilder.delete();
+
+            creditCardDao.deleteBuilder().delete();
+            loadCreditCardsFromUtils();
+
+
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -284,7 +326,6 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public it.polito.ezshop.data.User login(String username, String password) throws InvalidUsernameException, InvalidPasswordException {
-
 
         User returnUser = null;
 
@@ -696,18 +737,16 @@ public class EZShop implements EZShopInterface {
      * product might have no location assigned in this step.
      * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
      *
-     * @param productCode the code of the product that we should order as soon as possible
-     * @param quantity the quantity of product that we should order
+     * @param productCode  the code of the product that we should order as soon as possible
+     * @param quantity     the quantity of product that we should order
      * @param pricePerUnit the price to correspond to the supplier (!= than the resale price of the shop) per unit of
      *                     product
-     *
-     * @return  the id of the order (> 0)
-     *          -1 if the product does not exists, if there are problems with the db
-     *
-     * @throws InvalidProductCodeException if the productCode is not a valid bar code, if it is null or if it is empty
-     * @throws InvalidQuantityException if the quantity is less than or equal to 0
+     * @return the id of the order (> 0)
+     * -1 if the product does not exists, if there are problems with the db
+     * @throws InvalidProductCodeException  if the productCode is not a valid bar code, if it is null or if it is empty
+     * @throws InvalidQuantityException     if the quantity is less than or equal to 0
      * @throws InvalidPricePerUnitException if the price per unit of product is less than or equal to 0
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException        if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public Integer issueOrder(String productCode, int quantity, double pricePerUnit) throws InvalidProductCodeException, InvalidQuantityException, InvalidPricePerUnitException, UnauthorizedException {
@@ -721,7 +760,7 @@ public class EZShop implements EZShopInterface {
             throw new InvalidProductCodeException();
         }
         //Verify quantity validity
-        if( quantity<= 0){
+        if (quantity <= 0) {
             throw new InvalidQuantityException();
         }
 
@@ -731,13 +770,12 @@ public class EZShop implements EZShopInterface {
         }
 
         //Create order in db
-        try{
-            QueryBuilder<Order, Integer> orderQueryBuilder = orderDao.queryBuilder();
+        try {
             Order order = new Order(productCode, quantity, pricePerUnit);
             orderDao.create(order);
             orderId = order.getOrderId();
 
-        }catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -752,19 +790,17 @@ public class EZShop implements EZShopInterface {
      * This method affects the balance of the system.
      * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
      *
-     * @param productCode the code of the product to be ordered
-     * @param quantity the quantity of product to be ordered
+     * @param productCode  the code of the product to be ordered
+     * @param quantity     the quantity of product to be ordered
      * @param pricePerUnit the price to correspond to the supplier (!= than the resale price of the shop) per unit of
      *                     product
-     *
-     * @return  the id of the order (> 0)
-     *          -1 if the product does not exists, if the balance is not enough to satisfy the order, if there are some
-     *          problems with the db
-     *
-     * @throws InvalidProductCodeException if the productCode is not a valid bar code, if it is null or if it is empty
-     * @throws InvalidQuantityException if the quantity is less than or equal to 0
+     * @return the id of the order (> 0)
+     * -1 if the product does not exists, if the balance is not enough to satisfy the order, if there are some
+     * problems with the db
+     * @throws InvalidProductCodeException  if the productCode is not a valid bar code, if it is null or if it is empty
+     * @throws InvalidQuantityException     if the quantity is less than or equal to 0
      * @throws InvalidPricePerUnitException if the price per unit of product is less than or equal to 0
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException        if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public Integer payOrderFor(String productCode, int quantity, double pricePerUnit) throws InvalidProductCodeException, InvalidQuantityException, InvalidPricePerUnitException, UnauthorizedException {
@@ -779,7 +815,7 @@ public class EZShop implements EZShopInterface {
         }
 
         //Verify quantity validity
-        if( quantity<= 0){
+        if (quantity <= 0) {
             throw new InvalidQuantityException();
         }
 
@@ -792,9 +828,8 @@ public class EZShop implements EZShopInterface {
         double orderCost = pricePerUnit * quantity;
 
         //Create order in db
-        try{
-            if(Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
-                QueryBuilder<Order, Integer> orderQueryBuilder = orderDao.queryBuilder();
+        try {
+            if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
                 Order order = new Order(productCode, quantity, pricePerUnit);
                 order.setStatus("PAYED");
                 orderDao.create(order);
@@ -803,7 +838,7 @@ public class EZShop implements EZShopInterface {
                 //set the orderId to return
                 orderId = order.getOrderId();
             }
-        }catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -817,12 +852,10 @@ public class EZShop implements EZShopInterface {
      * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
      *
      * @param orderId the id of the order to be ORDERED
-     *
-     * @return  true if the order has been successfully ordered
-     *          false if the order does not exist or if it was not in an ISSUED/ORDERED state
-     *
+     * @return true if the order has been successfully ordered
+     * false if the order does not exist or if it was not in an ISSUED/ORDERED state
      * @throws InvalidOrderIdException if the order id is less than or equal to 0 or if it is null.
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException   if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public boolean payOrder(Integer orderId) throws InvalidOrderIdException, UnauthorizedException {
@@ -832,7 +865,7 @@ public class EZShop implements EZShopInterface {
         boolean isPayed = false;
 
         //check orderId validity
-        if(orderId == null || orderId <= 0 ){
+        if (orderId == null || orderId <= 0) {
             throw new InvalidOrderIdException();
         }
         //search for the order to pay
@@ -841,7 +874,7 @@ public class EZShop implements EZShopInterface {
                 .orElse(null);
 
         try {
-            if(orderToUpdate != null && orderToUpdate.getStatus().equals("ISSUED")) {
+            if (orderToUpdate != null && orderToUpdate.getStatus().equals("ISSUED")) {
 
                 double currentBalance = computeBalance();
                 double orderCost = orderToUpdate.getPricePerUnit() * orderToUpdate.getQuantity();
@@ -873,23 +906,23 @@ public class EZShop implements EZShopInterface {
      * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
      *
      * @param orderId the id of the order that has arrived
-     *
-     * @return  true if the operation was successful
-     *          false if the order does not exist or if it was not in an ORDERED/COMPLETED state
-     *
-     * @throws InvalidOrderIdException if the order id is less than or equal to 0 or if it is null.
+     * @return true if the operation was successful
+     * false if the order does not exist or if it was not in an ORDERED/COMPLETED state
+     * @throws InvalidOrderIdException  if the order id is less than or equal to 0 or if it is null.
      * @throws InvalidLocationException if the ordered product type has not an assigned location.
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException    if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public boolean recordOrderArrival(Integer orderId) throws InvalidOrderIdException, UnauthorizedException, InvalidLocationException {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
 
+        // TODO SHOULD CHECK PRODUCT LOCATION
+
         //return false if the order does not exist or if it was not in an ORDERED/COMPLETED state
         boolean isRecorded = false;
 
         //check orderId validity
-        if(orderId == null || orderId <= 0 ){
+        if (orderId == null || orderId <= 0) {
             throw new InvalidOrderIdException();
         }
 
@@ -900,11 +933,11 @@ public class EZShop implements EZShopInterface {
 
 
         try {
-            if(orderToUpdate != null && orderToUpdate.getStatus().equals("PAYED")) {
+            if (orderToUpdate != null && orderToUpdate.getStatus().equals("PAYED")) {
 
                 ProductType productToUpdate = getProductTypeByBarCode(orderToUpdate.getProductCode());
 
-                if(productToUpdate != null && !productToUpdate.getLocation().isEmpty()) {
+                if (productToUpdate != null && !productToUpdate.getLocation().isEmpty()) {
 
                     updateQuantity(productToUpdate.getId(), orderToUpdate.getQuantity());
 
@@ -948,11 +981,9 @@ public class EZShop implements EZShopInterface {
      * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
      *
      * @param customerName the name of the customer to be registered
-     *
      * @return the id (>0) of the new customer if successful, -1 otherwise
-     *
      * @throws InvalidCustomerNameException if the customer name is empty or null
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException        if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public Integer defineCustomer(String customerName) throws InvalidCustomerNameException, UnauthorizedException {
@@ -973,7 +1004,6 @@ public class EZShop implements EZShopInterface {
 
         // create customer in db
         try {
-            QueryBuilder<Customer, Integer> customerQueryBuilder = customerDao.queryBuilder();
             Customer customer = new Customer(customerName);
             customerDao.create(customer);
             customerId = customer.getId();
@@ -1070,10 +1100,9 @@ public class EZShop implements EZShopInterface {
      *
      * @param id the id of the customer to be deleted
      * @return true if the customer was successfully deleted
-     *          false if the user does not exists or if we have problems to reach the db
-     *
+     * false if the user does not exists or if we have problems to reach the db
      * @throws InvalidCustomerIdException if the id is null, less than or equal to 0.
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException      if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public boolean deleteCustomer(Integer id) throws InvalidCustomerIdException, UnauthorizedException {
@@ -1089,10 +1118,10 @@ public class EZShop implements EZShopInterface {
 
         // delete customer
         try {
-            if(customerDao.idExists(id)) {
+            if (customerDao.idExists(id)) {
                 isDeleted = customerDao.deleteById(id) == 1;
             }
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return isDeleted;
@@ -1103,12 +1132,10 @@ public class EZShop implements EZShopInterface {
      * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
      *
      * @param id the id of the customer
-     *
      * @return the customer with given id
-     *          null if that user does not exists
-     *
+     * null if that user does not exists
      * @throws InvalidCustomerIdException if the id is null, less than or equal to 0.
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException      if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public Customer getCustomer(Integer id) throws InvalidCustomerIdException, UnauthorizedException {
@@ -1136,7 +1163,6 @@ public class EZShop implements EZShopInterface {
      * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
      *
      * @return the list of all the customers registered
-     *
      * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
@@ -1160,19 +1186,31 @@ public class EZShop implements EZShopInterface {
      * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
      *
      * @return the code of a new available card. An empty string if the db is unreachable
-     *
      * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public String createCard() throws UnauthorizedException {
-        String cardCode;
+        String cardCode = null;
+        boolean found = false;
 
         // check privileges
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
-        // create card code
-        long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
-        cardCode = Long.toString(number);
+        while (!found) {
+            // create card code
+            long number = (long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L;
+            cardCode = Long.toString(number);
+
+            // check if card is already attached to any customer
+            QueryBuilder<Customer, Integer> cardFreeQueryBuilder = customerDao.queryBuilder().setCountOf(true);
+            try {
+                // check if card is attached to any customer
+                cardFreeQueryBuilder.where().eq("card", cardCode);
+                found = customerDao.countOf(cardFreeQueryBuilder.prepare()) == 0;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
         return cardCode;
     }
@@ -1183,14 +1221,12 @@ public class EZShop implements EZShopInterface {
      * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
      *
      * @param customerCard the number of the card to be attached to a customer
-     * @param customerId the id of the customer the card should be assigned to
-     *
+     * @param customerId   the id of the customer the card should be assigned to
      * @return true if the operation was successful
-     *          false if the card is already assigned to another user, if there is no customer with given id, if the db is unreachable
-     *
-     * @throws InvalidCustomerIdException if the id is null, less than or equal to 0.
+     * false if the card is already assigned to another user, if there is no customer with given id, if the db is unreachable
+     * @throws InvalidCustomerIdException   if the id is null, less than or equal to 0.
      * @throws InvalidCustomerCardException if the card is null, empty or in an invalid format
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException        if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public boolean attachCardToCustomer(String customerCard, Integer customerId) throws InvalidCustomerIdException, InvalidCustomerCardException, UnauthorizedException {
@@ -1229,16 +1265,14 @@ public class EZShop implements EZShopInterface {
      * <pointsToBeAdded>. The points on a card should always be greater than or equal to 0.
      * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
      *
-     * @param customerCard the card the points should be added to
+     * @param customerCard    the card the points should be added to
      * @param pointsToBeAdded the points to be added or subtracted ( this could assume a negative value)
-     *
      * @return true if the operation is successful
-     *          false   if there is no card with given code,
-     *                  if pointsToBeAdded is negative and there were not enough points on that card before this operation,
-     *                  if we cannot reach the db.
-     *
+     * false   if there is no card with given code,
+     * if pointsToBeAdded is negative and there were not enough points on that card before this operation,
+     * if we cannot reach the db.
      * @throws InvalidCustomerCardException if the card is null, empty or in an invalid format
-     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws UnauthorizedException        if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
     public boolean modifyPointsOnCard(String customerCard, int pointsToBeAdded) throws InvalidCustomerCardException, UnauthorizedException {
@@ -1264,7 +1298,7 @@ public class EZShop implements EZShopInterface {
             customerFreeQueryBuilder.where().eq("card", customerCard);
             isCardAvailable = customerDao.countOf(customerFreeQueryBuilder.prepare()) == 1;
 
-            if(isCardAvailable) {
+            if (isCardAvailable) {
                 // query for customer card
                 customer = customerDao.queryForEq("card", customerCard).get(0);
                 initPoints = customer.getPoints();
@@ -1347,54 +1381,273 @@ public class EZShop implements EZShopInterface {
             throw new InvalidTransactionIdException();
         }
 
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode)) {
+            throw new InvalidProductCodeException();
+        }
+
         // Verify amount validity (I included zero as it makes no sense excluding it)
         if (amount <= 0) {
             throw new InvalidQuantityException();
         }
 
-        boolean isRecordAdded = false;
+        SaleTransaction transaction = getOngoingTransactionById(transactionId);
 
-        SaleTransaction transaction = ongoingTransaction;
-        if (transaction == null || !transaction.getId().equals(transactionId)) {
-            // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
+        if (transaction == null || transaction.getStatus() != SaleTransaction.StatusEnum.STARTED) {
+            // No valid transaction found
+            return false;
         }
 
-        if (transaction != null) {
-            try {
-                QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
-                ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
+        boolean isAdded = false;
+        try {
 
-                if (product == null) {
-                    throw new InvalidProductCodeException();
-                }
+            isAdded = TransactionManager.callInTransaction(connectionSource,
+                    () -> {
+                        QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
+                        ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
 
-                // TODO VERIFY SUFFICIENT PRODUCT AVAILABILITY
+                        if (product == null) {
+                            // No valid product found
+                            return false;
+                        }
 
-                // TODO ADD DB TRANSACTION
-                isRecordAdded = transaction.addSaleTransactionRecord(product, amount);
-                if (isRecordAdded) {
-                    transaction.refreshAmount();
-                    saleTransactionDao.update(transaction);
-                }
+                        ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+
+                        Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                record -> record.getBarCode().equals(productCode)
+                        ).findFirst();
+
+                        if (optionalRecord.isPresent()) {
+                            SaleTransactionRecord existingRecord = optionalRecord.get();
+
+                            // There is an existing record for input product, updating it
+                            int amountAlreadyInTransaction = existingRecord.getAmount();
+
+                            if (product.getQuantity() < amountAlreadyInTransaction + amount) {
+                                // Not enough products to fulfill
+                                return false;
+                            }
+
+                            // There is an existing record for input product, increasing quantity
+                            existingRecord.setAmount(amountAlreadyInTransaction + amount);
+                            existingRecord.refreshTotalPrice();
+
+                            // Update record
+                            transactionRecords.update(existingRecord);
+
+                        } else {
+                            // No existing record for input product, creating a new one
+
+                            if (product.getQuantity() < amount) {
+                                // Not enough products to fulfill
+                                return false;
+                            }
+
+                            SaleTransactionRecord newRecord = new SaleTransactionRecord(transaction, product, amount);
+
+                            // Add new record
+                            transactionRecords.add(newRecord);
+                        }
 
 
-            } catch (SQLException e) {
-                e.printStackTrace();
-                isRecordAdded = false;
-            }
+                        transaction.refreshAmount();
+
+                        saleTransactionDao.update(transaction);
+                        ongoingTransaction = transaction;
+
+                        return true;
+                    });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        return isRecordAdded;
+        return isAdded;
     }
 
+    /**
+     * This method deletes a product from a sale transaction increasing the temporary amount of product available on the
+     * shelves for other customers.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the Sale transaction
+     * @param productCode   the barcode of the product to be deleted
+     * @param amount        the quantity of product to be deleted
+     * @return true if the operation is successful
+     * false   if the product code does not exist,
+     * if the quantity of product cannot satisfy the request,
+     * if the transaction id does not identify a started and open transaction.
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws InvalidProductCodeException   if the product code is empty, null or invalid
+     * @throws InvalidQuantityException      if the quantity is less than 0
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean deleteProductFromSale(Integer transactionId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
-        return false;
+        System.out.println("[DEV] deleteProductFromSale(" + transactionId + "," + productCode + "," + amount + ")");
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode)) {
+            throw new InvalidProductCodeException();
+        }
+
+        // Verify amount validity (I included zero as it makes no sense excluding it)
+        if (amount <= 0) {
+            throw new InvalidQuantityException();
+        }
+
+        SaleTransaction transaction = getOngoingTransactionById(transactionId);
+
+        if (transaction == null || transaction.getStatus() != SaleTransaction.StatusEnum.STARTED) {
+            // No valid transaction found
+            return false;
+        }
+
+        boolean isRemoved = false;
+        try {
+
+            isRemoved = TransactionManager.callInTransaction(connectionSource,
+                    () -> {
+                        QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
+                        ProductType product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
+
+                        if (product == null) {
+                            // No valid product found
+                            return false;
+                        }
+
+                        ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+
+                        Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                record -> record.getBarCode().equals(productCode)
+                        ).findFirst();
+
+                        if (!optionalRecord.isPresent()) {
+                            // No transaction record for this product
+                            return false;
+                        }
+
+                        SaleTransactionRecord existingRecord = optionalRecord.get();
+
+                        int amountAlreadyInTransaction = existingRecord.getAmount();
+
+                        if (amount > amountAlreadyInTransaction) {
+                            // The quantity cannot satisfy the request
+                            return false;
+                        } else if (amount == amountAlreadyInTransaction) {
+
+                            // Remove record
+                            transactionRecords.remove(existingRecord);
+                        } else {
+                            existingRecord.setAmount(amountAlreadyInTransaction - amount);
+                            existingRecord.refreshTotalPrice();
+
+                            // Update record
+                            transactionRecords.update(existingRecord);
+                        }
+
+                        transaction.setRecords(transactionRecords);
+                        transaction.refreshAmount();
+
+                        saleTransactionDao.update(transaction);
+                        ongoingTransaction = transaction;
+
+                        return true;
+                    });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isRemoved;
     }
 
+    /**
+     * This method applies a discount rate to all units of a product type with given type in a sale transaction. The
+     * discount rate should be greater than or equal to 0 and less than 1.
+     * The sale transaction should be started and open.
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param transactionId the id of the Sale transaction
+     * @param productCode   the barcode of the product to be discounted
+     * @param discountRate  the discount rate of the product
+     * @return true if the operation is successful
+     * false   if the product code does not exist,
+     * if the transaction id does not identify a started and open transaction.
+     * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
+     * @throws InvalidProductCodeException   if the product code is empty, null or invalid
+     * @throws InvalidDiscountRateException  if the discount rate is less than 0 or if it greater than or equal to 1.00
+     * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
     public boolean applyDiscountRateToProduct(Integer transactionId, String productCode, double discountRate) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidDiscountRateException, UnauthorizedException {
-        return false;
+        System.out.println("[DEV] applyDiscountRateToProduct(" + transactionId + "," + productCode + "," + discountRate + ")");
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Verify id validity
+        if (transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode)) {
+            throw new InvalidProductCodeException();
+        }
+
+        // Verify discountRate validity
+        if (discountRate < 0 || discountRate >= 1) {
+            throw new InvalidDiscountRateException();
+        }
+
+        SaleTransaction transaction = getOngoingTransactionById(transactionId);
+
+        if (transaction == null || transaction.getStatus() != SaleTransaction.StatusEnum.STARTED) {
+            // No valid transaction found
+            return false;
+        }
+
+        boolean isDiscounted = false;
+        try {
+
+            isDiscounted = TransactionManager.callInTransaction(connectionSource,
+                    () -> {
+                        ForeignCollection<SaleTransactionRecord> transactionRecords = transaction.getRecords();
+
+                        Optional<SaleTransactionRecord> optionalRecord = transactionRecords.stream().filter(
+                                record -> record.getBarCode().equals(productCode)
+                        ).findFirst();
+
+                        if (!optionalRecord.isPresent()) {
+                            // No transaction record for this product
+                            return false;
+                        }
+
+                        SaleTransactionRecord existingRecord = optionalRecord.get();
+
+                        existingRecord.setDiscountRate(discountRate);
+                        existingRecord.refreshTotalPrice();
+
+                        transactionRecords.update(existingRecord);
+
+                        transaction.setRecords(transactionRecords);
+                        transaction.refreshAmount();
+
+                        saleTransactionDao.update(transaction);
+                        ongoingTransaction = transaction;
+
+                        return true;
+                    });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return isDiscounted;
     }
 
     /**
@@ -1430,13 +1683,10 @@ public class EZShop implements EZShopInterface {
 
         boolean isDiscountApplied = false;
 
-        SaleTransaction transaction = ongoingTransaction;
-        if (transaction == null || !transaction.getId().equals(transactionId)) {
-            // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
-        }
+        SaleTransaction transaction = getOngoingTransactionById(transactionId);
 
         if (transaction != null) {
-            transaction.setDiscountRateAmount(discountRate);
+            transaction.setDiscountRate(discountRate);
             transaction.refreshAmount();
 
             try {
@@ -1514,11 +1764,7 @@ public class EZShop implements EZShopInterface {
 
         boolean transactionStatusChanged = false;
 
-        SaleTransaction ongoingTransaction = this.ongoingTransaction;
-
-        if (ongoingTransaction == null || !ongoingTransaction.getId().equals(transactionId)) {
-            // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
-        }
+        SaleTransaction ongoingTransaction = getOngoingTransactionById(transactionId);
 
         if (ongoingTransaction != null && ongoingTransaction.getStatus() == SaleTransaction.StatusEnum.STARTED) {
             // Close the transaction
@@ -1627,11 +1873,11 @@ public class EZShop implements EZShopInterface {
 
         Integer returnId = -1;
 
-        if (saleNumber == null || saleNumber<=0) throw new InvalidTransactionIdException();
+        if (saleNumber == null || saleNumber <= 0) throw new InvalidTransactionIdException();
 
         SaleTransaction transaction = getSaleTransaction(saleNumber);
 
-        if (transaction !=null){
+        if (transaction != null) {
             ReturnTransaction newReturnTransaction = new ReturnTransaction(saleNumber);
 
             try {
@@ -1639,9 +1885,8 @@ public class EZShop implements EZShopInterface {
                 returnTransactionDao.assignEmptyForeignCollection(newReturnTransaction, "records");
                 returnId = newReturnTransaction.getReturnId();
 
+            } catch (SQLException e) {
                 ongoingReturnTransaction = newReturnTransaction;
-
-            }catch (SQLException e) {
                 e.printStackTrace();
             }
         }
@@ -1656,36 +1901,37 @@ public class EZShop implements EZShopInterface {
 
         boolean productadded = false;
 
-        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
-        if ( productCode==null || productCode.isEmpty() || !validateBarcode(productCode)) throw new InvalidProductCodeException();
-        if (amount<=0 ) throw new InvalidQuantityException();
+        if (returnId == null || returnId <= 0) throw new InvalidTransactionIdException();
+        if (productCode == null || productCode.isEmpty() || !validateBarcode(productCode))
+            throw new InvalidProductCodeException();
+        if (amount <= 0) throw new InvalidQuantityException();
 
 
         ProductType product = getProductTypeByBarCode(productCode);
-        if (product== null) return false;
+        if (product == null) return false;
 
-        ReturnTransaction returnTransaction = getReturnTransaction (returnId);
-        if (returnTransaction ==null) return false;
+        ReturnTransaction returnTransaction = getReturnTransaction(returnId);
+        if (returnTransaction == null) return false;
 
         SaleTransaction transaction = getSaleTransaction(returnTransaction.getTicketNumber());
         if (transaction == null) return false;
 
-        for (TicketEntry salerecord : transaction.getEntries()){
+        for (TicketEntry salerecord : transaction.getEntries()) {
 
             if (salerecord.getBarCode().equals(productCode)) {
 
-                int saleAmount= salerecord.getAmount();
-                if (amount> saleAmount) return false;
+                int saleAmount = salerecord.getAmount();
+                if (amount > saleAmount) return false;
 
                 try {
                     ReturnTransactionRecord returnRecord = new ReturnTransactionRecord(product, amount, product.getPricePerUnit()*amount);
                     productadded= returnTransaction.addReturnTransactionRecord(returnRecord);
 
-                    if (productadded){
+                    if (productadded) {
                         returnTransactionDao.update(returnTransaction);
                     }
                 } catch (SQLException e) {
-                e.printStackTrace();
+                    e.printStackTrace();
 
                 }
                 return productadded;
@@ -1818,22 +2064,31 @@ public class EZShop implements EZShopInterface {
         // Validate and retrieve transaction by id
         SaleTransaction transaction = getSaleTransaction(transactionId);
 
-        if (transaction != null) {
-            if (cash >= transaction.getAmount()) {
-                transaction.setCash(cash);
-                double change = cash - transaction.getAmount();
-                transaction.setChange(change);
-                transaction.setStatus(SaleTransaction.StatusEnum.PAID);
-                transaction.setPaymentType("cash");
+        if (transaction != null && cash >= transaction.getAmount()) {
+            transaction.setCash(cash);
+            double change = cash - transaction.getAmount();
+            transaction.setChange(change);
+            transaction.setStatus(SaleTransaction.StatusEnum.PAID);
+            transaction.setPaymentType("cash");
 
-                try {
-                    saleTransactionDao.update(transaction);
+            try {
+                TransactionManager.callInTransaction(connectionSource,
+                        () -> {
+                            saleTransactionDao.update(transaction);
 
-                    // TODO UPDATE DAILY BALANCEOPERATION
-                    returnChange = change;
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                            updateInventoryByPaidTransaction(transaction);
+
+                            BalanceOperation balanceOperation = new BalanceOperation(transaction.getAmount());
+                            balanceOperationDao.create(balanceOperation);
+
+                            return null;
+                        });
+
+                returnChange = change;
+                ongoingTransaction = null;
+
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
 
@@ -1865,7 +2120,6 @@ public class EZShop implements EZShopInterface {
 
         System.out.println("[DEV] receiveCreditCardPayment(" + transactionId + ", " + creditCard + ")");
 
-
         boolean isSuccessful = false;
 
         // Validate credit card
@@ -1876,15 +2130,37 @@ public class EZShop implements EZShopInterface {
         // Validate and retrieve transaction by id
         SaleTransaction transaction = getSaleTransaction(transactionId);
 
-        // TODO CHECK IF CREDIT CARD IS REGISTERED && HAS ENOUGH MONEY
-
-        transaction.setPaymentType("card");
-        transaction.setCreditCard(creditCard);
-        transaction.setStatus(SaleTransaction.StatusEnum.PAID);
-
         try {
-            saleTransactionDao.update(transaction);
-            // TODO UPDATE DAILY BALANCEOPERATION
+
+            // Retrieve credit card
+            CreditCard card = creditCardDao.queryForId(creditCard);
+
+            if (card == null || card.getAmount() < transaction.getAmount()) {
+                // Card is not registered or has not enough money
+                return false;
+            }
+
+            transaction.setPaymentType("card");
+            transaction.setCreditCard(card);
+            transaction.setStatus(SaleTransaction.StatusEnum.PAID);
+
+            TransactionManager.callInTransaction(connectionSource,
+                    () -> {
+                        saleTransactionDao.update(transaction);
+
+                        updateInventoryByPaidTransaction(transaction);
+
+                        double balanceChange = transaction.getAmount();
+
+                        BalanceOperation balanceOperation = new BalanceOperation(balanceChange);
+                        balanceOperationDao.create(balanceOperation);
+
+                        // Reduce credit card balance
+                        card.setAmount(card.getAmount() - balanceChange);
+                        creditCardDao.update(card);
+
+                        return null;
+                    });
 
             isSuccessful = true;
             this.ongoingTransaction = null;
@@ -1966,9 +2242,8 @@ public class EZShop implements EZShopInterface {
      *
      * @param toBeAdded the amount of money (positive or negative) to be added to the current balance. If this value
      *                  is >= 0 than it should be considered as a CREDIT, if it is < 0 as a DEBIT
-     *
-     * @return  true if the balance has been successfully updated
-     *          false if toBeAdded + currentBalance < 0.
+     * @return true if the balance has been successfully updated
+     * false if toBeAdded + currentBalance < 0.
      * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
@@ -1979,14 +2254,13 @@ public class EZShop implements EZShopInterface {
 
         double currentBalance = computeBalance();
 
-        try{
-            if(currentBalance + toBeAdded >= 0){
-                QueryBuilder<BalanceOperation, Integer> balanceOperationQueryBuilder = balanceOperationDao.queryBuilder();
+        try {
+            if (currentBalance + toBeAdded >= 0) {
                 BalanceOperation balanceOperation = new BalanceOperation(toBeAdded);
                 balanceOperationDao.create(balanceOperation);
                 isUpdated = true;
             }
-        }catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -2004,15 +2278,15 @@ public class EZShop implements EZShopInterface {
         // get order list
         try {
 
-            if(from == null && to == null) {
+            if (from == null && to == null) {
                 balanceList.addAll(balanceOperationDao.queryForAll());
-            }else if(from == null) {
+            } else if (from == null) {
                 balanceList.addAll(balanceOperationDao.queryBuilder().where().
                         le("date_string", java.sql.Date.valueOf(to)).query());
-            }else if(to == null){
+            } else if (to == null) {
                 balanceList.addAll(balanceOperationDao.queryBuilder().where().
                         ge("date_string", java.sql.Date.valueOf(from)).query());
-            }else{
+            } else {
                 balanceList.addAll(balanceOperationDao.queryBuilder().where().
                         ge("date_string", java.sql.Date.valueOf(from)).
                         and().le("date_string", java.sql.Date.valueOf(to)).query());
@@ -2029,13 +2303,13 @@ public class EZShop implements EZShopInterface {
     public double computeBalance() throws UnauthorizedException {
         // check privileges
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
-        
+
         double currentBalance = 0.0;
 
         //currentBalance = balanceOperationDao.queryRawValue("select sum(money) from balance_operations");
 
-        for(int i=0; i<getCreditsAndDebits(null,null).size(); i++){
-             currentBalance += getCreditsAndDebits(null,null).get(i).getMoney();
+        for (int i = 0; i < getCreditsAndDebits(null, null).size(); i++) {
+            currentBalance += getCreditsAndDebits(null, null).get(i).getMoney();
         }
 
         return currentBalance;
@@ -2051,18 +2325,16 @@ public class EZShop implements EZShopInterface {
         String hashedPassword = null;
         try {
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-            hashedPassword  = byteToHex(sha1.digest(password.getBytes(StandardCharsets.UTF_8)));
-        }
-        catch(NoSuchAlgorithmException e) {
+            hashedPassword = byteToHex(sha1.digest(password.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         return hashedPassword;
     }
 
-    private String byteToHex(final byte[] hash){
+    private String byteToHex(final byte[] hash) {
         Formatter formatter = new Formatter();
-        for (byte b : hash)
-        {
+        for (byte b : hash) {
             formatter.format("%02x", b);
         }
         String result = formatter.toString();
@@ -2128,4 +2400,69 @@ public class EZShop implements EZShopInterface {
         return check == last;
     }
 
+
+    /**
+     * Retrieve the ongoing_transaction (taken from this.ongoingTransaction if compatible, else from DB)
+     * <p>
+     * As a side effect, update this.ongoingTransaction with the last requested transaction
+     *
+     * @param transactionId The id provided by the GUI method
+     * @return the requested SaleTransaction or null
+     */
+    public SaleTransaction getOngoingTransactionById(Integer transactionId) {
+
+        SaleTransaction returnTransaction = null;
+
+        if (transactionId.equals(ongoingTransaction.getId())) {
+            returnTransaction = ongoingTransaction;
+        } else {
+            try {
+                returnTransaction = saleTransactionDao.queryForId(transactionId);
+
+                if (returnTransaction != null) {
+                    this.ongoingTransaction = returnTransaction;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return returnTransaction;
+    }
+
+    /**
+     * Decreases the inventory availability by the sold amount
+     *
+     * @param transaction The transaction we are updating
+     */
+    private void updateInventoryByPaidTransaction(SaleTransaction transaction) throws SQLException {
+        for (SaleTransactionRecord record : transaction.getRecords()) {
+            ProductType product = record.getProductType();
+            product.setQuantity(product.getQuantity() - record.getAmount());
+            productTypeDao.update(product);
+        }
+
+    }
+
+    private void loadCreditCardsFromUtils() throws IOException {
+
+        Stream<String> lines = Files.lines(Paths.get(CREDIT_CARDS_FILE_PATH), Charset.defaultCharset());
+
+        lines.skip(3)
+                .forEachOrdered(line -> {
+                    if (!line.startsWith("#")) loadCreditCard(line);
+                });
+    }
+
+    private void loadCreditCard(String line) {
+        String[] lineParts = line.split(";");
+        CreditCard card = new CreditCard(lineParts[0], Double.parseDouble(lineParts[1]));
+
+        try {
+            if(!creditCardDao.idExists(card.getCode()))
+            creditCardDao.create(card);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
