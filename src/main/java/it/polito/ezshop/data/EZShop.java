@@ -1858,7 +1858,7 @@ public class EZShop implements EZShopInterface {
             QueryBuilder<SaleTransaction, Integer> closedTransactionByIdQueryBuilder = saleTransactionDao.queryBuilder();
 
             closedTransactionByIdQueryBuilder.where().eq("id", transactionId)
-                    .and().eq("status", SaleTransaction.StatusEnum.CLOSED);
+                    .and().ne("status", SaleTransaction.StatusEnum.STARTED);
 
             returnTransaction = closedTransactionByIdQueryBuilder.queryForFirst();
 
@@ -1882,7 +1882,8 @@ public class EZShop implements EZShopInterface {
 
         SaleTransaction transaction = getSaleTransaction(saleNumber);
 
-        if (transaction != null) {
+        if (transaction != null || transaction.getStatus() == SaleTransaction.StatusEnum.PAID) {
+
             ReturnTransaction newReturnTransaction = new ReturnTransaction(saleNumber);
 
             try {
@@ -1890,12 +1891,11 @@ public class EZShop implements EZShopInterface {
                 returnTransactionDao.assignEmptyForeignCollection(newReturnTransaction, "records");
                 returnId = newReturnTransaction.getReturnId();
 
-            } catch (SQLException e) {
                 ongoingReturnTransaction = newReturnTransaction;
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-
         return returnId;
     }
 
@@ -1929,11 +1929,18 @@ public class EZShop implements EZShopInterface {
                 if (amount > saleAmount) return false;
 
                 try {
+
+                    ForeignCollection<ReturnTransactionRecord> returntransactionRecords = returnTransaction.getReturnRecords();
+                    double oldreturnvalue= returnTransaction.getReturnValue();
+
                     ReturnTransactionRecord returnRecord = new ReturnTransactionRecord(product, amount, product.getPricePerUnit()*amount);
-                    productadded= returnTransaction.addReturnTransactionRecord(returnRecord);
+                    productadded= returntransactionRecords.add(returnRecord);
 
                     if (productadded) {
+
+                        returnTransaction.setReturnValue(oldreturnvalue+ returnRecord.getTotalPrice());
                         returnTransactionDao.update(returnTransaction);
+                        ongoingReturnTransaction=returnTransaction;
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -1980,11 +1987,12 @@ public class EZShop implements EZShopInterface {
             ongoingReturnTransaction.setStatus(ReturnTransaction.StatusEnum.CLOSED);
             transactionStatusChanged = true;
 
+
             if (commit){
                 try {
                     SaleTransaction transaction = getSaleTransaction(ongoingReturnTransaction.getTicketNumber());
                     if (transaction != null){
-                        ongoingReturnTransaction.getRecords().forEach((p) ->{
+                        ongoingReturnTransaction.getReturnRecords().forEach((p) ->{
                             transaction.updateSaleTransactionRecord(p.getProductType(), -(p.getQuantity()));
                         });
                         saleTransactionDao.update(transaction);
@@ -2017,7 +2025,7 @@ public class EZShop implements EZShopInterface {
             if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
                 SaleTransaction transaction = getSaleTransaction(ongoingReturnTransaction.getTicketNumber());
                 if (transaction != null){
-                    ongoingReturnTransaction.getRecords().forEach((p) ->{
+                    ongoingReturnTransaction.getReturnRecords().forEach((p) ->{
                         transaction.updateSaleTransactionRecord(p.getProductType(), p.getQuantity());
                     });
                     saleTransactionDao.update(transaction);

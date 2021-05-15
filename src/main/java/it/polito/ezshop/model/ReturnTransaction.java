@@ -71,9 +71,8 @@ public class ReturnTransaction implements it.polito.ezshop.data.ReturnTransactio
         this.returnValue = returnValue;
     }
 
-
-    public List<ReturnEntry> getRecords() {
-        return new ArrayList<>(this.records);
+    public ForeignCollection<ReturnTransactionRecord> getReturnRecords() {
+        return this.records;
     }
 
     /* @Override
