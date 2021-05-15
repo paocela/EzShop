@@ -98,15 +98,14 @@ public class EZShop implements EZShopInterface {
         // need to remove entries from db tables sale_transactions, sale_transaction_records, return_transaction,
         // return_transaction_records, products, balance_operations
         try {
-            // TODO REMOVE COMMENT FROM RETURN TRANSACTIONS LINES
             DeleteBuilder<SaleTransaction, Integer> saleTransactionDeleteBuilder = saleTransactionDao.deleteBuilder();
             saleTransactionDeleteBuilder.delete();
             DeleteBuilder<SaleTransactionRecord, Integer> saleTransactionRecordDeleteBuilder = saleTransactionRecordDao.deleteBuilder();
             saleTransactionRecordDeleteBuilder.delete();
-            //DeleteBuilder<ReturnTransaction, Integer> returnTransactionDeleteBuilder = returnTransactionDao.deleteBuilder();
-            //returnTransactionDeleteBuilder.delete();
-            //DeleteBuilder<ReturnTransactionRecord, Integer> ReturnTransactionRecordDeleteBuilder = saleTransactionDao.deleteBuilder();
-            //deleteBuilder.delete();
+            DeleteBuilder<ReturnTransaction, Integer> returnTransactionDeleteBuilder = returnTransactionDao.deleteBuilder();
+            returnTransactionDeleteBuilder.delete();
+            DeleteBuilder<ReturnTransactionRecord, Integer> ReturnTransactionRecordDeleteBuilder = returnTransactionRecordDao.deleteBuilder();
+            ReturnTransactionRecordDeleteBuilder.delete();
             DeleteBuilder<ProductType, Integer> ProductTypeDeleteBuilder = productTypeDao.deleteBuilder();
             ProductTypeDeleteBuilder.delete();
             DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
