@@ -26,11 +26,13 @@ Version: 1.0
     to start tests
     >
 
-- hashPassword
-- byteToHex
-- validateCreditCard
-- validateBarcode
-- refreshTotalPrice
+- EZShop::hashPassword
+- EZShop::byteToHex
+- EZShop::validateCreditCard
+- EZShop::validateBarcode
+- SaleTransactionRecord::refreshTotalPrice
+- SaleTransaction::refreshAmount
+
 
  ### **Class *EZShop* - method *hashPassword***
 
