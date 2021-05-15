@@ -1935,9 +1935,10 @@ public class EZShop implements EZShopInterface {
                 try {
                     SaleTransaction transaction = getSaleTransaction(ongoingReturnTransaction.getTicketNumber());
                     if (transaction != null){
-                        ongoingReturnTransaction.getReturnRecords().forEach((p) ->{
-                            //transaction.removeProductFromRecords(p.getProductType(), -(p.getQuantity()));
-                        });
+
+                        for (ReturnTransactionRecord p : ongoingReturnTransaction.getReturnRecords()){
+                            transaction.removeProductFromRecords(p.getProductType(), p.getQuantity());
+                        }
                         saleTransactionDao.update(transaction);
                         returnTransactionDao.update(ongoingReturnTransaction);
                     }
@@ -1968,9 +1969,9 @@ public class EZShop implements EZShopInterface {
             if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
                 SaleTransaction transaction = getSaleTransaction(ongoingReturnTransaction.getTicketNumber());
                 if (transaction != null){
-                    ongoingReturnTransaction.getReturnRecords().forEach((p) ->{
-                        //transaction.addProductToRecords(p.getProductType(), p.getQuantity());
-                    });
+                    for (ReturnTransactionRecord p : ongoingReturnTransaction.getReturnRecords()){
+                        transaction.addProductToRecords(p.getProductType(), p.getQuantity());
+                    }
                     saleTransactionDao.update(transaction);
                     if (returnTransactionDao.deleteById(returnId)==1) isDeleted=true;
                 }
