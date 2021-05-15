@@ -44,6 +44,7 @@ public class EZShop implements EZShopInterface {
 
     private User userLogged = null;
     private SaleTransaction ongoingTransaction = null;
+    private ReturnTransaction ongoingReturnTransaction = null;
 
     public EZShop() {
         try {
@@ -56,6 +57,7 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, SaleTransactionRecord.class);
             TableUtils.createTableIfNotExists(connectionSource, ReturnTransaction.class);
             TableUtils.createTableIfNotExists(connectionSource, ReturnTransactionRecord.class);
+
             TableUtils.createTableIfNotExists(connectionSource, Order.class);
             TableUtils.createTableIfNotExists(connectionSource, BalanceOperation.class);
 
@@ -282,6 +284,7 @@ public class EZShop implements EZShopInterface {
      */
     @Override
     public it.polito.ezshop.data.User login(String username, String password) throws InvalidUsernameException, InvalidPasswordException {
+
 
         User returnUser = null;
 
@@ -1618,6 +1621,8 @@ public class EZShop implements EZShopInterface {
     @Override
     public Integer startReturnTransaction(Integer saleNumber) throws /*InvalidTicketNumberException,*/InvalidTransactionIdException, UnauthorizedException {
 
+        System.out.println("[DEV] startReturnTransaction()");
+
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
         Integer returnId = -1;
@@ -1633,6 +1638,8 @@ public class EZShop implements EZShopInterface {
                 returnTransactionDao.create(newReturnTransaction);
                 returnTransactionDao.assignEmptyForeignCollection(newReturnTransaction, "records");
                 returnId = newReturnTransaction.getReturnId();
+
+                ongoingReturnTransaction = newReturnTransaction;
 
             }catch (SQLException e) {
                 e.printStackTrace();
@@ -1671,7 +1678,7 @@ public class EZShop implements EZShopInterface {
                 if (amount> saleAmount) return false;
 
                 try {
-                    ReturnTransactionRecord returnRecord = new it.polito.ezshop.model.ReturnTransactionRecord(productCode, amount, product.getPricePerUnit()*amount);
+                    ReturnTransactionRecord returnRecord = new ReturnTransactionRecord(product, amount, product.getPricePerUnit()*amount);
                     productadded= returnTransaction.addReturnTransactionRecord(returnRecord);
 
                     if (productadded){
@@ -1704,12 +1711,81 @@ public class EZShop implements EZShopInterface {
 
     @Override
     public boolean endReturnTransaction(Integer returnId, boolean commit) throws InvalidTransactionIdException, UnauthorizedException {
-        return false;
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+
+        boolean transactionStatusChanged = false;
+
+        ReturnTransaction ongoingReturnTransaction = this.ongoingReturnTransaction;
+
+        if (ongoingReturnTransaction == null || !ongoingReturnTransaction.getReturnId().equals(returnId)) {
+            // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
+        }
+
+        if (ongoingReturnTransaction != null && ongoingReturnTransaction.getStatus() == ReturnTransaction.StatusEnum.STARTED) {
+            // Close the transaction
+            ongoingReturnTransaction.setStatus(ReturnTransaction.StatusEnum.CLOSED);
+            transactionStatusChanged = true;
+
+            if (commit){
+                try {
+                    SaleTransaction transaction = getSaleTransaction(ongoingReturnTransaction.getTicketNumber());
+                    if (transaction != null){
+                        ongoingReturnTransaction.getRecords().forEach((p) ->{
+                            transaction.updateSaleTransactionRecord(p.getProductType(), -(p.getQuantity()));
+                        });
+                        saleTransactionDao.update(transaction);
+                        returnTransactionDao.update(ongoingReturnTransaction);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+        }
+
+        return transactionStatusChanged;
     }
 
     @Override
     public boolean deleteReturnTransaction(Integer returnId) throws InvalidTransactionIdException, UnauthorizedException {
-        return false;
+        System.out.println("[DEV] deleteReturnTransaction(" + returnId + ")");
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+
+        boolean isDeleted = false;
+
+        try {
+
+            ReturnTransaction returnTransaction = returnTransactionDao.queryForId(returnId);
+
+            if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
+                SaleTransaction transaction = getSaleTransaction(ongoingReturnTransaction.getTicketNumber());
+                if (transaction != null){
+                    ongoingReturnTransaction.getRecords().forEach((p) ->{
+                        transaction.updateSaleTransactionRecord(p.getProductType(), p.getQuantity());
+                    });
+                    saleTransactionDao.update(transaction);
+                    if (returnTransactionDao.deleteById(returnId)==1) isDeleted=true;
+                }
+            }
+
+            // Unset the ongoing returntransaction if it is the deleted one
+            if (isDeleted && ongoingReturnTransaction.getReturnId().equals(returnId)) {
+                ongoingReturnTransaction = null;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return isDeleted;
+
     }
 
     /**
@@ -1821,12 +1897,65 @@ public class EZShop implements EZShopInterface {
 
     @Override
     public double returnCashPayment(Integer returnId) throws InvalidTransactionIdException, UnauthorizedException {
-        return 0;
+
+        System.out.println("[DEV] returnCashPayment(" + returnId );
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        double returncash=-1;
+
+        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+
+        ReturnTransaction returnTransaction= getReturnTransaction(returnId);
+        if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
+            returncash= returnTransaction.getReturnValue();
+            returnTransaction.setStatus(ReturnTransaction.StatusEnum.PAID);
+            try{
+                returnTransactionDao.update(returnTransaction);
+
+                // TODO UPDATE DAILY BALANCEOPERATION
+
+            }catch (SQLException e) {
+                e.printStackTrace();
+                return -1;
+            }
+        }
+        return returncash;
     }
 
     @Override
     public double returnCreditCardPayment(Integer returnId, String creditCard) throws InvalidTransactionIdException, InvalidCreditCardException, UnauthorizedException {
-        return 0;
+        System.out.println("[DEV] returnCreditCardPayment(" + returnId );
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        // Validate credit card
+        if (creditCard == null || creditCard.isEmpty() || !validateCreditCard(creditCard)) {
+            throw new InvalidCreditCardException();
+        }
+
+        // TODO CHECK IF CREDIT CARD IS REGISTERED
+
+
+        double returncash=-1;
+
+        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+
+        ReturnTransaction returnTransaction= getReturnTransaction(returnId);
+        if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
+            returncash= returnTransaction.getReturnValue();
+            returnTransaction.setStatus(ReturnTransaction.StatusEnum.PAID);
+            try{
+                returnTransactionDao.update(returnTransaction);
+
+                // TODO UPDATE DAILY BALANCEOPERATION
+
+            }catch (SQLException e) {
+                e.printStackTrace();
+                return -1;
+            }
+        }
+        return returncash;
     }
 
     /**

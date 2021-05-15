@@ -3,15 +3,17 @@ package it.polito.ezshop.model;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import it.polito.ezshop.data.ReturnEntry;
+
 
 @DatabaseTable(tableName = "return_transaction_records")
-public class ReturnTransactionRecord implements it.polito.ezshop.data.ReturnTransactionRecord {
+public class ReturnTransactionRecord implements ReturnEntry {
 
     @DatabaseField(generatedId = true)
     private Integer recordId;
 
-    @DatabaseField(canBeNull = false)
-    private String productId;
+    @DatabaseField(canBeNull = false, foreign = true, columnName = "product_type_id", foreignAutoRefresh = true)
+    private ProductType productType;
 
     @DatabaseField(canBeNull = false)
     private int quantity;
@@ -19,11 +21,14 @@ public class ReturnTransactionRecord implements it.polito.ezshop.data.ReturnTran
     @DatabaseField(canBeNull = false)
     private double totalPrice;
 
+    @DatabaseField(canBeNull = false, foreign = true, columnName = "return_transaction_id")
+    private ReturnTransaction returnTransaction;
+
     public ReturnTransactionRecord() {
     }
 
-    public ReturnTransactionRecord(String productId, int quantity, double totalPrice) {
-        this.productId = productId;
+    public ReturnTransactionRecord(ProductType productType, int quantity, double totalPrice) {
+        this.productType = productType;
         this.quantity = quantity;
         this.totalPrice = totalPrice;
     }
@@ -39,13 +44,13 @@ public class ReturnTransactionRecord implements it.polito.ezshop.data.ReturnTran
     }
 
     @Override
-    public String getProductId() {
-        return productId;
+    public ProductType getProductType() {
+        return productType;
     }
 
     @Override
-    public void setProductId(String productId) {
-        this.productId = productId;
+    public void setProductType(ProductType productType) {
+        this.productType = productType;
     }
 
     @Override

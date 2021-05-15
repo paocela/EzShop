@@ -16,7 +16,7 @@ public interface ReturnTransaction {
 
     void setReturnValue(double value);
 
-    List<ReturnTransactionRecord> getRecords();
+    List<ReturnEntry> getRecords();
 
     //void setRecords(List<ReturnTransactionRecord> record);
 

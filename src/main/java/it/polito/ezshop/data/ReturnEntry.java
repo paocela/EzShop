@@ -1,14 +1,16 @@
 package it.polito.ezshop.data;
 
-public interface ReturnTransactionRecord {
+import it.polito.ezshop.model.ProductType;
+
+public interface ReturnEntry {
 
     Integer getRecordId();
 
     void setRecordId(Integer id);
 
-    String getProductId();
+    public it.polito.ezshop.model.ProductType getProductType();
 
-    void setProductId(String id);
+    public void setProductType(ProductType productType);
 
     int getQuantity();
 

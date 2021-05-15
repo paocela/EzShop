@@ -4,14 +4,18 @@ import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
-import it.polito.ezshop.data.ReturnTransactionRecord;
+
+import it.polito.ezshop.data.ReturnEntry;
 
 import java.sql.SQLException;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @DatabaseTable(tableName = "return_transactions")
-public class ReturnTransaction implements it.polito.ezshop.data.ReturnTransaction{
+public class ReturnTransaction implements it.polito.ezshop.data.ReturnTransaction {
+
+    public enum StatusEnum {STARTED, CLOSED, PAID};
 
     @DatabaseField(generatedId = true)
     private Integer returnid;
@@ -19,11 +23,14 @@ public class ReturnTransaction implements it.polito.ezshop.data.ReturnTransactio
     @DatabaseField(canBeNull = false)
     private Integer ticketNumber;
 
-    @DatabaseField()
+    @DatabaseField(canBeNull = false)
+    private ReturnTransaction.StatusEnum status = ReturnTransaction.StatusEnum.STARTED;
+
+    @DatabaseField(canBeNull = false)
     private double returnValue = 0;
 
     @ForeignCollectionField(eager = true)
-    ForeignCollection<ReturnTransactionRecord> records;
+    private ForeignCollection<ReturnTransactionRecord> records;
 
 
     public ReturnTransaction() {
@@ -64,8 +71,8 @@ public class ReturnTransaction implements it.polito.ezshop.data.ReturnTransactio
         this.returnValue = returnValue;
     }
 
-    @Override
-    public List<ReturnTransactionRecord> getRecords() {
+
+    public List<ReturnEntry> getRecords() {
         return new ArrayList<>(this.records);
     }
 
@@ -75,9 +82,18 @@ public class ReturnTransaction implements it.polito.ezshop.data.ReturnTransactio
     }
     */
 
-    public boolean addReturnTransactionRecord(ReturnTransactionRecord record) throws SQLException {
+    public boolean addReturnTransactionRecord(ReturnEntry record) throws SQLException {
 
         return true;
+    }
+
+
+    public ReturnTransaction.StatusEnum getStatus() {
+        return status;
+    }
+
+    public void setStatus(ReturnTransaction.StatusEnum status) {
+        this.status = status;
     }
 
 
