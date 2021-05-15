@@ -28,9 +28,9 @@ Version: 1.0
 
 - EZShop::hashPassword
 - EZShop::byteToHex
-- EZShop::validateCreditCard
+- EZShop::validateCreditCard (my-done)
 - EZShop::validateBarcode
-- SaleTransactionRecord::refreshTotalPrice
+- SaleTransactionRecord::refreshTotalPrice (my-done)
 - SaleTransaction::refreshAmount
 
 
@@ -137,16 +137,18 @@ Version: 1.0
 
 - Credit card number validity
 
+- Credit card string format
+
   
 
 **Predicates for method validateCreditCard:**
 
-| Criterion                   | Predicate |
-| --------------------------- | --------- |
-| Credit card number validity | yes       |
-|                             | no        |
-
-
+| Criterion                   | Predicate       |
+| --------------------------- | --------------- |
+| Credit card number validity | yes             |
+|                             | no              |
+| Credit card string format   | only numbers    |
+|                             | numbers + chars |
 
 **Boundaries for method validateCreditCard**:
 
@@ -158,10 +160,11 @@ Version: 1.0
 
  **Combination of predicates for method validateCreditCard**
 
-| Credit card number validity | Valid/Invalid | Description of the test case | JUnit test case |
-| --------------------------- | ------------- | ---------------------------- | --------------- |
-| yes                         | valid         | T1(12345674, "true")<br />   |                 |
-| no                          | invalid       | T2(13245674, "false")        |                 |
+| Credit card number validity | Credit card string format | Valid/Invalid | Description of the test case | JUnit test case         |
+| --------------------------- | ------------------------- | ------------- | ---------------------------- | ----------------------- |
+| yes                         | only numbers              | valid         | T1(12345674, "true")         | testCorrectCreditCard   |
+| no                          | only numbers              | invalid       | T2(13245674, "false")        | testWrongCreditCard     |
+| *                           | numbers + chars           | invalid       | T3(1324B5674, "false")       | testNonNumberCreditCard |
 
  ### **Class *EZShop* - method *validateBarcode***
 
@@ -210,28 +213,19 @@ Version: 1.0
 |            |            |      |                 |                              |                 |
 |            |            |      |                 |                              |                 |
 
+
+
  ### **Class *SaleTransactionRecord* - method *refreshTotalPrice***
 
-
-
 **Criteria for method *refreshTotalPrice*:**
-	
 
- - 
- - 
-
-
-
-
+- formula validity
 
 **Predicates for method *refreshTotalPrice*:**
 
-| Criteria | Predicate |
-| -------- | --------- |
-|          |           |
-|          |           |
-|          |           |
-|          |           |
+| Criteria         | Predicate |
+| ---------------- | --------- |
+| formula validity | yes       |
 
 
 
@@ -242,20 +236,15 @@ Version: 1.0
 | Criteria | Boundary values |
 | -------- | --------------- |
 |          |                 |
-|          |                 |
 
 
 
 **Combination of predicates**:
 
 
-| Criteria 1 | Criteria 2 | ...  | Valid / Invalid | Description of the test case | JUnit test case |
-| ---------- | ---------- | ---- | --------------- | ---------------------------- | --------------- |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
+| formula validity | Valid / Invalid | Description of the test case                                 | JUnit test case  |
+| ---------------- | --------------- | ------------------------------------------------------------ | ---------------- |
+| yes              | valid           | ProductType productType = new ProductType()<br />SaleTransaction saleTransaction = new SaleTransaction()<br />check saleTransaction.getTotalPrice()<br />modify saleTransactions attributes<br />saleTransaction.refreshTotalPrice()<br />check saleTransaction.getTotalPrice() | testValidFormula |
 
 
 

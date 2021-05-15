@@ -2298,7 +2298,11 @@ public class EZShop implements EZShopInterface {
 
         // validate through Luhn's algorithm
         for (int i = creditCard.length() - 1; i >= 0; i--) {
-            n = Integer.parseInt(creditCard.substring(i, i + 1));
+            try{
+                n = Integer.parseInt(creditCard.substring(i, i + 1));
+            } catch (NumberFormatException e) {
+                return false;
+            }
             if (alternate) {
                 n *= 2;
                 if (n >= 10) {
