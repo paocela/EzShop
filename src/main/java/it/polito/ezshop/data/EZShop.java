@@ -686,20 +686,12 @@ public class EZShop implements EZShopInterface {
             throw new InvalidProductIdException();
         }
 
+        // Verify location
         if (newPos == null || newPos.isEmpty()) {
             newPos = "";
         } else {
-            String[] pos = newPos.split("-");
-
-            if (pos.length < 3) {
-                throw new InvalidLocationException();
-            }
-
-            try {
-                Integer.parseInt(pos[0]);
-                Integer.parseInt(pos[2]);
-            } catch (NumberFormatException nfe) {
-                throw new InvalidLocationException();
+            if(!newPos.matches("/^[0-9]+-[A-Za-z0-9]+-[0-9]+/gm")) {
+                throw new InvalidLocationException("Product location provided is not good");
             }
         }
 
