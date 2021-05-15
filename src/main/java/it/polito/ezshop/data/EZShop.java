@@ -1854,15 +1854,22 @@ public class EZShop implements EZShopInterface {
 
         SaleTransaction returnTransaction = null;
 
+        QueryBuilder<SaleTransaction, Integer> saleTransactionFreeQueryBuilder = saleTransactionDao.queryBuilder().setCountOf(true);
+
         try {
-            QueryBuilder<SaleTransaction, Integer> closedTransactionByIdQueryBuilder = saleTransactionDao.queryBuilder();
+            saleTransactionFreeQueryBuilder.where().eq("id", transactionId);
+            boolean isSaleTransactionIdavailable = saleTransactionDao.countOf(saleTransactionFreeQueryBuilder.prepare()) == 0;
 
-            closedTransactionByIdQueryBuilder.where().eq("id", transactionId)
-                    .and().ne("status", SaleTransaction.StatusEnum.STARTED);
+            if (!isSaleTransactionIdavailable){
+                QueryBuilder<SaleTransaction, Integer> closedTransactionByIdQueryBuilder = saleTransactionDao.queryBuilder();
 
-            returnTransaction = closedTransactionByIdQueryBuilder.queryForFirst();
+                closedTransactionByIdQueryBuilder.where().eq("id", transactionId)
+                        .and().ne("status", SaleTransaction.StatusEnum.STARTED);
 
-        } catch (SQLException e) {
+                returnTransaction = closedTransactionByIdQueryBuilder.queryForFirst();
+            }
+
+        }catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -1882,7 +1889,7 @@ public class EZShop implements EZShopInterface {
 
         SaleTransaction transaction = getSaleTransaction(saleNumber);
 
-        if (transaction != null || transaction.getStatus() == SaleTransaction.StatusEnum.PAID) {
+        if (transaction != null && transaction.getStatus() == SaleTransaction.StatusEnum.PAID) {
 
             ReturnTransaction newReturnTransaction = new ReturnTransaction(saleNumber);
 
