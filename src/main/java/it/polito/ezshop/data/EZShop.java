@@ -47,6 +47,8 @@ public class EZShop implements EZShopInterface {
     Dao<Customer, Integer> customerDao;
     Dao<SaleTransaction, Integer> saleTransactionDao;
     Dao<ReturnTransaction, Integer> returnTransactionDao;
+    Dao<SaleTransactionRecord, Integer> saleTransactionRecordDao;
+    Dao<ReturnTransactionRecord, Integer> returnTransactionRecordDao;
     Dao<Order, Integer> orderDao;
     Dao<BalanceOperation, Integer> balanceOperationDao;
     Dao<CreditCard, String> creditCardDao;
