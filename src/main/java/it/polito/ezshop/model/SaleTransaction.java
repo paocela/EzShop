@@ -11,6 +11,7 @@ import java.time.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @DatabaseTable(tableName = "sale_transactions")
 public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
@@ -190,8 +191,82 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
         return this.records;
     }
 
-    public void updateSaleTransactionRecord(ProductType productType, int toaddquantity) {
-        // TODO
+    public boolean addProductToRecords(ProductType product, int addedQuantity) throws SQLException {
+
+        Optional<SaleTransactionRecord> optionalRecord = this.records.stream().filter(
+                record -> record.getBarCode().equals(product.getBarCode())
+        ).findFirst();
+
+        if (optionalRecord.isPresent()) {
+            SaleTransactionRecord existingRecord = optionalRecord.get();
+
+            // There is an existing record for input product, updating it
+            int amountAlreadyInTransaction = existingRecord.getAmount();
+
+            if (product.getQuantity() < amountAlreadyInTransaction + addedQuantity) {
+                // Not enough products to fulfill
+                return false;
+            }
+
+            // There is an existing record for input product, increasing quantity
+            existingRecord.setAmount(amountAlreadyInTransaction + addedQuantity);
+            existingRecord.refreshTotalPrice();
+
+            // Update record
+            this.records.update(existingRecord);
+
+        } else {
+            // No existing record for input product, creating a new one
+
+            if (product.getQuantity() < addedQuantity) {
+                // Not enough products to fulfill
+                return false;
+            }
+
+            SaleTransactionRecord newRecord = new SaleTransactionRecord(this, product, addedQuantity);
+
+            // Add new record
+            this.records.add(newRecord);
+        }
+
         refreshAmount();
+
+        return true;
+    }
+
+    public boolean removeProductFromRecords(ProductType product, int removedQuantity) throws SQLException {
+
+
+        Optional<SaleTransactionRecord> optionalRecord = this.records.stream().filter(
+                record -> record.getBarCode().equals(product.getBarCode())
+        ).findFirst();
+
+        if (!optionalRecord.isPresent()) {
+            // No transaction record for this product
+            return false;
+        }
+
+        SaleTransactionRecord existingRecord = optionalRecord.get();
+
+        int amountAlreadyInTransaction = existingRecord.getAmount();
+
+        if (removedQuantity > amountAlreadyInTransaction) {
+            // The quantity cannot satisfy the request
+            return false;
+        } else if (removedQuantity == amountAlreadyInTransaction) {
+
+            // Remove record
+            this.records.remove(existingRecord);
+        } else {
+            existingRecord.setAmount(amountAlreadyInTransaction - removedQuantity);
+            existingRecord.refreshTotalPrice();
+
+            // Update record
+            this.records.update(existingRecord);
+        }
+
+        refreshAmount();
+
+        return false;
     }
 }
