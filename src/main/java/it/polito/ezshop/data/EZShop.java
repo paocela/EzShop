@@ -1,8 +1,7 @@
 package it.polito.ezshop.data;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.dao.ForeignCollection;
+import com.j256.ormlite.dao.*;
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.logger.Log;
 import com.j256.ormlite.logger.Logger;
@@ -939,7 +938,11 @@ public class EZShop implements EZShopInterface {
 
                 ProductType productToUpdate = getProductTypeByBarCode(orderToUpdate.getProductCode());
 
-                if (productToUpdate != null && !productToUpdate.getLocation().isEmpty()) {
+                if (productToUpdate != null){
+
+                   if(productToUpdate.getLocation() == null) {
+                       throw new InvalidLocationException();
+                   }
 
                     updateQuantity(productToUpdate.getId(), orderToUpdate.getQuantity());
 
@@ -2308,10 +2311,10 @@ public class EZShop implements EZShopInterface {
 
         double currentBalance = 0.0;
 
-        //currentBalance = balanceOperationDao.queryRawValue("select sum(money) from balance_operations");
+        List<it.polito.ezshop.data.BalanceOperation> BalanceOperations = getCreditsAndDebits(null, null);
 
-        for (int i = 0; i < getCreditsAndDebits(null, null).size(); i++) {
-            currentBalance += getCreditsAndDebits(null, null).get(i).getMoney();
+        for(it.polito.ezshop.data.BalanceOperation b : BalanceOperations){
+            currentBalance += b.getMoney();
         }
 
         return currentBalance;
