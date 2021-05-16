@@ -143,27 +143,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
     @Override
     public void setEntries(List<TicketEntry> entries) {
-        // Unused method required by the teacher-defined interface
-        // Might regret writing this later
-        try {
-            this.records = this.records.getDao().getEmptyForeignCollection("records");
-
-            for (TicketEntry entry : entries) {
-                SaleTransactionRecord record = new SaleTransactionRecord();
-
-                record.setBarCode(entry.getBarCode());
-                record.setProductDescription(entry.getProductDescription());
-                record.setAmount(entry.getAmount());
-                record.setPricePerUnit(entry.getPricePerUnit());
-                record.setDiscountRate(entry.getDiscountRate());
-
-                this.records.add(record);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-
+        throw new java.lang.UnsupportedOperationException("This method cannot be implemented given the ForeignCollection logic embedded into OrmLite");
     }
 
     @Override
