@@ -2269,7 +2269,7 @@ public class EZShop implements EZShopInterface {
         }
     }
 
-    private String hashPassword(String password) {
+    public static String hashPassword(String password) {
         String hashedPassword = null;
         try {
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
@@ -2280,7 +2280,7 @@ public class EZShop implements EZShopInterface {
         return hashedPassword;
     }
 
-    private String byteToHex(final byte[] hash) {
+    public static String byteToHex(final byte[] hash) {
         Formatter formatter = new Formatter();
         for (byte b : hash) {
             formatter.format("%02x", b);
