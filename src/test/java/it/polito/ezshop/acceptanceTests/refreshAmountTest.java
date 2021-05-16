@@ -14,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 public class refreshAmountTest {
     @Test
     public void testRefreshAmount() {
+
         ProductType productType = new ProductType("Nutella", "1", 3.2, "");
         SaleTransaction saleTransaction = new SaleTransaction();
         SaleTransactionRecord saleTransactionRecord = new SaleTransactionRecord(saleTransaction, productType, 10);
