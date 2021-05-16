@@ -69,7 +69,6 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, SaleTransactionRecord.class);
             TableUtils.createTableIfNotExists(connectionSource, ReturnTransaction.class);
             TableUtils.createTableIfNotExists(connectionSource, ReturnTransactionRecord.class);
-
             TableUtils.createTableIfNotExists(connectionSource, Order.class);
             TableUtils.createTableIfNotExists(connectionSource, BalanceOperation.class);
             TableUtils.createTableIfNotExists(connectionSource, CreditCard.class);
@@ -908,8 +907,6 @@ public class EZShop implements EZShopInterface {
     @Override
     public boolean recordOrderArrival(Integer orderId) throws InvalidOrderIdException, UnauthorizedException, InvalidLocationException {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
-
-        // TODO SHOULD CHECK PRODUCT LOCATION
 
         //return false if the order does not exist or if it was not in an ORDERED/COMPLETED state
         boolean isRecorded = false;

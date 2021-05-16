@@ -81,6 +81,8 @@ Version: 1.0
 |||||||
 |||||||
 
+
+
  ### **Class *EZShop* - method *byteToHex***
 
 
@@ -132,7 +134,9 @@ Version: 1.0
 
 ### **Class *EZShop* - method *validateCreditCard***
 
-**Criteria for method $validateCreditCard$:**
+
+
+**Criteria for method validateCreditCard:**
 	
 
 - Credit card number validity
@@ -166,6 +170,8 @@ Version: 1.0
 | no                          | only numbers              | invalid       | T2(13245674, "false")        | testWrongCreditCard     |
 | *                           | numbers + chars           | invalid       | T3(1324B5674, "false")       | testNonNumberCreditCard |
 
+
+
  ### **Class *EZShop* - method *validateBarcode***
 
 
@@ -173,53 +179,52 @@ Version: 1.0
 **Criteria for method *validateBarcode*:**
 	
 
- - 
- - 
-
-
+ - Validity of the String parameter
+ - Length of the String
 
 
 
 **Predicates for method *validateBarcode*:**
 
-| Criteria | Predicate |
-| -------- | --------- |
-|          |           |
-|          |           |
-|          |           |
-|          |           |
+| Criteria                         | Predicate                |
+| -------------------------------- | ------------------------ |
+| Validity of the String parameter | Valid                    |
+|                                  | Null                     |
+| Length of the String             | 12 <= length <= 14       |
+|                                  | length <12 OR length >14 |
+| Validity of barcode              | Yes                      |
+|                                  | No                       |
 
 
 
-
-
-**Boundaries**:
+**Boundaries for method validateBarcode**:
 
 | Criteria | Boundary values |
 | -------- | --------------- |
-|          |                 |
-|          |                 |
+| ...      | ...             |
 
 
 
-**Combination of predicates**:
+**Combination of predicates for method validateBarcode**:
 
 
-| Criteria 1 | Criteria 2 | ...  | Valid / Invalid | Description of the test case | JUnit test case |
-| ---------- | ---------- | ---- | --------------- | ---------------------------- | --------------- |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
+| Validity of the String parameter | Length of the String     | Validity of barcode | Valid / Invalid | Description of the test case | JUnit test case          |
+| -------------------------------- | ------------------------ | ------------------- | --------------- | ---------------------------- | ------------------------ |
+| Valid                            | 12 <= length <= 14       | Yes                 | Valid           | T0(0123456789012) -> true    | testValidBarCode         |
+| "                                | "                        | No                  | Invalid         | T1(01234567890123) -> false  | testInvalidBarCode       |
+| "                                | length <12 OR length >14 | -                   | Invalid         | T2(012345678) -> false       | testOutOfBoundaryBarCode |
+| NULL                             | -                        | -                   | Invalid         | T3(NULL) ->  error           | testNullBarCode          |
 
 
 
  ### **Class *SaleTransactionRecord* - method *refreshTotalPrice***
 
+
+
 **Criteria for method *refreshTotalPrice*:**
 
 - formula validity
+  
 
 **Predicates for method *refreshTotalPrice*:**
 
@@ -229,9 +234,7 @@ Version: 1.0
 
 
 
-
-
-**Boundaries**:
+**Boundaries for method *refreshTotalPrice***:
 
 | Criteria | Boundary values |
 | -------- | --------------- |
@@ -239,12 +242,48 @@ Version: 1.0
 
 
 
-**Combination of predicates**:
+**Combination of predicates for method *refreshTotalPrice***:
 
 
 | formula validity | Valid / Invalid | Description of the test case                                 | JUnit test case  |
 | ---------------- | --------------- | ------------------------------------------------------------ | ---------------- |
 | yes              | valid           | ProductType productType = new ProductType()<br />SaleTransaction saleTransaction = new SaleTransaction()<br />check saleTransaction.getTotalPrice()<br />modify saleTransactions attributes<br />saleTransaction.refreshTotalPrice()<br />check saleTransaction.getTotalPrice() | testValidFormula |
+
+
+
+ ### **Class *SaleTransaction* - method *refreshAmount***
+
+
+
+**Criteria for method *refreshAmount*:**
+	
+
+ - Formula validity
+
+
+
+**Predicates for method *refreshAmount*:**
+
+| Criteria         | Predicate |
+| ---------------- | --------- |
+| Formula validity | Yes       |
+
+
+
+**Boundaries for method refreshAmount**:
+
+| Criteria | Boundary values |
+| -------- | --------------- |
+| ...      | ...             |
+
+
+
+**Combination of predicates for method refreshAmount**:
+
+
+| Formula validity | Valid / Invalid | Description of the test case                                 | JUnit test case   |
+| ---------------- | --------------- | ------------------------------------------------------------ | ----------------- |
+| Yes              | Valid           | ProductType productType = new ProductType()<br />SaleTransaction saleTransaction = new SaleTransaction()<br />SaleTransactionRecord = new SaleTransactionRecord(saleTransactionRecord)<br />List<TicketEntry> entries<br />entries.add(saleTransactionRecord)<br />saleTransaction.setEntries(entries)<br /><br />check saleTransaction.getAmount()<br />modify saleTransactions attributes<br />saleTransaction.refreshAmount()<br />check saleTransaction.getAmount() | testRefreshAmount |
 
 
 
