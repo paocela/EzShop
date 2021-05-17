@@ -251,42 +251,6 @@ Version: 1.0
 
 
 
- ### **Class *SaleTransaction* - method *refreshAmount***
-
-
-
-**Criteria for method *refreshAmount*:**
-	
-
- - Formula validity
-
-
-
-**Predicates for method *refreshAmount*:**
-
-| Criteria         | Predicate |
-| ---------------- | --------- |
-| Formula validity | Yes       |
-
-
-
-**Boundaries for method refreshAmount**:
-
-| Criteria | Boundary values |
-| -------- | --------------- |
-| ...      | ...             |
-
-
-
-**Combination of predicates for method refreshAmount**:
-
-
-| Formula validity | Valid / Invalid | Description of the test case                                 | JUnit test case   |
-| ---------------- | --------------- | ------------------------------------------------------------ | ----------------- |
-| Yes              | Valid           | ProductType productType = new ProductType()<br />SaleTransaction saleTransaction = new SaleTransaction()<br />SaleTransactionRecord = new SaleTransactionRecord(saleTransactionRecord)<br />List<TicketEntry> entries<br />entries.add(saleTransactionRecord)<br />saleTransaction.setEntries(entries)<br /><br />check saleTransaction.getAmount()<br />modify saleTransactions attributes<br />saleTransaction.refreshAmount()<br />check saleTransaction.getAmount() | testRefreshAmount |
-
-
-
 
 # White Box Unit Tests
 
