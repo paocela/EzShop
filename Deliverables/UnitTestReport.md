@@ -271,7 +271,7 @@ Version: 1.0
 
 |Unit name | Loop rows | Number of iterations | JUnit test case |
 |---|---|---|---|
-|Class EZShop - method validateBarcode|2338|11|test12BarCode|
+|Class EZShop - method validateBarcode|-|11|test12BarCode|
 |"|"|12|testValidBarCode|
 |"|"|13|testInvalidBarCode|
 |"|"|0|testNullBarCode,<br />testTooShortBarCode,<br />testTooLongBarCode|
