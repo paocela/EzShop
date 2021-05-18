@@ -25,4 +25,15 @@ public class creditCardValidationTest {
         assertFalse(it.polito.ezshop.data.EZShop.validateCreditCard(creditCard));
     }
 
+    @Test
+    public void testEmptyCreditCard()  {
+        String creditCard = "";
+        assertTrue(it.polito.ezshop.data.EZShop.validateCreditCard(creditCard));
+    }
+
+    @Test
+    public void testLengthOneCreditCard()  {
+        String creditCard = "1";
+        assertFalse(it.polito.ezshop.data.EZShop.validateCreditCard(creditCard));
+    }
 }

@@ -2170,6 +2170,7 @@ public class EZShop implements EZShopInterface {
                     // Card is not registered
                     return -1;
                 }
+                
                 updateInventoryByReturnTransaction(returnTransaction);
 
                 returnTransactionDao.update(returnTransaction);
