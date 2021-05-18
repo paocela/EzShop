@@ -18,7 +18,7 @@ public class Customer implements it.polito.ezshop.data.Customer {
     @DatabaseField()
     private Integer points;
 
-    Customer() { }
+    public Customer() { }
 
     public Customer(String name) {
         this.name = name;

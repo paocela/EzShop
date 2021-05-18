@@ -1,10 +1,6 @@
 package it.polito.ezshop.acceptanceTests;
 
-import it.polito.ezshop.exceptions.InvalidCreditCardException;
-import org.junit.Assert;
 import org.junit.Test;
-
-import it.polito.ezshop.data.EZShop;
 
 import static org.junit.Assert.*;
 
