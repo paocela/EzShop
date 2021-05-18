@@ -2174,8 +2174,15 @@ public class EZShop implements EZShopInterface {
 
                 returnTransactionDao.update(returnTransaction);
 
+                double balanceChange = returnTransaction.getReturnValue();
+
+
                 BalanceOperation balanceOperation = new BalanceOperation(-returnTransaction.getReturnValue());
                 balanceOperationDao.create(balanceOperation);
+
+                // Increase credit card balance
+                card.setAmount(card.getAmount() + balanceChange);
+                creditCardDao.update(card);
 
                 ongoingReturnTransaction = null;
 
