@@ -242,6 +242,21 @@ Version: 1.0
 |  | testSetType |
 |  | testSetGetMoney |
 |  | testSetGetDate |
+| Class *Customer* -  setters/getters methods | testGetCustomerName |
+|  | testSetCustomerName |
+|  | testGetCustomerCard |
+|  | testSetCustomerCard |
+|  | testGetId |
+|  | testSetId |
+|  | testGetPoints |
+|  | testSetPoints |
+|  | testCustomer |
+|  | testEmptyCustomer |
+| Class *EZShop* - method validateCreditCard | testCorrectCreditCard |
+| | testWrongCreditCard |
+| | testNonNumberCreditCard |
+| | testEmptyCreditCard |
+| | testLengthOneCreditCard |
 
 ### coverage report
 
@@ -260,4 +275,7 @@ Version: 1.0
 |"|"|12|testValidBarCode|
 |"|"|13|testInvalidBarCode|
 |"|"|0|testNullBarCode,<br />testTooShortBarCode,<br />testTooLongBarCode|
+|Class EZShop - method validateCreditCard|-|8|testCorrectCreditCard <br/> testWrongCreditCard|
+|"|"|0|testEmptyCreditCard|
+|"|"|1|testLengthOneCreditCard|
 
