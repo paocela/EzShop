@@ -39,96 +39,53 @@ Version: 1.0
 
 
 **Criteria for method *hashPassword*:**
-	
 
- - 
- - 
-
-
-
-
+ - Hashing algorithm validity
 
 **Predicates for method *hashPassword*:**
 
 | Criteria | Predicate |
 | -------- | --------- |
-|          |           |
-|          |           |
-|          |           |
-|          |           |
-
-
-
-
+|Hashing algorithm validity | true |
 
 **Boundaries**:
 
 | Criteria | Boundary values |
 | -------- | --------------- |
-|          |                 |
-|          |                 |
-
-
+| ...       | ...            |
 
 **Combination of predicates**:
 
 
-| Criteria 1 | Criteria 2 | ... | Valid / Invalid | Description of the test case | JUnit test case |
-|-------|-------|-------|-------|-------|-------|
-|||||||
-|||||||
-|||||||
-|||||||
-|||||||
-
+| hashing algorithm validity | Valid / Invalid | Description of the test case                                 | JUnit test case  |
+| ---------------- | --------------- | ------------------------------------------------------------ | ---------------- |
+| yes              | valid           | T1(*) | testStandardSHA1Implementation |
 
 
  ### **Class *EZShop* - method *byteToHex***
 
-
-
 **Criteria for method *byteToHex*:**
-	
-
- - 
- - 
-
-
-
-
+ - encoding validity
 
 **Predicates for method *byteToHex*:**
 
 | Criteria | Predicate |
 | -------- | --------- |
-|          |           |
-|          |           |
-|          |           |
-|          |           |
-
-
-
-
+| encoding validity | yes       |
 
 **Boundaries**:
 
 | Criteria | Boundary values |
 | -------- | --------------- |
-|          |                 |
-|          |                 |
-
-
+| ...       | ...            |
 
 **Combination of predicates**:
 
 
-| Criteria 1 | Criteria 2 | ...  | Valid / Invalid | Description of the test case | JUnit test case |
-| ---------- | ---------- | ---- | --------------- | ---------------------------- | --------------- |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
-|            |            |      |                 |                              |                 |
+| encoding validity | Valid / Invalid | Description of the test case                                 | JUnit test case  |
+| ---------------- | --------------- | ------------------------------------------------------------ | ---------------- |
+| yes              | valid           | T1(*) | testValidByteToHexString |
+
 
 
 
