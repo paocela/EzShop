@@ -230,8 +230,17 @@ Version: 1.0
 | | testNullBarCode |
 | | testTooLongBarCode |
 | |test12BarCode |
-| Class *Order* - setters/getters methods | orderTest|
-| Class *BalanceOperation* -  setters/getters methods | balanceOperationTest|
+| Class *Order* - setters/getters methods | testSetGetOrderId |
+|  | testGetSetBalanceId |
+|  | testGetSetProductCode |
+|  | testGetSetQuantity |
+|  | testGetSetPricePerUnit |
+|  | testGetSetStatus |
+| Class *BalanceOperation* -  setters/getters methods | testSetGetBalanceId |
+|  | testGetType |
+|  | testSetType |
+|  | testSetGetMoney |
+|  | testSetGetDate |
 
 ### coverage report
 
