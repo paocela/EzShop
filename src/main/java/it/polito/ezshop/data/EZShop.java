@@ -689,8 +689,8 @@ public class EZShop implements EZShopInterface {
         if (newPos == null || newPos.isEmpty()) {
             newPos = "";
         } else {
-            if(!newPos.matches("/^[0-9]+-[A-Za-z0-9]+-[0-9]+/gm")) {
-                throw new InvalidLocationException("Product location provided is not good");
+            if(!newPos.matches("[0-9]+-[A-Za-z-0-9]+-[0-9]+")) {
+                throw new InvalidLocationException();
             }
         }
 
