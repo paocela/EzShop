@@ -143,6 +143,7 @@ Version: 1.0
 
  - Validity of the String parameter
  - Length of the String
+ - Validity of barcode
 
 
 
