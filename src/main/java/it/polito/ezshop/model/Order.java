@@ -23,10 +23,8 @@ public class Order implements it.polito.ezshop.data.Order {
     @DatabaseField()
     private Double pricePerUnit;
 
-
     @DatabaseField(canBeNull = false)
-    private Integer balanceId=-1; //TODO: to fix after adding BalanceOperation
-
+    private Integer balanceId;
 
     public Order(){ }
 

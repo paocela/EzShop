@@ -823,10 +823,26 @@ public class EZShop implements EZShopInterface {
         try {
             if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
                 Order order = new Order(productCode, quantity, pricePerUnit);
-                order.setStatus("PAYED");
-                orderDao.create(order);
+
                 //update balance
                 recordBalanceUpdate(-orderCost);
+
+                //retrieve balance id
+                QueryBuilder<BalanceOperation, Integer> balanceQueryBuilder = balanceOperationDao.queryBuilder().
+                        orderBy("balanceId", false).limit(1L);
+
+                Integer balanceId = balanceQueryBuilder.query().get(0).getBalanceId();
+
+                //update order status and balanceId
+                order.setStatus("PAYED");
+                order.setBalanceId(balanceId);
+                orderDao.create(order);
+
+                UpdateBuilder<Order, Integer> updateOrderQueryBuilder = orderDao.updateBuilder();
+                updateOrderQueryBuilder.updateColumnValue("balanceId", balanceId)
+                        .where().eq("orderId", orderId);
+                updateOrderQueryBuilder.update();
+
                 //set the orderId to return
                 orderId = order.getOrderId();
             }
@@ -872,14 +888,23 @@ public class EZShop implements EZShopInterface {
                 double orderCost = orderToUpdate.getPricePerUnit() * orderToUpdate.getQuantity();
 
                 if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
-                    Order.StatusEnum status = Order.StatusEnum.PAYED;
-                    //update order state
-                    UpdateBuilder<Order, Integer> updateOrderQueryBuilder = orderDao.updateBuilder();
-                    updateOrderQueryBuilder.updateColumnValue("status", status)
-                            .where().eq("orderId", orderId);
-                    updateOrderQueryBuilder.update();
+
                     //update balance
                     recordBalanceUpdate(-orderCost);
+
+                    //retrieve balance id
+                    QueryBuilder<BalanceOperation, Integer> balanceQueryBuilder = balanceOperationDao.queryBuilder().
+                            orderBy("balanceId", false).limit(1L);
+
+                    Integer balanceId = balanceQueryBuilder.query().get(0).getBalanceId();
+
+                    //update order state and balance id
+                    Order.StatusEnum status = Order.StatusEnum.PAYED;
+                    UpdateBuilder<Order, Integer> updateOrderQueryBuilder = orderDao.updateBuilder();
+                    updateOrderQueryBuilder.updateColumnValue("status", status).
+                            updateColumnValue("balanceId", balanceId)
+                            .where().eq("orderId", orderId);
+                    updateOrderQueryBuilder.update();
 
                     isPayed = true;
                 }
