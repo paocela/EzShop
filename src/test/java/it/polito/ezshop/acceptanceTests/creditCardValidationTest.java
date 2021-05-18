@@ -4,13 +4,12 @@ import it.polito.ezshop.exceptions.InvalidCreditCardException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import it.polito.ezshop.data.EZShop;
 
+import static org.junit.Assert.*;
 
-public class TestJUnit1 {
+
+public class creditCardValidationTest {
 
     @Test
     public void testCorrectCreditCard() {
@@ -23,4 +22,11 @@ public class TestJUnit1 {
         String creditCard = "13245674";
         assertFalse(it.polito.ezshop.data.EZShop.validateCreditCard(creditCard));
     }
+
+    @Test
+    public void testNonNumberCreditCard()  {
+        String creditCard = "123C";
+        assertFalse(it.polito.ezshop.data.EZShop.validateCreditCard(creditCard));
+    }
+
 }

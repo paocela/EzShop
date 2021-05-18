@@ -69,7 +69,6 @@ public class EZShop implements EZShopInterface {
             TableUtils.createTableIfNotExists(connectionSource, SaleTransactionRecord.class);
             TableUtils.createTableIfNotExists(connectionSource, ReturnTransaction.class);
             TableUtils.createTableIfNotExists(connectionSource, ReturnTransactionRecord.class);
-
             TableUtils.createTableIfNotExists(connectionSource, Order.class);
             TableUtils.createTableIfNotExists(connectionSource, BalanceOperation.class);
             TableUtils.createTableIfNotExists(connectionSource, CreditCard.class);
@@ -908,8 +907,6 @@ public class EZShop implements EZShopInterface {
     @Override
     public boolean recordOrderArrival(Integer orderId) throws InvalidOrderIdException, UnauthorizedException, InvalidLocationException {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
-
-        // TODO SHOULD CHECK PRODUCT LOCATION
 
         //return false if the order does not exist or if it was not in an ORDERED/COMPLETED state
         boolean isRecorded = false;
@@ -2269,7 +2266,7 @@ public class EZShop implements EZShopInterface {
         }
     }
 
-    private String hashPassword(String password) {
+    public static String hashPassword(String password) {
         String hashedPassword = null;
         try {
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
@@ -2280,7 +2277,7 @@ public class EZShop implements EZShopInterface {
         return hashedPassword;
     }
 
-    private String byteToHex(final byte[] hash) {
+    public static String byteToHex(final byte[] hash) {
         Formatter formatter = new Formatter();
         for (byte b : hash) {
             formatter.format("%02x", b);
@@ -2298,7 +2295,11 @@ public class EZShop implements EZShopInterface {
 
         // validate through Luhn's algorithm
         for (int i = creditCard.length() - 1; i >= 0; i--) {
-            n = Integer.parseInt(creditCard.substring(i, i + 1));
+            try{
+                n = Integer.parseInt(creditCard.substring(i, i + 1));
+            } catch (NumberFormatException e) {
+                return false;
+            }
             if (alternate) {
                 n *= 2;
                 if (n >= 10) {
