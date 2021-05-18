@@ -5,7 +5,8 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        creditCardValidationTest.class, barCodeValidationTest.class, saleTransactionRecordValidationTest.class, passwordHashValidationTest.class, CustomerValidationTest.class
+        creditCardValidationTest.class, barCodeValidationTest.class, saleTransactionRecordValidationTest.class,
+        passwordHashValidationTest.class, CustomerValidationTest.class,orderTest.class, balanceOperationTest.class,
 })
 
 

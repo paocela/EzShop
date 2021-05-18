@@ -27,11 +27,16 @@ Version: 1.0
     >
 
 - EZShop::hashPassword
+
 - EZShop::byteToHex
+
 - EZShop::validateCreditCard (my-done)
+
 - EZShop::validateBarcode
+
 - SaleTransactionRecord::refreshTotalPrice (my-done)
-- SaleTransaction::refreshAmount
+
+  
 
 
  ### **Class *EZShop* - method *hashPassword***
@@ -208,12 +213,12 @@ Version: 1.0
 **Combination of predicates for method validateBarcode**:
 
 
-| Validity of the String parameter | Length of the String     | Validity of barcode | Valid / Invalid | Description of the test case | JUnit test case          |
-| -------------------------------- | ------------------------ | ------------------- | --------------- | ---------------------------- | ------------------------ |
-| Valid                            | 12 <= length <= 14       | Yes                 | Valid           | T0(0123456789012) -> true    | testValidBarCode         |
-| "                                | "                        | No                  | Invalid         | T1(01234567890123) -> false  | testInvalidBarCode       |
-| "                                | length <12 OR length >14 | -                   | Invalid         | T2(012345678) -> false       | testOutOfBoundaryBarCode |
-| NULL                             | -                        | -                   | Invalid         | T3(NULL) ->  error           | testNullBarCode          |
+| Validity of the String parameter | Length of the String     | Validity of barcode | Valid / Invalid | Description of the test case | JUnit test case     |
+| -------------------------------- | ------------------------ | ------------------- | --------------- | ---------------------------- | ------------------- |
+| Valid                            | 12 <= length <= 14       | Yes                 | Valid           | T0(0123456789012) -> true    | testValidBarCode    |
+| "                                | "                        | No                  | Invalid         | T1(01234567890123) -> false  | testInvalidBarCode  |
+| "                                | length <12 OR length >14 | -                   | Invalid         | T2(012345678) -> false       | testTooShortBarCode |
+| NULL                             | -                        | -                   | Invalid         | T3(NULL) ->  error           | testNullBarCode     |
 
 
 
@@ -224,7 +229,6 @@ Version: 1.0
 **Criteria for method *refreshTotalPrice*:**
 
 - formula validity
-  
 
 **Predicates for method *refreshTotalPrice*:**
 
@@ -262,12 +266,17 @@ Version: 1.0
 
 
 | Unit name | JUnit test case |
-|--|--|
-|||
-|||
-||||
+|-----------|-----------------|
+| Class *EZShop* - method validateBarcode | testValidBarCode |
+| | testInvalidBarCode |
+| | testTooShortBarCode |
+| | testNullBarCode |
+| | testTooLongBarCode |
+| |test12BarCode |
+| Class *Order* - setters/getters methods | orderTest|
+| Class *BalanceOperation* -  setters/getters methods | balanceOperationTest|
 
-### Code coverage report
+### coverage report
 
     <Add here the screenshot report of the statement and branch coverage obtained using
     the Eclemma tool. >
@@ -280,9 +289,8 @@ Version: 1.0
 
 |Unit name | Loop rows | Number of iterations | JUnit test case |
 |---|---|---|---|
-|||||
-|||||
-||||||
-
-
+|Class EZShop - method validateBarcode|2338|11|test12BarCode|
+|"|"|12|testValidBarCode|
+|"|"|13|testInvalidBarCode|
+|"|"|0|testNullBarCode,<br />testTooShortBarCode,<br />testTooLongBarCode|
 

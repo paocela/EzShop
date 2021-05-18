@@ -19,7 +19,7 @@ public class barCodeValidationTest {
     }
 
     @Test
-    public void testOutOfBoundaryBarCode(){
+    public void testTooShortBarCode(){
         String testBarCode = "012345678"; //9 digits
         assertFalse(it.polito.ezshop.data.EZShop.validateBarcode(testBarCode));
     }
@@ -30,4 +30,15 @@ public class barCodeValidationTest {
         assertThrows(NullPointerException.class, () -> {it.polito.ezshop.data.EZShop.validateBarcode(null);} );
     }
 
+    @Test
+    public void testTooLongBarCode(){
+        String testBarCode = "0123456789012345"; //16 digits
+        assertFalse(it.polito.ezshop.data.EZShop.validateBarcode(testBarCode));
+    }
+
+    @Test
+    public void test12BarCode(){
+        String testBarCode = "012345678901"; //12 digits
+        assertFalse(it.polito.ezshop.data.EZShop.validateBarcode(testBarCode));
+    }
 }
