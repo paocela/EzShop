@@ -1845,7 +1845,7 @@ public class EZShop implements EZShopInterface {
         ProductType product = getProductTypeByBarCode(productCode);
         if (product == null) return false;
 
-        ReturnTransaction returnTransaction = getReturnTransaction(returnId);
+        ReturnTransaction returnTransaction = getOngoingReturnTransactionById(returnId);
         if (returnTransaction == null) return false;
 
         SaleTransaction transaction = getSaleTransaction(returnTransaction.getTicketNumber());
@@ -1855,15 +1855,25 @@ public class EZShop implements EZShopInterface {
 
             if (salerecord.getBarCode().equals(productCode)) {
 
-                int saleAmount = salerecord.getAmount();
-                if (amount > saleAmount) return false;
+                int saleQuantity= salerecord.getAmount();
+                if (amount > saleQuantity) return false;
+
+                double totprice= product.getPricePerUnit()*amount;
+
+                if (transaction.getDiscountRate()!=0){
+                    totprice= totprice-(totprice*transaction.getDiscountRate());
+                }
+                if (salerecord.getDiscountRate() != 0){
+                    totprice= totprice-(totprice*salerecord.getDiscountRate());
+                }
+
 
                 try {
 
                     ForeignCollection<ReturnTransactionRecord> returntransactionRecords = returnTransaction.getReturnRecords();
                     double oldreturnvalue= returnTransaction.getReturnValue();
 
-                    ReturnTransactionRecord returnRecord = new ReturnTransactionRecord(product, amount, product.getPricePerUnit()*amount);
+                    ReturnTransactionRecord returnRecord = new ReturnTransactionRecord(product, amount, totprice);
                     productadded= returntransactionRecords.add(returnRecord);
 
                     if (productadded) {
@@ -1883,20 +1893,6 @@ public class EZShop implements EZShopInterface {
         return false;
     }
 
-    private ReturnTransaction getReturnTransaction(Integer returnId) {
-
-        ReturnTransaction returnTransaction = null;
-
-        try {
-            returnTransaction = returnTransactionDao.queryForId(returnId);
-
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return returnTransaction;
-    }
 
     @Override
     public boolean endReturnTransaction(Integer returnId, boolean commit) throws InvalidTransactionIdException, UnauthorizedException {
@@ -1907,11 +1903,8 @@ public class EZShop implements EZShopInterface {
 
         boolean transactionStatusChanged = false;
 
-        ReturnTransaction ongoingReturnTransaction = this.ongoingReturnTransaction;
+        ReturnTransaction ongoingReturnTransaction = getOngoingReturnTransactionById(returnId);
 
-        if (ongoingReturnTransaction == null || !ongoingReturnTransaction.getReturnId().equals(returnId)) {
-            // TODO CHECK IF THIS CAN ACTUALLY HAPPEN VIA THE GUI
-        }
 
         if (ongoingReturnTransaction != null && ongoingReturnTransaction.getStatus() == ReturnTransaction.StatusEnum.STARTED) {
             // Close the transaction
@@ -1927,6 +1920,7 @@ public class EZShop implements EZShopInterface {
                         for (ReturnTransactionRecord p : ongoingReturnTransaction.getReturnRecords()){
                             transaction.removeProductFromRecords(p.getProductType(), p.getQuantity());
                         }
+
                         saleTransactionDao.update(transaction);
                         returnTransactionDao.update(ongoingReturnTransaction);
                     }
@@ -2127,14 +2121,18 @@ public class EZShop implements EZShopInterface {
 
         if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
 
-        ReturnTransaction returnTransaction= getReturnTransaction(returnId);
+        ReturnTransaction returnTransaction= getOngoingReturnTransactionById(returnId);
         if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
             returncash= returnTransaction.getReturnValue();
             returnTransaction.setStatus(ReturnTransaction.StatusEnum.PAID);
             try{
+                updateInventoryByReturnTransaction(returnTransaction);
                 returnTransactionDao.update(returnTransaction);
 
-                // TODO UPDATE DAILY BALANCEOPERATION
+                BalanceOperation balanceOperation = new BalanceOperation(-returnTransaction.getReturnValue());
+                balanceOperationDao.create(balanceOperation);
+
+                ongoingReturnTransaction = null;
 
             }catch (SQLException e) {
                 e.printStackTrace();
@@ -2150,26 +2148,36 @@ public class EZShop implements EZShopInterface {
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
+        double returncash=-1;
+
         // Validate credit card
         if (creditCard == null || creditCard.isEmpty() || !validateCreditCard(creditCard)) {
             throw new InvalidCreditCardException();
         }
 
-        // TODO CHECK IF CREDIT CARD IS REGISTERED
-
-
-        double returncash=-1;
-
         if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+        ReturnTransaction returnTransaction= getOngoingReturnTransactionById(returnId);
 
-        ReturnTransaction returnTransaction= getReturnTransaction(returnId);
         if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
             returncash= returnTransaction.getReturnValue();
             returnTransaction.setStatus(ReturnTransaction.StatusEnum.PAID);
             try{
+
+                // Retrieve credit card
+                CreditCard card = creditCardDao.queryForId(creditCard);
+
+                if (card == null ) {
+                    // Card is not registered
+                    return -1;
+                }
+                updateInventoryByReturnTransaction(returnTransaction);
+
                 returnTransactionDao.update(returnTransaction);
 
-                // TODO UPDATE DAILY BALANCEOPERATION
+                BalanceOperation balanceOperation = new BalanceOperation(-returnTransaction.getReturnValue());
+                balanceOperationDao.create(balanceOperation);
+
+                ongoingReturnTransaction = null;
 
             }catch (SQLException e) {
                 e.printStackTrace();
@@ -2379,6 +2387,36 @@ public class EZShop implements EZShopInterface {
         return returnTransaction;
     }
 
+
+    /**
+     * Retrieve the ongoing_returntransaction (taken from this.ongoingTransaction if compatible, else from DB)
+     * <p>
+     * As a side effect, update this.ongoingTransaction with the last requested transaction
+     *
+     * @param transactionId The id provided by the GUI method
+     * @return the requested ReturnTransaction or null
+     */
+    public ReturnTransaction getOngoingReturnTransactionById(Integer transactionId) {
+
+        ReturnTransaction returnTransaction = null;
+
+        if (transactionId.equals(ongoingReturnTransaction.getReturnId())) {
+            returnTransaction = ongoingReturnTransaction;
+        } else {
+            try {
+                returnTransaction = returnTransactionDao.queryForId(transactionId);
+
+                if (returnTransaction != null) {
+                    this.ongoingReturnTransaction = returnTransaction;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return returnTransaction;
+    }
+
     /**
      * Decreases the inventory availability by the sold amount
      *
@@ -2388,6 +2426,20 @@ public class EZShop implements EZShopInterface {
         for (SaleTransactionRecord record : transaction.getRecords()) {
             ProductType product = record.getProductType();
             product.setQuantity(product.getQuantity() - record.getAmount());
+            productTypeDao.update(product);
+        }
+
+    }
+
+    /**
+     * Increase the inventory availability by the return amount
+     *
+     * @param returntransaction The ReturnTransaction we are updating
+     */
+    private void updateInventoryByReturnTransaction(ReturnTransaction returntransaction) throws SQLException {
+        for (ReturnTransactionRecord record : returntransaction.getReturnRecords()) {
+            ProductType product = record.getProductType();
+            product.setQuantity(product.getQuantity() + record.getQuantity());
             productTypeDao.update(product);
         }
 
