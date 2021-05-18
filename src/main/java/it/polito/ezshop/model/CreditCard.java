@@ -15,8 +15,8 @@ public class CreditCard {
     CreditCard(){}
 
     public CreditCard(String code, double amount){
-        this.code = code;
-        this.amount = amount;
+        setCode(code);
+        setAmount(amount);
     }
 
     public String getCode() {

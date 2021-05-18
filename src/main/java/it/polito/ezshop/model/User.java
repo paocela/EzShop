@@ -20,7 +20,7 @@ public class User implements it.polito.ezshop.data.User {
     @DatabaseField(canBeNull = false)
     private String role;
 
-    User() { }
+    public User() { }
 
     public User(String username, String password, RoleEnum role) {
         this.setUsername(username);

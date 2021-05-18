@@ -257,6 +257,34 @@ Version: 1.0
 | | testNonNumberCreditCard |
 | | testEmptyCreditCard |
 | | testLengthOneCreditCard |
+| Class *User* - setters/getters/constructor | testParametricConstructor |
+| | testSetId |
+| | testSetUsername |
+| | testSetPassword |
+| | testSetRole |
+| | testSetRoleEnum |
+| Class *SaleTransaction* - setters/getters | testSetId |
+| | testSetStatus |
+| | testSetAmount |
+| | testSetDiscountRate |
+| | testSetPaymentType |
+| | testSetCash |
+| | testSetChange |
+| | testSetCreditCard |
+| | testSetTicketNumber |
+| | testSetEntries |
+| | testSetPrice |
+| | testCreationDate |
+| | testCreationTime |
+| Class *SaleTransactionRecord* - setters/getters | testValidFormula |
+| | testSetId |
+| | testSetTotalPrice |
+| | testSetProductType |
+| | testSetBarCode |
+| | testSetProductDescription |
+| | testSetAmount |
+| | testSetPricePerUnit |
+| | testSetDiscountRate |
 
 ### coverage report
 

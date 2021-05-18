@@ -24,7 +24,7 @@ public class SaleTransactionRecord implements TicketEntry {
     @DatabaseField(canBeNull = false, foreign = true, columnName = "sale_transaction_id")
     private SaleTransaction saleTransaction;
 
-    SaleTransactionRecord() {
+    public SaleTransactionRecord() {
     }
 
     public SaleTransactionRecord(SaleTransaction saleTransaction, ProductType productType, int amount) {
@@ -36,6 +36,10 @@ public class SaleTransactionRecord implements TicketEntry {
 
     public Integer getId() {
         return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public double getTotalPrice() {

@@ -8,10 +8,7 @@ import it.polito.ezshop.data.TicketEntry;
 
 import java.sql.SQLException;
 import java.time.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @DatabaseTable(tableName = "sale_transactions")
 public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
@@ -72,8 +69,7 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
     }
 
     public LocalTime getTime() {
-        return LocalDateTime.ofEpochSecond(createdAt, 0, ZoneOffset.of("GMT+2"))
-                .toLocalTime();
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(createdAt), TimeZone.getDefault().toZoneId()).toLocalTime();
     }
 
     public double getAmount() {
