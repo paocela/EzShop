@@ -252,18 +252,19 @@ package it.polito.ezshop.model {
     }
    
     class Order {
-        id: Integer
-        status: Enum< ISSUED, ORDERED, COMPLETED>
+        orderId: Integer
+        status: Enum< ISSUED, PAYED, COMPLETED>
         productCode: String
         quantity: Integer
         pricePerUnit: double
+        balanceId: Integer
 
     }
     class BalanceOperation {
-        id: Integer
-        date: LocalDate
+        balanceId: Integer
+        dateString: String
         type: Enum<CREDIT,DEBIT>
-        amount: double
+        money: double
 
     }
     
