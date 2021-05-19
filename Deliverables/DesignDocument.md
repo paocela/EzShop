@@ -239,9 +239,8 @@ package it.polito.ezshop.model {
     class BalanceOperation {
         id: Integer
         date: LocalDate
-        type: Enum<CREDIT,DEBIT,ORDER,SALE,RETURN>
+        type: Enum<CREDIT,DEBIT>
         amount: double
-        description: String
 
     }
 }
@@ -309,7 +308,7 @@ hide members
 | FR4.1 | X | | | | X |
 | FR4.2 | X | | | | X |
 | FR4.3 | X | | | | X | | | | | | X |
-| FR4.4 | X | | | | X | | | | | | X | 
+| FR4.4 | X | | | | X | | | | | | X |
 | FR4.5 | X | | | | | | | | | | X | X
 | FR4.6 | X | | | | | | | | | | X
 | FR4.7 | X | | | | | | | | | | X

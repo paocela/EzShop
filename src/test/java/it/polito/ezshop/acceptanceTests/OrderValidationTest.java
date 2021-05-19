@@ -4,7 +4,7 @@ import it.polito.ezshop.model.Order;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class orderTest {
+public class OrderValidationTest {
 
     @Test
     public void testSetGetOrderId() {

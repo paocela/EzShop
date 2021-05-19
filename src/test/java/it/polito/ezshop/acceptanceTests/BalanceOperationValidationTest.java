@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 import static org.junit.Assert.assertEquals;
 
-public class balanceOperationTest {
+public class BalanceOperationValidationTest {
 
     @Test
     public void testSetGetBalanceId() {

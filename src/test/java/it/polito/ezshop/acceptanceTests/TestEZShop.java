@@ -10,10 +10,12 @@ import org.junit.runners.Suite;
         SaleTransactionRecordValidationTest.class,
         passwordHashValidationTest.class,
         CustomerValidationTest.class,
-        orderTest.class,
-        balanceOperationTest.class,
+        OrderValidationTest.class,
+        BalanceOperationValidationTest.class,
         UserValidationTest.class,
-        SaleTransactionValidationTest.class
+        SaleTransactionValidationTest.class,
+        ReturnTransactionRecordValidationTest.class,
+        ReturnTransactionValidationTest.class
 })
 
 
