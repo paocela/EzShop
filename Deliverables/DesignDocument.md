@@ -201,7 +201,6 @@ package it.polito.ezshop.model {
         notes: String
         position: String
         pricePerUnit: double
-        + updateQuantity()
 
 
     }
@@ -238,16 +237,17 @@ package it.polito.ezshop.model {
     class ReturnTransaction {
         returnId : Integer
         transactionId: Integer
+        status: StatusEnum
         returnedValue: double
         recordList : List <ReturnTransactionRecord>        
-        + addReturnTransactionRecord()
 
     }
     class ReturnTransactionRecord {
         returnId: Integer
-        productId: Integer
+        productType: ProductType
         quantity: int
         totalPrice : double
+        returnTransaction: ReturnTransaction
 
     }
    
