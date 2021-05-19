@@ -61,6 +61,16 @@ public class ReturnTransaction implements it.polito.ezshop.data.ReturnTransactio
         this.ticketNumber = ticketNumber;
     }
 
+
+    public ReturnTransaction.StatusEnum getStatus() {
+        return status;
+    }
+
+    public void setStatus(ReturnTransaction.StatusEnum status) {
+        this.status = status;
+    }
+
+
     @Override
     public double getReturnValue() {
         return returnValue;
@@ -80,20 +90,5 @@ public class ReturnTransaction implements it.polito.ezshop.data.ReturnTransactio
 
     }
     */
-
-    public boolean addReturnTransactionRecord(ReturnEntry record) throws SQLException {
-
-        return true;
-    }
-
-
-    public ReturnTransaction.StatusEnum getStatus() {
-        return status;
-    }
-
-    public void setStatus(ReturnTransaction.StatusEnum status) {
-        this.status = status;
-    }
-
 
 }

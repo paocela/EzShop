@@ -285,6 +285,14 @@ Version: 1.0
 | | testSetAmount |
 | | testSetPricePerUnit |
 | | testSetDiscountRate |
+| Class *ReturnTransaction* - setters/getters | testSetReturnId |
+| | testSetTicketNumber |
+| | testSetStatus |
+| | testSetReturnValue |
+| Class *ReturnTransactionRecord* - setters/getters | testSetRecordId |
+| | testSetProductType |
+| | testSetTotalPrice |
+| | testSetQuantity |
 
 ### coverage report
 
