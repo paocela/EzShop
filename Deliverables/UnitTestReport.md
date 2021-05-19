@@ -26,18 +26,6 @@ Version: 1.0
     to start tests
     >
 
-- EZShop::hashPassword
-
-- EZShop::byteToHex
-
-- EZShop::validateCreditCard (my-done)
-
-- EZShop::validateBarcode
-
-- SaleTransactionRecord::refreshTotalPrice (my-done)
-
-  
-
 
  ### **Class *EZShop* - method *hashPassword***
 
@@ -305,7 +293,10 @@ Version: 1.0
 
     <Add here the screenshot report of the statement and branch coverage obtained using
     the Eclemma tool. >
-
+*Model Package Coverage*
+![Model Package Coverage](WBimages/modelCoverage.png?raw=true "Model Package Coverage")
+*Data Package Coverage*
+![Data Package Coverage](WBimages/dataCoverage.png?raw=true "Data Package Coverage")
 
 ### Loop coverage analysis
 
@@ -314,11 +305,11 @@ Version: 1.0
 
 |Unit name | Loop rows | Number of iterations | JUnit test case |
 |---|---|---|---|
-|Class EZShop - method validateBarcode|-|11|test12BarCode|
+|Class EZShop - method validateBarcode|2379 - 2385|11|test12BarCode|
 |"|"|12|testValidBarCode|
 |"|"|13|testInvalidBarCode|
 |"|"|0|testNullBarCode,<br />testTooShortBarCode,<br />testTooLongBarCode|
-|Class EZShop - method validateCreditCard|-|8|testCorrectCreditCard <br/> testWrongCreditCard|
+|Class EZShop - method validateCreditCard|2338 - 2352|8|testCorrectCreditCard <br/> testWrongCreditCard|
 |"|"|0|testEmptyCreditCard|
 |"|"|1|testLengthOneCreditCard|
 

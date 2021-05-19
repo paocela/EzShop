@@ -15,7 +15,8 @@ import org.junit.runners.Suite;
         UserValidationTest.class,
         SaleTransactionValidationTest.class,
         ReturnTransactionRecordValidationTest.class,
-        ReturnTransactionValidationTest.class
+        ReturnTransactionValidationTest.class,
+        ProductTypeValidationTest.class
 })
 
 
