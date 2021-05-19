@@ -21,7 +21,7 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
     @DatabaseField()
     private Double pricePerUnit;
 
-    ProductType() { }
+    public ProductType() { }
 
     public ProductType(String description, String code, Double pricePerUnit, String notes) {
         this.code = code;

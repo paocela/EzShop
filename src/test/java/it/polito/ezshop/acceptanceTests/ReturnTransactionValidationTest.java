@@ -1,6 +1,5 @@
 package it.polito.ezshop.acceptanceTests;
 
-import it.polito.ezshop.data.ReturnEntry;
 import it.polito.ezshop.model.ReturnTransaction;
 import org.junit.Test;
 

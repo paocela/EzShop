@@ -293,6 +293,13 @@ Version: 1.0
 | | testSetProductType |
 | | testSetTotalPrice |
 | | testSetQuantity |
+| Class *ProductType* - setters/getters | testSetId |
+| | testSetBarCode |
+| | testSetDescription |
+| | testSetQuantity |
+| | testSetNote |
+| | testLocation |
+| | testPricePerUnit |
 
 ### coverage report
 
