@@ -1,10 +1,10 @@
 # Unit Testing Documentation
 
-Authors:
+Authors: Francesco Policastro, Paolo Celada, Luca Pezzolla, Teodoro Corbo
 
-Date:
+Date: 15/05/2021
 
-Version:
+Version: 1.0
 
 # Contents
 
@@ -26,52 +26,178 @@ Version:
     to start tests
     >
 
- ### **Class *class_name* - method *name***
+
+ ### **Class *EZShop* - method *hashPassword***
 
 
 
-**Criteria for method *name*:**
-	
+**Criteria for method *hashPassword*:**
 
- - 
- - 
+ - Hashing algorithm validity
 
-
-
-
-
-**Predicates for method *name*:**
+**Predicates for method *hashPassword*:**
 
 | Criteria | Predicate |
 | -------- | --------- |
-|          |           |
-|          |           |
-|          |           |
-|          |           |
-
-
-
-
+|Hashing algorithm validity | true |
 
 **Boundaries**:
 
 | Criteria | Boundary values |
 | -------- | --------------- |
-|          |                 |
-|          |                 |
-
-
+| ...       | ...            |
 
 **Combination of predicates**:
 
 
-| Criteria 1 | Criteria 2 | ... | Valid / Invalid | Description of the test case | JUnit test case |
-|-------|-------|-------|-------|-------|-------|
-|||||||
-|||||||
-|||||||
-|||||||
-|||||||
+| hashing algorithm validity | Valid / Invalid | Description of the test case                                 | JUnit test case  |
+| ---------------- | --------------- | ------------------------------------------------------------ | ---------------- |
+| yes              | valid           | T1(*) | testStandardSHA1Implementation |
+
+
+ ### **Class *EZShop* - method *byteToHex***
+
+**Criteria for method *byteToHex*:**
+ - encoding validity
+
+**Predicates for method *byteToHex*:**
+
+| Criteria | Predicate |
+| -------- | --------- |
+| encoding validity | yes       |
+
+**Boundaries**:
+
+| Criteria | Boundary values |
+| -------- | --------------- |
+| ...       | ...            |
+
+**Combination of predicates**:
+
+
+| encoding validity | Valid / Invalid | Description of the test case                                 | JUnit test case  |
+| ---------------- | --------------- | ------------------------------------------------------------ | ---------------- |
+| yes              | valid           | T1(*) | testValidByteToHexString |
+
+
+
+
+### **Class *EZShop* - method *validateCreditCard***
+
+
+
+**Criteria for method validateCreditCard:**
+	
+
+- Credit card number validity
+
+- Credit card string format
+
+  
+
+**Predicates for method validateCreditCard:**
+
+| Criterion                   | Predicate       |
+| --------------------------- | --------------- |
+| Credit card number validity | yes             |
+|                             | no              |
+| Credit card string format   | only numbers    |
+|                             | numbers + chars |
+
+**Boundaries for method validateCreditCard**:
+
+| Criterion | Boundary values |
+| --------- | --------------- |
+| ...       | ...             |
+
+
+
+ **Combination of predicates for method validateCreditCard**
+
+| Credit card number validity | Credit card string format | Valid/Invalid | Description of the test case | JUnit test case         |
+| --------------------------- | ------------------------- | ------------- | ---------------------------- | ----------------------- |
+| yes                         | only numbers              | valid         | T1(12345674, "true")         | testCorrectCreditCard   |
+| no                          | only numbers              | invalid       | T2(13245674, "false")        | testWrongCreditCard     |
+| *                           | numbers + chars           | invalid       | T3(1324B5674, "false")       | testNonNumberCreditCard |
+
+
+
+ ### **Class *EZShop* - method *validateBarcode***
+
+
+
+**Criteria for method *validateBarcode*:**
+	
+
+ - Validity of the String parameter
+ - Length of the String
+ - Validity of barcode
+
+
+
+**Predicates for method *validateBarcode*:**
+
+| Criteria                         | Predicate                |
+| -------------------------------- | ------------------------ |
+| Validity of the String parameter | Valid                    |
+|                                  | Null                     |
+| Length of the String             | 12 <= length <= 14       |
+|                                  | length <12 OR length >14 |
+| Validity of barcode              | Yes                      |
+|                                  | No                       |
+
+
+
+**Boundaries for method validateBarcode**:
+
+| Criteria | Boundary values |
+| -------- | --------------- |
+| ...      | ...             |
+
+
+
+**Combination of predicates for method validateBarcode**:
+
+
+| Validity of the String parameter | Length of the String     | Validity of barcode | Valid / Invalid | Description of the test case | JUnit test case     |
+| -------------------------------- | ------------------------ | ------------------- | --------------- | ---------------------------- | ------------------- |
+| Valid                            | 12 <= length <= 14       | Yes                 | Valid           | T0(0123456789012) -> true    | testValidBarCode    |
+| "                                | "                        | No                  | Invalid         | T1(01234567890123) -> false  | testInvalidBarCode  |
+| "                                | length <12 OR length >14 | -                   | Invalid         | T2(012345678) -> false       | testTooShortBarCode |
+| NULL                             | -                        | -                   | Invalid         | T3(NULL) ->  error           | testNullBarCode     |
+
+
+
+ ### **Class *SaleTransactionRecord* - method *refreshTotalPrice***
+
+
+
+**Criteria for method *refreshTotalPrice*:**
+
+- formula validity
+
+**Predicates for method *refreshTotalPrice*:**
+
+| Criteria         | Predicate |
+| ---------------- | --------- |
+| formula validity | yes       |
+
+
+
+**Boundaries for method *refreshTotalPrice***:
+
+| Criteria | Boundary values |
+| -------- | --------------- |
+|          |                 |
+
+
+
+**Combination of predicates for method *refreshTotalPrice***:
+
+
+| formula validity | Valid / Invalid | Description of the test case                                 | JUnit test case  |
+| ---------------- | --------------- | ------------------------------------------------------------ | ---------------- |
+| yes              | valid           | ProductType productType = new ProductType()<br />SaleTransaction saleTransaction = new SaleTransaction()<br />check saleTransaction.getTotalPrice()<br />modify saleTransactions attributes<br />saleTransaction.refreshTotalPrice()<br />check saleTransaction.getTotalPrice() | testValidFormula |
 
 
 
@@ -79,23 +205,98 @@ Version:
 # White Box Unit Tests
 
 ### Test cases definition
-    
+
     <JUnit test classes must be in src/test/java/it/polito/ezshop>
     <Report here all the created JUnit test cases, and the units/classes under test >
     <For traceability write the class and method name that contains the test case>
 
 
 | Unit name | JUnit test case |
-|--|--|
-|||
-|||
-||||
+|-----------|-----------------|
+| Class *EZShop* - method validateBarcode | testValidBarCode |
+| | testInvalidBarCode |
+| | testTooShortBarCode |
+| | testNullBarCode |
+| | testTooLongBarCode |
+| |test12BarCode |
+| Class *Order* - setters/getters methods | testSetGetOrderId |
+|  | testGetSetBalanceId |
+|  | testGetSetProductCode |
+|  | testGetSetQuantity |
+|  | testGetSetPricePerUnit |
+|  | testGetSetStatus |
+| Class *BalanceOperation* -  setters/getters methods | testSetGetBalanceId |
+|  | testGetType |
+|  | testSetType |
+|  | testSetGetMoney |
+|  | testSetGetDate |
+| Class *Customer* -  setters/getters methods | testGetCustomerName |
+|  | testSetCustomerName |
+|  | testGetCustomerCard |
+|  | testSetCustomerCard |
+|  | testGetId |
+|  | testSetId |
+|  | testGetPoints |
+|  | testSetPoints |
+|  | testCustomer |
+|  | testEmptyCustomer |
+| Class *EZShop* - method validateCreditCard | testCorrectCreditCard |
+| | testWrongCreditCard |
+| | testNonNumberCreditCard |
+| | testEmptyCreditCard |
+| | testLengthOneCreditCard |
+| Class *User* - setters/getters/constructor | testParametricConstructor |
+| | testSetId |
+| | testSetUsername |
+| | testSetPassword |
+| | testSetRole |
+| | testSetRoleEnum |
+| Class *SaleTransaction* - setters/getters | testSetId |
+| | testSetStatus |
+| | testSetAmount |
+| | testSetDiscountRate |
+| | testSetPaymentType |
+| | testSetCash |
+| | testSetChange |
+| | testSetCreditCard |
+| | testSetTicketNumber |
+| | testSetEntries |
+| | testSetPrice |
+| | testCreationDate |
+| | testCreationTime |
+| Class *SaleTransactionRecord* - setters/getters | testValidFormula |
+| | testSetId |
+| | testSetTotalPrice |
+| | testSetProductType |
+| | testSetBarCode |
+| | testSetProductDescription |
+| | testSetAmount |
+| | testSetPricePerUnit |
+| | testSetDiscountRate |
+| Class *ReturnTransaction* - setters/getters | testSetReturnId |
+| | testSetTicketNumber |
+| | testSetStatus |
+| | testSetReturnValue |
+| Class *ReturnTransactionRecord* - setters/getters | testSetRecordId |
+| | testSetProductType |
+| | testSetTotalPrice |
+| | testSetQuantity |
+| Class *ProductType* - setters/getters | testSetId |
+| | testSetBarCode |
+| | testSetDescription |
+| | testSetQuantity |
+| | testSetNote |
+| | testLocation |
+| | testPricePerUnit |
 
-### Code coverage report
+### coverage report
 
     <Add here the screenshot report of the statement and branch coverage obtained using
     the Eclemma tool. >
-
+*Model Package Coverage*
+![Model Package Coverage](WBimages/modelCoverage.png?raw=true "Model Package Coverage")
+*Data Package Coverage*
+![Data Package Coverage](WBimages/dataCoverage.png?raw=true "Data Package Coverage")
 
 ### Loop coverage analysis
 
@@ -104,9 +305,11 @@ Version:
 
 |Unit name | Loop rows | Number of iterations | JUnit test case |
 |---|---|---|---|
-|||||
-|||||
-||||||
-
-
+|Class EZShop - method validateBarcode|2379 - 2385|11|test12BarCode|
+|"|"|12|testValidBarCode|
+|"|"|13|testInvalidBarCode|
+|"|"|0|testNullBarCode,<br />testTooShortBarCode,<br />testTooLongBarCode|
+|Class EZShop - method validateCreditCard|2338 - 2352|8|testCorrectCreditCard <br/> testWrongCreditCard|
+|"|"|0|testEmptyCreditCard|
+|"|"|1|testLengthOneCreditCard|
 

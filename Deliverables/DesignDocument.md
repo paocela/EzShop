@@ -133,20 +133,40 @@ package it.polito.ezshop.data {
 
     }
     
-       class Shop {
-        balance: double
-        userLogged: User
-        ongoingTransactionId: Integer
-        ongoingReturnTransactionId: Integer
-
-        + getReturnTransaction()
-        + getOrder()
-        + getProductType()
-        + validateCreditCard()
-        + getUserByUsername()
+       class EZShop {
+        - {static} DATABASE_URL: String
+        - {static} CREDIT_CARDS_FILE_PATH: String
+        - connectionSource: ConnectionSource
+        - userDao: Dao<User, Integer>
+        - productTypeDao: Dao<ProductType, Integer>
+        - customerDao: Dao<Customer, Integer>
+        - saleTransactionDao: Dao<SaleTransaction, Integer>
+        - returnTransactionDao: Dao<ReturnTransaction, Integer>
+        - saleTransactionRecordDao: Dao<SaleTransactionRecord, Integer>
+        - returnTransactionRecordDao: Dao<ReturnTransactionRecord, Integer>
+        - orderDao: Dao<Order, Integer>
+        - balanceOperationDao: Dao<BalanceOperation, Integer>
+        - creditCardDao: Dao<CreditCard, String>
+        - userLogged: User
+        - ongoingTransaction: SaleTransaction
+        - ongoingReturnTransaction: ReturnTransaction
+        
+        - authorize(): void
+        - updateInventoryByPaidTransaction(): void
+        - updateInventoryByReturnTransaction(): void
+        - loadCreditCardsFromUtils(): void
+        - loadCreditCard(): void
+        
+        + getOngoingTransactionById(): SaleTransaction
+        + getOngoingReturnTransactionById(): ReturnTransaction
+        + hashPassword(): String
+        + byteToHex(): String
+        + validateCreditCard(): String
+        + validateBarcode(): String
+        
 
     } 
-    Shop --^ EzShopInterface
+    EZShop --^ EzShopInterface
 }
 ```
 
@@ -165,10 +185,11 @@ package it.polito.ezshop.model {
 
     }
     class User {
+        RoleEnum: enum
         id: Integer
         username : String   
         password : String
-        role : String in <"Administrator", "Cashier", "ShopManager">
+        role : String
 
     }
     class ProductType {
@@ -180,75 +201,82 @@ package it.polito.ezshop.model {
         notes: String
         position: String
         pricePerUnit: double
-        + updateQuantity()
 
 
     }
     class SaleTransaction {
+    
+        StatusEnum: enum
         id: Integer
+        status: StatusEnum
+        amount: double
+        discountRate : double
         date : LocalDate
         time : LocalTime
-        amount: double
-        discountRateProducts : List <ProductDiscount>
-        discountRateAmount : double
-        paymentType: String in <cash, card>
+        paymentType: String
         cash: double
         change: double
-        creditCard: String
-        recordList : List <SaleTransactionRecord>
-        + addSaleTransactionRecord()
-        + addProductDiscount()
+        creditCard: CreditCard
+        {static} createdAt: long
+        records : ForeignCollection <SaleTransactionRecord>
+        + refreshAmount(): void
+        + addProductToRecords(): boolean
+        + removeProductFromRecords(): boolean
 
     }
     class SaleTransactionRecord {
-        transactionId: Integer
-        productId: Integer
-        quantity: int
+        id: Integer
+        amount: int
         totalPrice : double
-
+        productType: ProductType
+        discountRate: double
+        saleTransaction: SaleTransaction
+        + refreshTotalPrice(): void
     }
+    
     class ReturnTransaction {
         returnId : Integer
         transactionId: Integer
+        status: StatusEnum
         returnedValue: double
         recordList : List <ReturnTransactionRecord>        
-        + addReturnTransactionRecord()
 
     }
     class ReturnTransactionRecord {
         returnId: Integer
-        productId: Integer
+        productType: ProductType
         quantity: int
         totalPrice : double
+        returnTransaction: ReturnTransaction
 
     }
-    class ProductDiscount {
-        id: Integer
-        productId: Integer
-        discountRate: double
-
-    }
+   
     class Order {
-        id: Integer
-        status: Enum< ISSUED, ORDERED, COMPLETED>
+        orderId: Integer
+        status: Enum< ISSUED, PAYED, COMPLETED>
         productCode: String
         quantity: Integer
         pricePerUnit: double
+        balanceId: Integer
 
     }
     class BalanceOperation {
-        id: Integer
-        date: LocalDate
-        type: Enum<CREDIT,DEBIT,ORDER,SALE,RETURN>
-        amount: double
-        description: String
+        balanceId: Integer
+        dateString: String
+        type: Enum<CREDIT,DEBIT>
+        money: double
 
+    }
+    
+    class CreditCard {
+       code: String
+       amount: double
     }
 }
 
 SaleTransaction - "*" SaleTransactionRecord
 ReturnTransaction - "*" ReturnTransactionRecord
-ProductDiscount "*" -- SaleTransaction 
+CreditCard  -- "*" SaleTransaction 
 SaleTransactionRecord -- ProductType
 ReturnTransactionRecord - ProductType
 
@@ -309,7 +337,7 @@ hide members
 | FR4.1 | X | | | | X |
 | FR4.2 | X | | | | X |
 | FR4.3 | X | | | | X | | | | | | X |
-| FR4.4 | X | | | | X | | | | | | X | 
+| FR4.4 | X | | | | X | | | | | | X |
 | FR4.5 | X | | | | | | | | | | X | X
 | FR4.6 | X | | | | | | | | | | X
 | FR4.7 | X | | | | | | | | | | X
