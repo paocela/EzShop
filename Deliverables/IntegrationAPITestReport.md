@@ -1,10 +1,10 @@
 # Integration and API Test Documentation
 
-Authors:
+Authors: Paolo Celada, Teodoro Corbo, Luca Pezzolla, Francesco Policastro
 
-Date:
+Date: 22/05/2021
 
-Version:
+Version: 1.0
 
 # Contents
 
@@ -23,7 +23,30 @@ Version:
 
 # Dependency graph 
 
-     <report the here the dependency graph of the classes in EzShop, using plantuml>
+```plantuml
+
+EzShop -down-> BalanceOperation
+EzShop -down-> Customer
+EzShop -down-> Order
+EzShop -down-> User
+EzShop -down-> ReturnTransaction
+EzShop -down-> SaleTransaction
+
+SaleTransaction -down-> CreditCard
+SaleTransaction -down-> SaleTransactionRecord
+SaleTransaction -down-> ProductType
+
+SaleTransactionRecord -down-> ProductType
+
+ReturnTransaction -down-> ReturnTransactionRecord
+ReturnTransactionRecord -down-> ProductType
+
+EzShop -down-> SaleTransactionRecord
+EzShop -down-> ReturnTransactionRecord
+EzShop -down-> CreditCard
+EzShop -down-> ProductType
+
+```
      
 # Integration approach
 
