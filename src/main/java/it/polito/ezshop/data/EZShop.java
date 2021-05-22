@@ -38,6 +38,7 @@ import it.polito.ezshop.model.BalanceOperation;
 public class EZShop implements EZShopInterface {
 
     private final static String DATABASE_URL = "jdbc:sqlite:data/db.sqlite";
+    private final static String TEST_DATABASE_URL = "jdbc:sqlite:data/test_db.sqlite";
     private final static String CREDIT_CARDS_FILE_PATH = "src/main/java/it/polito/ezshop/utils/CreditCards.txt";
 
     ConnectionSource connectionSource;
@@ -56,11 +57,19 @@ public class EZShop implements EZShopInterface {
     private SaleTransaction ongoingTransaction = null;
     private ReturnTransaction ongoingReturnTransaction = null;
 
-    public EZShop() {
+    public EZShop(){
+        this(false);
+    }
+
+    public EZShop(boolean isTestEnvironment) {
         Logger.setGlobalLogLevel(Log.Level.ERROR);
 
         try {
-            connectionSource = new JdbcConnectionSource(DATABASE_URL);
+            if(isTestEnvironment){
+                connectionSource = new JdbcConnectionSource(TEST_DATABASE_URL);
+            } else {
+                connectionSource = new JdbcConnectionSource(DATABASE_URL);
+            }
 
             TableUtils.createTableIfNotExists(connectionSource, User.class);
             TableUtils.createTableIfNotExists(connectionSource, ProductType.class);
