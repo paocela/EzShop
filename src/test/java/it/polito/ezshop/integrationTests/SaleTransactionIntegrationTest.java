@@ -41,7 +41,7 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test       //UC6.1 + 7.1
-    public void testCompletedCreditCard() throws InvalidTransactionIdException, UnauthorizedException, InvalidPaymentException, InvalidCreditCardException {
+    public void testCompletedCreditCard() throws InvalidTransactionIdException, UnauthorizedException, InvalidCreditCardException {
 
         loginAs(User.RoleEnum.Administrator);
         double balanceBefore = shop.computeBalance();
@@ -107,7 +107,7 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test       //UC6.4
-    public void testLoyaltyCard() throws InvalidTransactionIdException, UnauthorizedException, InvalidPaymentException, InvalidDiscountRateException, InvalidCustomerNameException, InvalidCustomerIdException, InvalidCustomerCardException {
+    public void testLoyaltyCard() throws InvalidTransactionIdException, UnauthorizedException, InvalidPaymentException, InvalidCustomerNameException, InvalidCustomerIdException, InvalidCustomerCardException {
 
         loginAs(User.RoleEnum.Administrator);
 
@@ -170,7 +170,7 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test       //UC6.1 + 7.2
-    public void testFailedCreditCard() throws InvalidTransactionIdException, UnauthorizedException, InvalidPaymentException, InvalidCreditCardException {
+    public void testFailedCreditCard() throws InvalidTransactionIdException, UnauthorizedException {
 
         loginAs(User.RoleEnum.Cashier);
         boolean isClosed = shop.endSaleTransaction(transactionId);
