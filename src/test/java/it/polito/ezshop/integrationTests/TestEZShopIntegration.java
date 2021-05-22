@@ -16,7 +16,10 @@ import java.util.List;
         SaleTransactionIntegrationTest.class,
         ReturnTransactionIntegrationTest.class,
         UserIntegrationTest.class,
-        AuthenticateIntegrationTest.class
+        AuthenticateIntegrationTest.class,
+        OrderIntegrationTest.class,
+        ProductTypeIntegrationTest.class,
+//        BalanceUpdateIntegrationTest.class,
 })
 
 public class TestEZShopIntegration extends BaseIntegrationTest {
