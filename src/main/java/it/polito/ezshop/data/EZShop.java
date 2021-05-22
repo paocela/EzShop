@@ -1113,7 +1113,7 @@ public class EZShop implements EZShopInterface {
             try {
                 UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
                 updateCustomerQueryBuilder.updateColumnValue("name", newCustomerName)
-                        .updateColumnValue("card", "")
+                        .updateColumnValue("card", null)
                         .where().eq("id", id);
                 updateCustomerQueryBuilder.update();
                 isUpdated = true;

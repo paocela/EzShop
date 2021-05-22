@@ -12,9 +12,11 @@ import java.util.List;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-//        CustomerIntegrationTest.class,
+        CustomerIntegrationTest.class,
         SaleTransactionIntegrationTest.class,
-        ReturnTransactionIntegrationTest.class
+        ReturnTransactionIntegrationTest.class,
+        UserIntegrationTest.class,
+        AuthenticateIntegrationTest.class
 })
 
 public class TestEZShopIntegration extends BaseIntegrationTest {
