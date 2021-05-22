@@ -86,7 +86,9 @@ public class EZShop implements EZShopInterface {
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
+            saleTransactionRecordDao = DaoManager.createDao(connectionSource, SaleTransactionRecord.class);
             returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
+            returnTransactionRecordDao = DaoManager.createDao(connectionSource, ReturnTransactionRecord.class);
             orderDao = DaoManager.createDao(connectionSource, Order.class);
             balanceOperationDao = DaoManager.createDao(connectionSource, BalanceOperation.class);
             creditCardDao = DaoManager.createDao(connectionSource, CreditCard.class);
@@ -108,8 +110,12 @@ public class EZShop implements EZShopInterface {
         try {
             DeleteBuilder<SaleTransaction, Integer> saleTransactionDeleteBuilder = saleTransactionDao.deleteBuilder();
             saleTransactionDeleteBuilder.delete();
+            DeleteBuilder<SaleTransactionRecord, Integer> saleTransactionRecordDeleteBuilder = saleTransactionRecordDao.deleteBuilder();
+            saleTransactionRecordDeleteBuilder.delete();
             DeleteBuilder<ReturnTransaction, Integer> returnTransactionDeleteBuilder = returnTransactionDao.deleteBuilder();
             returnTransactionDeleteBuilder.delete();
+            DeleteBuilder<ReturnTransactionRecord, Integer> ReturnTransactionRecordDeleteBuilder = returnTransactionRecordDao.deleteBuilder();
+            ReturnTransactionRecordDeleteBuilder.delete();
             DeleteBuilder<ProductType, Integer> ProductTypeDeleteBuilder = productTypeDao.deleteBuilder();
             ProductTypeDeleteBuilder.delete();
             DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
