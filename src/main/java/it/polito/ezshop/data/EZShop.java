@@ -108,12 +108,8 @@ public class EZShop implements EZShopInterface {
         try {
             DeleteBuilder<SaleTransaction, Integer> saleTransactionDeleteBuilder = saleTransactionDao.deleteBuilder();
             saleTransactionDeleteBuilder.delete();
-            DeleteBuilder<SaleTransactionRecord, Integer> saleTransactionRecordDeleteBuilder = saleTransactionRecordDao.deleteBuilder();
-            saleTransactionRecordDeleteBuilder.delete();
             DeleteBuilder<ReturnTransaction, Integer> returnTransactionDeleteBuilder = returnTransactionDao.deleteBuilder();
             returnTransactionDeleteBuilder.delete();
-            DeleteBuilder<ReturnTransactionRecord, Integer> ReturnTransactionRecordDeleteBuilder = returnTransactionRecordDao.deleteBuilder();
-            ReturnTransactionRecordDeleteBuilder.delete();
             DeleteBuilder<ProductType, Integer> ProductTypeDeleteBuilder = productTypeDao.deleteBuilder();
             ProductTypeDeleteBuilder.delete();
             DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
@@ -1876,7 +1872,15 @@ public class EZShop implements EZShopInterface {
         if (amount <= 0) throw new InvalidQuantityException();
 
 
-        ProductType product = getProductTypeByBarCode(productCode);
+        QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
+        ProductType product = null;
+
+        try {
+            product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         if (product == null) return false;
 
         ReturnTransaction returnTransaction = getOngoingReturnTransactionById(returnId);

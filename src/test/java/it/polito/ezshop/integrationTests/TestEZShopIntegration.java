@@ -12,7 +12,9 @@ import java.util.List;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        CustomerIntegrationTest.class
+//        CustomerIntegrationTest.class,
+        SaleTransactionIntegrationTest.class,
+        ReturnTransactionIntegrationTest.class
 })
 
 public class TestEZShopIntegration extends BaseIntegrationTest {
@@ -23,6 +25,8 @@ public class TestEZShopIntegration extends BaseIntegrationTest {
     public static void init() throws InvalidPasswordException, InvalidRoleException, InvalidUsernameException {
         Integer testUserId;
 
+        shop.reset();
+
         testUserId = shop.createUser("testCashier", "password", "Cashier");
         testUserIds.add(testUserId);
 
@@ -31,6 +35,7 @@ public class TestEZShopIntegration extends BaseIntegrationTest {
 
         testUserId = shop.createUser("testAdministrator", "password", "Administrator");
         testUserIds.add(testUserId);
+
     }
 
 
