@@ -20,7 +20,7 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
         loginAs(User.RoleEnum.ShopManager);
 
         productId = shop.createProductType("Any", productCode, productPricePerUnit, null);
-        assertTrue(productId >=0);
+        assertTrue(productId >= 0);
 
         boolean isPositionUpdate = shop.updatePosition(productId, "1-A-1");
         assertTrue(isPositionUpdate);
@@ -34,9 +34,9 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
         loginAs(User.RoleEnum.Cashier);
 
         transactionId = shop.startSaleTransaction();
-        assertTrue(transactionId >=0);
+        assertTrue(transactionId >= 0);
 
-        boolean isProductAdded= shop.addProductToSale(transactionId, productCode, transactionProductAmount);
+        boolean isProductAdded = shop.addProductToSale(transactionId, productCode, transactionProductAmount);
         assertTrue(isProductAdded);
     }
 
@@ -127,7 +127,10 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
         boolean isClosed = shop.endSaleTransaction(transactionId);
         assertTrue(isClosed);
 
-        boolean isModified = shop.modifyPointsOnCard(customerCard, 50);
+        int points = shop.computePointsForSale(transactionId);
+        assertTrue(points >= 0);
+
+        boolean isModified = shop.modifyPointsOnCard(customerCard, points);
         assertTrue(isModified);
 
         double change = shop.receiveCashPayment(transactionId, 12);
@@ -151,12 +154,17 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test       //UC6.6 + UC 7.4
-    public void testCompletedCash() throws InvalidTransactionIdException, UnauthorizedException, InvalidPaymentException {
+    public void testCompletedCash() throws InvalidTransactionIdException, UnauthorizedException, InvalidPaymentException, InvalidQuantityException, InvalidProductCodeException {
 
         loginAs(User.RoleEnum.Administrator);
         double balanceBefore = shop.computeBalance();
 
+        int removedAmount = 1;
+
         loginAs(User.RoleEnum.Cashier);
+        boolean isRemoved = shop.deleteProductFromSale(transactionId, productCode, removedAmount);
+        assertTrue(isRemoved);
+
         boolean isClosed = shop.endSaleTransaction(transactionId);
         assertTrue(isClosed);
 
@@ -166,7 +174,7 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
         loginAs(User.RoleEnum.Administrator);
         double balanceAfter = shop.computeBalance();
 
-        assertEquals(transactionProductAmount * productPricePerUnit, balanceAfter - balanceBefore, .01);
+        assertEquals((transactionProductAmount - removedAmount) * productPricePerUnit, balanceAfter - balanceBefore, .01);
     }
 
     @Test       //UC6.1 + 7.2
@@ -176,7 +184,7 @@ public class SaleTransactionIntegrationTest extends BaseIntegrationTest {
         boolean isClosed = shop.endSaleTransaction(transactionId);
         assertTrue(isClosed);
 
-        assertThrows(InvalidCreditCardException.class,() -> {
+        assertThrows(InvalidCreditCardException.class, () -> {
             shop.receiveCreditCardPayment(transactionId, "45465488484");
         });
 
