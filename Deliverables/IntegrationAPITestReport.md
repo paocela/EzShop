@@ -16,20 +16,10 @@ Version: 1.0
 - [Integration approach](#integration-approach)
 - [Tests](#tests)
   - [Step 1](#step-1)
-  - [Step 2](#step-2)
-  - [Step n](#step-n)
 - [Scenarios](#scenarios)
-  - [Scenario UCx.y](#scenario-ucxy)
+  - [Scenario UC3.4](#scenario-uc34)
 - [Coverage of Scenarios and FR](#coverage-of-scenarios-and-fr)
 - [Coverage of Non Functional Requirements](#coverage-of-non-functional-requirements)
-    - [](#)
-
-- [Tests](#tests)
-
-- [Scenarios](#scenarios)
-
-- [Coverage of scenarios and FR](#scenario-coverage)
-- [Coverage of non-functional requirements](#nfr-coverage)
 
 
 
@@ -105,21 +95,21 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 
 | Scenario ID | Functional Requirements covered | JUnit  Test(s) |
 | ----------- | ------------------------------- | ----------- |
-| 1-1       | FR3.1,                  | testCreateProductType |
+| 1-1       | FR3.1                 | testCreateProductType |
 | 1-2      | FR3.4, FR4.2                 | testUpdateLocation |
 | 1-3       | FR4.1 | testUpdateProductType |
-| 2.1         | FR1.1                 |    testCreateUser         |             
-| 2.2         | FR1.2                 |      testDeleteUser       |             
-| 2.3         | FR1.1                |     testModifyUserRights<br />testGetUser        |   
+| 2-1        | FR1.1                 |    testCreateUser         |
+| 2-2        | FR1.2                 |      testDeleteUser       |
+| 2-3        | FR1.1                |     testModifyUserRights<br />testGetUser        |
 | 3-1 | FR4.3, | testValidIssueOrder |
 | 3-2 | FR4.5 | testValidPayOrder |
 | 3-3 | FR4.6 | testValidRecordOrderArrival |
 | 3-4 | FR4.4 | testValidPayOrderFor |
-| 4.1         | FR5.1                 |      testCreateValidCustomer<br /> testCreateCustomerUnauthorized      |             
-| 4.2         | FR5.6            |    testCreateCard <br /> testGetCustomer <br /> testAttachCardToCustomer         |             
-| 4.3         | FR5.1                 | testDetachValidCardFromCustomer            |
-| 4.4        | FR5.1, FR5.2         |  testModifyValidNameCustomerRecord <br />testModifyValidCardCustomerRecord<br />testModifyInvalidNameCustomerRecord<br />testDeleteCustomerRecord     |
-| 5.1       | FR1.5      |   testValidLogin <br /> testValidLogout    |
+| 4-1        | FR5.1                 |      testCreateValidCustomer<br /> testCreateCustomerUnauthorized      |
+| 4-2        | FR5.6            |    testCreateCard <br /> testGetCustomer <br /> testAttachCardToCustomer         |
+| 4-3        | FR5.1                 | testDetachValidCardFromCustomer            |
+| 4-4      | FR5.1, FR5.2         |  testModifyValidNameCustomerRecord <br />testModifyValidCardCustomerRecord<br />testModifyInvalidNameCustomerRecord<br />testDeleteCustomerRecord     |
+| 5-1      | FR1.5      |   testValidLogin <br /> testValidLogout    |
 | 6-1 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR7.2, FR8.2 | testCompletedCreditCard <br /> testCompletedCash |
 | 6-2 | FR6.1, FR6.2, FR6.5, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testProductDiscount |
 | 6-3 | FR6.1, FR6.2, FR6.4, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testSaleDiscount |
@@ -135,7 +125,7 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 | 9-1 | FR8.1, FR8.2, FR8.3, | testListBalance (to fix) |
 | 10-1 | | |
 | 10-2 | | |
-        
+
 
 
 
@@ -146,12 +136,11 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 <Report in the following table the coverage of the Non Functional Requirements of the application - only those that can be tested with automated testing frameworks.>
 
 
-### 
+
 
 | Non Functional Requirement | Test name |
 | -------------------------- | --------- |
 |      NFR4                      |  /acceptanceTests/barCodeValidationTest         |
 |      NFR5                      |  /acceptanceTests/creditCardValidationTest         |
 |      NFR6                      |  testInvalidCustomerCard         |
-
 
