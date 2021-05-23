@@ -2,6 +2,7 @@ package it.polito.ezshop.integrationTests;
 
 import it.polito.ezshop.exceptions.*;
 import it.polito.ezshop.model.User;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -44,8 +45,8 @@ public class ProductTypeIntegrationTest extends BaseIntegrationTest {
     }
 
     //scenario 1.3 TODO: TO FIX updateProduct?
-    @Test
-    public void testUpdateProductType() throws UnauthorizedException, InvalidProductIdException, InvalidProductCodeException, InvalidProductDescriptionException, InvalidPricePerUnitException {
+    @AfterClass
+    public static void testUpdateProductType() throws UnauthorizedException, InvalidProductIdException, InvalidProductCodeException, InvalidProductDescriptionException, InvalidPricePerUnitException {
         loginAs(User.RoleEnum.ShopManager);
 
         boolean isUpdated;

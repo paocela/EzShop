@@ -483,7 +483,7 @@ public class EZShop implements EZShopInterface {
 
                 productFreeQueryBuilder.where().eq("code", newCode);
                 boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
-                if (!isProductCodeAvailable) {
+                if (isProductCodeAvailable) {
 
                     UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
                     updateProductQueryBuilder.updateColumnValue("code", newCode)
