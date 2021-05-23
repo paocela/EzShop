@@ -126,12 +126,14 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 
 | Scenario ID | Functional Requirements covered | JUnit  Test(s) | 
 | ----------- | ------------------------------- | ----------- | 
-|  ..         | FRx                             |             |             
-|  ..         | FRy                             |             |             
-| ...         |                                 |             |             
-| ...         |                                 |             |             
-| ...         |                                 |             |             
-| ...         |                                 |             |             
+|  2.1         | FR1.1                 |    testCreateUser         |             
+|  2.2         | FR1.2                 |      testDeleteUser       |             
+| 2.3         | FR1.1                |     testModifyUserRights<br />testGetUser        |             
+| 4.1         | FR5.1                 |      testCreateValidCustomer<br /> testCreateCustomerUnauthorized      |             
+| 4.2         | FR5.6            |    testCreateCard <br /> testGetCustomer <br /> testAttachCardToCustomer         |             
+| 4.3         | FR5.1                 | testDetachValidCardFromCustomer            |
+| 4.4        | FR5.1, FR5.2         |  testModifyValidNameCustomerRecord <br />testModifyValidCardCustomerRecord<br />testModifyInvalidNameCustomerRecord<br />testDeleteCustomerRecord     |
+| 5.1       | FR1.5      |   testValidLogin <br /> testValidLogout    |
 
 
 
@@ -145,6 +147,8 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 
 | Non Functional Requirement | Test name |
 | -------------------------- | --------- |
-|                            |           |
+|      NFR4                      |  /acceptanceTests/barCodeValidationTest         |
+|      NFR5                      |  /acceptanceTests/creditCardValidationTest         |
+|      NFR6                      |  testInvalidCustomerCard         |
 
 

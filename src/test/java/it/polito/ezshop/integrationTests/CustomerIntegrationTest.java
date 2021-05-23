@@ -60,6 +60,15 @@ public class CustomerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    public void testInvalidCustomerCard() throws InvalidCustomerNameException, UnauthorizedException {
+        loginAs(User.RoleEnum.ShopManager);
+
+        Integer newCustomerId = shop.defineCustomer("newCustomer");
+        assertThrows(InvalidCustomerCardException.class, () -> shop.attachCardToCustomer("101", newCustomerId));
+
+    }
+
+    @Test
     public void testModifyValidNameCustomerRecord() throws InvalidCustomerNameException, UnauthorizedException, InvalidCustomerIdException, InvalidCustomerCardException {
         loginAs(User.RoleEnum.ShopManager);
 
