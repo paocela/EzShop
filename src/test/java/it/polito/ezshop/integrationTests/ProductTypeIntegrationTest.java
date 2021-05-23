@@ -59,7 +59,7 @@ public class ProductTypeIntegrationTest extends BaseIntegrationTest {
     }
 
     @After
-    public void deleteProduct() throws UnauthorizedException, InvalidProductIdException, InvalidProductCodeException {
+    public void deleteProduct() throws UnauthorizedException, InvalidProductIdException {
         loginAs(User.RoleEnum.ShopManager);
         shop.deleteProductType(productId);
     }
