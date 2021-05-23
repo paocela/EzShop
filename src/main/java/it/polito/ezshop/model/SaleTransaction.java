@@ -243,6 +243,6 @@ public class SaleTransaction implements it.polito.ezshop.data.SaleTransaction {
 
         refreshAmount();
 
-        return false;
+        return true;
     }
 }
