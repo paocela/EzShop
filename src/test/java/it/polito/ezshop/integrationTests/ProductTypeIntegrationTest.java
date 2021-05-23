@@ -44,7 +44,7 @@ public class ProductTypeIntegrationTest extends BaseIntegrationTest {
         assertTrue(isUpdated);
     }
 
-    //scenario 1.3 TODO: TO FIX updateProduct?
+    //scenario 1.3
     @AfterClass
     public static void testUpdateProductType() throws UnauthorizedException, InvalidProductIdException, InvalidProductCodeException, InvalidProductDescriptionException, InvalidPricePerUnitException {
         loginAs(User.RoleEnum.ShopManager);

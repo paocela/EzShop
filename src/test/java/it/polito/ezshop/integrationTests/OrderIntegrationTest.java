@@ -37,21 +37,21 @@ public class OrderIntegrationTest extends BaseIntegrationTest {
 
         assertTrue(orderId > 0);
     }
-    //TODO: ADD SCENARIO?
+
     @Test
     public void testInvalidCodeIssueOrder(){
         loginAs(User.RoleEnum.ShopManager);
 
         assertThrows(InvalidProductCodeException.class, () -> shop.issueOrder("", 10, 1));
     }
-    //TODO: ADD SCENARIO?
+
     @Test
     public void testInvalidQuantityIssueOrder(){
         loginAs(User.RoleEnum.ShopManager);
 
         assertThrows(InvalidQuantityException.class, () -> shop.issueOrder("000000000000", -1, 1));
     }
-    //TODO: ADD SCENARIO?
+
     @Test
     public void testInvalidPriceIssueOrder(){
         loginAs(User.RoleEnum.ShopManager);
@@ -66,7 +66,7 @@ public class OrderIntegrationTest extends BaseIntegrationTest {
         assertThrows(UnauthorizedException.class,() -> shop.issueOrder("000000000000", 10, 1));
     }
 
-    //TODO: ADD NEW SCENARIO!
+    //Scenario 3.4
     @Test
     public void testValidPayOrderFor() throws InvalidQuantityException, UnauthorizedException, InvalidPricePerUnitException, InvalidProductCodeException {
         loginAs(User.RoleEnum.ShopManager);
@@ -75,21 +75,21 @@ public class OrderIntegrationTest extends BaseIntegrationTest {
 
         assertTrue(orderId > 0);
     }
-    //TODO: ADD SCENARIO?
+
     @Test
     public void testInvalidQuantityPayOrderFor() {
         loginAs(User.RoleEnum.ShopManager);
 
         assertThrows(InvalidQuantityException.class, () -> shop.payOrderFor("000000000000", -1, 1));
     }
-    //TODO: ADD SCENARIO?
+
     @Test
     public void testInvalidCodePayOrderFor() {
         loginAs(User.RoleEnum.ShopManager);
 
         assertThrows(InvalidProductCodeException.class, () -> shop.payOrderFor("0", 10, 1));
     }
-    //TODO: ADD SCENARIO?
+
     @Test
     public void testInvalidPricePayOrderFor() {
         loginAs(User.RoleEnum.ShopManager);
