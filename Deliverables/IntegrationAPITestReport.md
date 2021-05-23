@@ -131,22 +131,21 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 
 | Scenario ID | Functional Requirements covered | JUnit  Test(s) |
 | ----------- | ------------------------------- | ----------- |
-|  1-1       | FR3.1,                  | testCreateProductType |
-|  1-2      | FR3.4, FR4.2                 | testUpdateLocation |
+| 1-1       | FR3.1,                  | testCreateProductType |
+| 1-2      | FR3.4, FR4.2                 | testUpdateLocation |
 | 1-3       | FR4.1 | testUpdateProductType |
-| 2-1      |                                 |             |
-| 2-2      |                                 |             |
-| 2-3      |                                 |             |
+| 2.1         | FR1.1                 |    testCreateUser         |             
+| 2.2         | FR1.2                 |      testDeleteUser       |             
+| 2.3         | FR1.1                |     testModifyUserRights<br />testGetUser        |   
 | 3-1 | FR4.3, | testValidIssueOrder |
 | 3-2 | FR4.5 | testValidPayOrder |
 | 3-3 | FR4.6 | testValidRecordOrderArrival |
 | 3-4 | FR4.4 | testValidPayOrderFor |
-| 4-1 | | |
-| 4-2 | | |
-| 4-3 | | |
-| 4-4 | | |
-| 5-1 | | |
-| 5-2 | | |
+| 4.1         | FR5.1                 |      testCreateValidCustomer<br /> testCreateCustomerUnauthorized      |             
+| 4.2         | FR5.6            |    testCreateCard <br /> testGetCustomer <br /> testAttachCardToCustomer         |             
+| 4.3         | FR5.1                 | testDetachValidCardFromCustomer            |
+| 4.4        | FR5.1, FR5.2         |  testModifyValidNameCustomerRecord <br />testModifyValidCardCustomerRecord<br />testModifyInvalidNameCustomerRecord<br />testDeleteCustomerRecord     |
+| 5.1       | FR1.5      |   testValidLogin <br /> testValidLogout    |
 | 6-1 | | |
 | 6-2 | | |
 | 6-3 | | |
@@ -162,6 +161,8 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 | 9-1 | FR8.1,FR8.2, FR8.3, | testListBalance (to fix) |
 | 10-1 | | |
 | 10-2 | | |
+        
+
 
 
 
@@ -173,8 +174,10 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 
 ### 
 
-| Non Functional Requirement | Test name                |
-| -------------------------- | ------------------------ |
-| NFR4                       | barCodeValidationTest    |
-| NFR5                       | creditCardValidationTest |
+| Non Functional Requirement | Test name |
+| -------------------------- | --------- |
+|      NFR4                      |  /acceptanceTests/barCodeValidationTest         |
+|      NFR5                      |  /acceptanceTests/creditCardValidationTest         |
+|      NFR6                      |  testInvalidCustomerCard         |
+
 

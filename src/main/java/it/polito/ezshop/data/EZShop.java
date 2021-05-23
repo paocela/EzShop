@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
 import it.polito.ezshop.model.ProductType;
+import it.polito.ezshop.model.ProductType;
 import it.polito.ezshop.model.ReturnTransaction;
 import it.polito.ezshop.model.SaleTransaction;
 import it.polito.ezshop.model.User;
