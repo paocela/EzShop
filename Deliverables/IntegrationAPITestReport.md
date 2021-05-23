@@ -61,47 +61,21 @@ EzShop -down-> ProductType
 ```
 
 # Integration approach
-
-    <Write here the integration sequence you adopted, in general terms (top down, bottom up, mixed) and as sequence
-    (ex: step1: class A, step 2: class A+B, step 3: class A+B+C, etc)> 
-    <Some steps may  correspond to unit testing (ex step1 in ex above), presented in other document UnitTestReport.md>
-    <One step will  correspond to API testing>
-
-
+We chose to apply a bottom up approach, since we obtained high coverage on all models via unit testing, and DAOs are provided by the ORMLite, which we selected as a development platform.
+Therefore, our tests will only apply to methods contained in EZShop and declared in the EZShopInterface.
 
 #  Tests
-
-   <define below a table for each integration step. For each integration step report the group of classes under test, and the names of
-     JUnit test cases applied to them> JUnit test classes should be here src/test/java/it/polito/ezshop
+All integration tests are contained in src/test/java/it/polito/ezshop/integrationTests.
+Please run them through the main file (TestEZShopIntegration) to obtain a valid suite execution.
 
 ## Step 1
 | Classes  | JUnit test cases |
-|--|--|
-|||
-
-
-## Step 2
-| Classes  | JUnit test cases |
-|--|--|
-|||
-
-
-## Step n 
-
-   
-
-| Classes  | JUnit test cases |
-|--|--|
-|||
-
+| ------------- |:-------------:|
+|it.polito.ezshop.data.EZShop|*|
 
 
 
 # Scenarios
-
-
-<If needed, define here additional scenarios for the application. Scenarios should be named
- referring the UC in the OfficialRequirements that they detail>
 
 ## Scenario UC3.4
 
@@ -146,19 +120,19 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 | 4.3         | FR5.1                 | testDetachValidCardFromCustomer            |
 | 4.4        | FR5.1, FR5.2         |  testModifyValidNameCustomerRecord <br />testModifyValidCardCustomerRecord<br />testModifyInvalidNameCustomerRecord<br />testDeleteCustomerRecord     |
 | 5.1       | FR1.5      |   testValidLogin <br /> testValidLogout    |
-| 6-1 | | |
-| 6-2 | | |
-| 6-3 | | |
-| 6-4 | | |
-| 6-5 | | |
-| 6-6 | | |
-| 7-1 | | |
-| 7-2 | | |
-| 7-3 | | |
-| 7-4 | | |
-| 8-1 | | |
-| 8-2 | | |
-| 9-1 | FR8.1,FR8.2, FR8.3, | testListBalance (to fix) |
+| 6-1 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR7.2, FR8.2 | testCompletedCreditCard <br /> testCompletedCash |
+| 6-2 | FR6.1, FR6.2, FR6.5, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testProductDiscount |
+| 6-3 | FR6.1, FR6.2, FR6.4, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testSaleDiscount |
+| 6-4 | FR5.7, FR6.1, FR6.2, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testLoyaltyCard |
+| 6-5 | FR6.1, FR6.2, FR6.7, FR6.10, FR6.11 | testCancelled |
+| 6-6 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testCompletedCash |
+| 7-1 | FR6.1, FR6.2, FR6.7, FR6.10, FR6.11, FR7.2, FR8.2 | testCompletedCreditCard |
+| 7-2 | FR6.1, FR6.2, FR6.7, FR6.10, FR6.11, FR7.2 | testFailedCreditCard |
+| 7-3 | FR6.1, FR6.2, FR6.7, FR6.10, FR6.11, FR7.2 | testInsufficientFunds |
+| 7-4 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testCompletedCash |
+| 8-1 | FR6.12, FR6.13, FR6.14, FR6.15, FR7.4, FR8.1 | testCompletedReturnTransactionCreditCard |
+| 8-2 | FR6.12, FR6.13, FR6.14, FR6.15, FR7.3, FR8.1 | testCompletedReturnTransactionCash |
+| 9-1 | FR8.1, FR8.2, FR8.3, | testListBalance (to fix) |
 | 10-1 | | |
 | 10-2 | | |
         
