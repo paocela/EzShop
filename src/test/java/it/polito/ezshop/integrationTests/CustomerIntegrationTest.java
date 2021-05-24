@@ -106,6 +106,17 @@ public class CustomerIntegrationTest extends BaseIntegrationTest {
         assertThrows(InvalidCustomerNameException.class, () -> shop.modifyCustomer(customerId, "", null));
     }
 
+    @Test
+    public void testModifyPointsOnCustomerCard() throws InvalidCustomerIdException, UnauthorizedException, InvalidCustomerCardException {
+        loginAs(User.RoleEnum.ShopManager);
+
+        assertEquals(customerCard, shop.getCustomer(customerId).getCustomerCard());
+        shop.modifyPointsOnCard(customerCard, 20);
+        assertEquals(20, shop.getCustomer(customerId).getPoints(), 0);
+        shop.modifyPointsOnCard(customerCard, 35);
+        assertEquals(55, shop.getCustomer(customerId).getPoints(), 0);
+    }
+
     @AfterClass
     public static void testDeleteCustomerRecord() throws InvalidCustomerIdException, UnauthorizedException {
         loginAs(User.RoleEnum.ShopManager);

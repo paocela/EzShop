@@ -67,7 +67,7 @@ Please run them through the main file (TestEZShopIntegration) to obtain a valid 
 
 # Scenarios
 
-## Scenario UC3.4
+### Scenario UC3.4
 
 | Scenario | Order of product type X issued and payed |
 | ------------- |:-------------:|
@@ -81,6 +81,27 @@ Please run them through the main file (TestEZShopIntegration) to obtain a valid 
 |  1     | S creates order O |
 |  2     | S fills quantity of product to be ordered and the price per unit |
 | 3 | O's state is updated to PAYED |
+
+### Scenario UC4.5
+
+| Scenario | Delete customer record |
+| ------------- |:-------------:| 
+|  Precondition     | Account U for Customer Cu existing  |
+|  Post condition     | U is deleted |
+| Step#        | Description  |
+|  1    |  User selects customer record U |
+|  2    |  User deletes personal data of Cu from system  |
+
+### Scenario UC4.6
+
+| Scenario | Modify points on customer card |
+| ------------- |:-------------:| 
+|  Precondition     | Account U for Customer Cu existing  |
+|  Post condition     | Points on account U updated |
+| Step#        | Description  |
+|  1    |  User selects customer record U |
+|  2    |  User insert amount of points to be added P_add |
+|  3    |  Points on account U are updated as P = P + P_add |
 
 
 
@@ -108,7 +129,9 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 | 4-1        | FR5.1                 |      testCreateValidCustomer<br /> testCreateCustomerUnauthorized      |
 | 4-2        | FR5.6            |    testCreateCard <br /> testGetCustomer <br /> testAttachCardToCustomer         |
 | 4-3        | FR5.1                 | testDetachValidCardFromCustomer            |
-| 4-4      | FR5.1, FR5.2         |  testModifyValidNameCustomerRecord <br />testModifyValidCardCustomerRecord<br />testModifyInvalidNameCustomerRecord<br />testDeleteCustomerRecord     |
+| 4-4      | FR5.1         |  testModifyValidNameCustomerRecord <br />testModifyValidCardCustomerRecord<br />testModifyInvalidNameCustomerRecord<br />testDeleteCustomerRecord     |
+| 4-5      | FR5.2         |  testDeleteCustomerRecord     |
+| 4-6      | FR5.7         |  testModifyPointsOnCustomerCard     |
 | 5-1      | FR1.5      |   testValidLogin <br /> testValidLogout    |
 | 6-1 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR7.2, FR8.2 | testCompletedCreditCard <br /> testCompletedCash |
 | 6-2 | FR6.1, FR6.2, FR6.5, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testProductDiscount |
