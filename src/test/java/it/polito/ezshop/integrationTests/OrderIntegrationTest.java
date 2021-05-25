@@ -108,12 +108,13 @@ public class OrderIntegrationTest extends BaseIntegrationTest {
 
     //Scenario 3-2
     @Test
-    public void testValidPayOrder() throws UnauthorizedException, InvalidQuantityException, InvalidPricePerUnitException, InvalidProductCodeException {
+    public void testValidPayOrder() throws UnauthorizedException, InvalidQuantityException, InvalidPricePerUnitException, InvalidProductCodeException, InvalidOrderIdException {
         loginAs(User.RoleEnum.ShopManager);
 
-        Integer orderId = shop.payOrderFor("000000000000", 10, 1);
+        Integer orderId = shop.issueOrder("000000000000", 10, 1);
+        boolean isPayed = shop.payOrder(orderId);
 
-        assertTrue(orderId > 0);
+        assertTrue(isPayed);
     }
 
     //Scenario 3-3
