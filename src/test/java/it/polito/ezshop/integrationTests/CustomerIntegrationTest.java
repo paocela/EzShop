@@ -1,5 +1,6 @@
 package it.polito.ezshop.integrationTests;
 
+import it.polito.ezshop.data.Customer;
 import it.polito.ezshop.exceptions.InvalidCustomerCardException;
 import it.polito.ezshop.exceptions.InvalidCustomerIdException;
 import it.polito.ezshop.exceptions.InvalidCustomerNameException;
@@ -10,11 +11,16 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static org.junit.Assert.*;
 
 public class CustomerIntegrationTest extends BaseIntegrationTest {
 
     static Integer customerId;
+    static Integer customerId2;
+    static Integer newCustomerId;
     static String customerCard;
 
     @BeforeClass
@@ -51,6 +57,17 @@ public class CustomerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    public void testGetAllCustomers() throws InvalidCustomerNameException, UnauthorizedException {
+        loginAs(User.RoleEnum.ShopManager);
+
+        customerId2 = shop.defineCustomer("newCustomerName");
+        assertTrue(customerId2 > 0);
+        List<Customer> list = shop.getAllCustomers();
+        assertTrue(list.stream().map(x -> x.getId()).collect(Collectors.toList()).contains(customerId));
+        assertTrue(list.stream().map(x -> x.getId()).collect(Collectors.toList()).contains(customerId2));
+    }
+
+    @Test
     public void testAttachCardToCustomer() throws UnauthorizedException, InvalidCustomerIdException, InvalidCustomerCardException {
         loginAs(User.RoleEnum.ShopManager);
 
@@ -63,7 +80,7 @@ public class CustomerIntegrationTest extends BaseIntegrationTest {
     public void testInvalidCustomerCard() throws InvalidCustomerNameException, UnauthorizedException {
         loginAs(User.RoleEnum.ShopManager);
 
-        Integer newCustomerId = shop.defineCustomer("newCustomer");
+        newCustomerId = shop.defineCustomer("newCustomer");
         assertThrows(InvalidCustomerCardException.class, () -> shop.attachCardToCustomer("101", newCustomerId));
 
     }
@@ -122,5 +139,7 @@ public class CustomerIntegrationTest extends BaseIntegrationTest {
         loginAs(User.RoleEnum.ShopManager);
 
         assertTrue(shop.deleteCustomer(customerId));
+        assertTrue(shop.deleteCustomer(customerId2));
+        assertTrue(shop.deleteCustomer(newCustomerId));
     }
 }

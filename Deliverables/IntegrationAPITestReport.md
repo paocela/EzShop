@@ -109,6 +109,7 @@ Please run them through the main file (TestEZShopIntegration) to obtain a valid 
 
 
 <Report in the following table the coverage of  scenarios (from official requirements and from above) vs FR. 
+Report also for each of the scenarios the (one or more) API JUnit ficial requirements and from above) vs FR. 
 Report also for each of the scenarios the (one or more) API JUnit tests that cover it. >
 
 

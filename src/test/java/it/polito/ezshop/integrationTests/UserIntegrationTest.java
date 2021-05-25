@@ -6,9 +6,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static org.junit.Assert.*;
 public class UserIntegrationTest extends BaseIntegrationTest {
     static Integer userId;
+    static Integer userId2;
 
     @BeforeClass
     public static void init() throws InvalidPasswordException, InvalidRoleException, InvalidUsernameException {
@@ -31,6 +35,17 @@ public class UserIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    public void testGetAllUsers() throws UnauthorizedException, InvalidPasswordException, InvalidRoleException, InvalidUsernameException {
+        loginAs(User.RoleEnum.Administrator);
+
+        userId2 = shop.createUser("newUser2", "password", "Cashier");
+        assertTrue(userId2 > 0);
+        List<it.polito.ezshop.data.User> list = shop.getAllUsers();
+        assertTrue(list.stream().map(x -> x.getId()).collect(Collectors.toList()).contains(userId));
+        assertTrue(list.stream().map(x -> x.getId()).collect(Collectors.toList()).contains(userId2));
+    }
+
+    @Test
     public void testModifyUserRights() throws InvalidUserIdException, UnauthorizedException, InvalidRoleException {
         loginAs(User.RoleEnum.Administrator);
 
@@ -47,5 +62,6 @@ public class UserIntegrationTest extends BaseIntegrationTest {
         loginAs(User.RoleEnum.Administrator);
 
         assertTrue(shop.deleteUser(userId));
+        assertTrue(shop.deleteUser(userId2));
     }
 }
