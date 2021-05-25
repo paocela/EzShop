@@ -145,7 +145,7 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 | 7-4 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testCompletedCash |
 | 8-1 | FR6.12, FR6.13, FR6.14, FR6.15, FR7.4, FR8.1 | testCompletedReturnTransactionCreditCard |
 | 8-2 | FR6.12, FR6.13, FR6.14, FR6.15, FR7.3, FR8.1 | testCompletedReturnTransactionCash |
-| 9-1 | FR8.1, FR8.2, FR8.3, | testListBalance (to fix) |
+| 9-1 | FR8.1, FR8.2, FR8.3, | testListBalance  |
 | 10-1 | | |
 | 10-2 | | |
 

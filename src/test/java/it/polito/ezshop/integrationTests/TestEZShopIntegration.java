@@ -19,7 +19,7 @@ import java.util.List;
         AuthenticateIntegrationTest.class,
         OrderIntegrationTest.class,
         ProductTypeIntegrationTest.class,
-//        BalanceUpdateIntegrationTest.class,
+        BalanceUpdateIntegrationTest.class,
 })
 
 public class TestEZShopIntegration extends BaseIntegrationTest {
