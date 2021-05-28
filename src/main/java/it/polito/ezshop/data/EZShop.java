@@ -779,10 +779,11 @@ public class EZShop implements EZShopInterface {
 
         //Create order in db
         try {
-            Order order = new Order(productCode, quantity, pricePerUnit);
-            orderDao.create(order);
-            orderId = order.getOrderId();
-
+            if(getProductTypeByBarCode(productCode) != null) {
+                Order order = new Order(productCode, quantity, pricePerUnit);
+                orderDao.create(order);
+                orderId = order.getOrderId();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -837,7 +838,7 @@ public class EZShop implements EZShopInterface {
 
         //Create order in db
         try {
-            if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
+            if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0 && getProductTypeByBarCode(productCode) != null) {
                 Order order = new Order(productCode, quantity, pricePerUnit);
 
                 //update balance
@@ -970,7 +971,7 @@ public class EZShop implements EZShopInterface {
 
                 if (productToUpdate != null) {
 
-                    if (productToUpdate.getLocation() == null) {
+                    if (productToUpdate.getLocation().equals("")) {
                         throw new InvalidLocationException();
                     }
 
