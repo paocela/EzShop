@@ -85,6 +85,7 @@ public class ProductType implements it.polito.ezshop.data.ProductType {
 
     @Override
     public String getLocation() {
+        if (position==null) return "";
         return position;
     }
 

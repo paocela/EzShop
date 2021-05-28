@@ -121,6 +121,8 @@ public class EZShop implements EZShopInterface {
             ProductTypeDeleteBuilder.delete();
             DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
             BalanceOperationDeleteBuilder.delete();
+            DeleteBuilder<User, Integer> UserDeleteBuilder = userDao.deleteBuilder();
+            UserDeleteBuilder.delete();
 
             creditCardDao.deleteBuilder().delete();
             loadCreditCardsFromUtils();
@@ -482,8 +484,14 @@ public class EZShop implements EZShopInterface {
             boolean isProductIdavailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
             if (!isProductIdavailable) {
 
-                productFreeQueryBuilder.where().eq("code", newCode);
-                boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+                ProductType product = productTypeDao.queryForId(id);
+                boolean isProductCodeAvailable = true;
+                if (product.getBarCode().equals(newCode)){
+                    isProductCodeAvailable= true;
+                }else {
+                    productFreeQueryBuilder.where().eq("code", newCode);
+                    isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+                }
                 if (isProductCodeAvailable) {
 
                     UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
@@ -2419,7 +2427,7 @@ public class EZShop implements EZShopInterface {
 
         SaleTransaction returnTransaction = null;
 
-        if (transactionId.equals(ongoingTransaction.getId())) {
+        if (ongoingTransaction!= null && transactionId.equals(ongoingTransaction.getId())) {
             returnTransaction = ongoingTransaction;
         } else {
             try {
@@ -2449,7 +2457,7 @@ public class EZShop implements EZShopInterface {
 
         ReturnTransaction returnTransaction = null;
 
-        if (transactionId.equals(ongoingReturnTransaction.getReturnId())) {
+        if (ongoingReturnTransaction != null && transactionId.equals(ongoingReturnTransaction.getReturnId())) {
             returnTransaction = ongoingReturnTransaction;
         } else {
             try {
