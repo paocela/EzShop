@@ -1,82 +1,107 @@
 # Integration and API Test Documentation
 
-Authors:
+Authors: Paolo Celada, Teodoro Corbo, Luca Pezzolla, Francesco Policastro
 
-Date:
+Date: 22/05/2021
 
-Version:
+Version: 1.0
 
 # Contents
 
-- [Dependency graph](#dependency graph)
+- [Dependency graph](#dependency-graph)
 
-- [Integration approach](#integration)
-
+- [Integration and API Test Documentation](#integration-and-api-test-documentation)
+- [Contents](#contents)
+- [Dependency graph](#dependency-graph)
+- [Integration approach](#integration-approach)
 - [Tests](#tests)
-
+  - [Step 1](#step-1)
 - [Scenarios](#scenarios)
-
-- [Coverage of scenarios and FR](#scenario-coverage)
-- [Coverage of non-functional requirements](#nfr-coverage)
+  - [Scenario UC3.4](#scenario-uc34)
+- [Coverage of Scenarios and FR](#coverage-of-scenarios-and-fr)
+- [Coverage of Non Functional Requirements](#coverage-of-non-functional-requirements)
 
 
 
 # Dependency graph 
 
-     <report the here the dependency graph of the classes in EzShop, using plantuml>
-     
+```plantuml
+
+EzShop -down-> BalanceOperation
+EzShop -down-> Customer
+EzShop -down-> Order
+EzShop -down-> User
+EzShop -down-> ReturnTransaction
+EzShop -down-> SaleTransaction
+
+SaleTransaction -down-> CreditCard
+SaleTransaction -down-> SaleTransactionRecord
+SaleTransaction -down-> ProductType
+
+SaleTransactionRecord -down-> ProductType
+
+ReturnTransaction -down-> ReturnTransactionRecord
+ReturnTransactionRecord -down-> ProductType
+
+EzShop -down-> SaleTransactionRecord
+EzShop -down-> ReturnTransactionRecord
+EzShop -down-> CreditCard
+EzShop -down-> ProductType
+
+```
+
 # Integration approach
-
-    <Write here the integration sequence you adopted, in general terms (top down, bottom up, mixed) and as sequence
-    (ex: step1: class A, step 2: class A+B, step 3: class A+B+C, etc)> 
-    <Some steps may  correspond to unit testing (ex step1 in ex above), presented in other document UnitTestReport.md>
-    <One step will  correspond to API testing>
-    
-
+We chose to apply a bottom up approach, since we obtained high coverage on all models via unit testing, and DAOs are provided by the ORMLite, which we selected as a development platform.
+Therefore, our tests will only apply to methods contained in EZShop and declared in the EZShopInterface.
 
 #  Tests
-
-   <define below a table for each integration step. For each integration step report the group of classes under test, and the names of
-     JUnit test cases applied to them> JUnit test classes should be here src/test/java/it/polito/ezshop
+All integration tests are contained in src/test/java/it/polito/ezshop/integrationTests.
+Please run them through the main file (TestEZShopIntegration) to obtain a valid suite execution.
 
 ## Step 1
 | Classes  | JUnit test cases |
-|--|--|
-|||
-
-
-## Step 2
-| Classes  | JUnit test cases |
-|--|--|
-|||
-
-
-## Step n 
-
-   
-
-| Classes  | JUnit test cases |
-|--|--|
-|||
-
+| ------------- |:-------------:|
+|it.polito.ezshop.data.EZShop|*|
 
 
 
 # Scenarios
 
+### Scenario UC3.4
 
-<If needed, define here additional scenarios for the application. Scenarios should be named
- referring the UC in the OfficialRequirements that they detail>
-
-## Scenario UCx.y
-
-| Scenario |  name |
-| ------------- |:-------------:| 
-|  Precondition     |  |
-|  Post condition     |   |
+| Scenario | Order of product type X issued and payed |
+| ------------- |:-------------:|
+|  Precondition     | ShopManager S exists and is logged in |
+|  | Product type X exists |
+|  | Balance >= Order.units * Order.pricePerUnit |
+|  Post condition     | Order O exists and is in PAYED state |
+|  | Balance -= Order.units * Order.pricePerUnit |
+|  | X.units not changed |
 | Step#        | Description  |
-|  1     |  ... |  
-|  2     |  ... |
+|  1     | S creates order O |
+|  2     | S fills quantity of product to be ordered and the price per unit |
+| 3 | O's state is updated to PAYED |
+
+### Scenario UC4.5
+
+| Scenario | Delete customer record |
+| ------------- |:-------------:| 
+|  Precondition     | Account U for Customer Cu existing  |
+|  Post condition     | U is deleted |
+| Step#        | Description  |
+|  1    |  User selects customer record U |
+|  2    |  User deletes personal data of Cu from system  |
+
+### Scenario UC4.6
+
+| Scenario | Modify points on customer card |
+| ------------- |:-------------:| 
+|  Precondition     | Account U for Customer Cu existing  |
+|  Post condition     | Points on account U updated |
+| Step#        | Description  |
+|  1    |  User selects customer record U |
+|  2    |  User insert amount of points to be added P_add |
+|  3    |  Points on account U are updated as P = P + P_add |
 
 
 
@@ -84,19 +109,48 @@ Version:
 
 
 <Report in the following table the coverage of  scenarios (from official requirements and from above) vs FR. 
+Report also for each of the scenarios the (one or more) API JUnit ficial requirements and from above) vs FR. 
 Report also for each of the scenarios the (one or more) API JUnit tests that cover it. >
 
 
 
 
-| Scenario ID | Functional Requirements covered | JUnit  Test(s) | 
-| ----------- | ------------------------------- | ----------- | 
-|  ..         | FRx                             |             |             
-|  ..         | FRy                             |             |             
-| ...         |                                 |             |             
-| ...         |                                 |             |             
-| ...         |                                 |             |             
-| ...         |                                 |             |             
+| Scenario ID | Functional Requirements covered | JUnit  Test(s) |
+| ----------- | ------------------------------- | ----------- |
+| 1-1       | FR3.1                 | testCreateProductType |
+| 1-2      | FR3.4, FR4.2                 | testUpdateLocation |
+| 1-3       | FR4.1 | testUpdateProductType |
+| 2-1        | FR1.1                 |    testCreateUser         |
+| 2-2        | FR1.2                 |      testDeleteUser       |
+| 2-3        | FR1.1                |     testModifyUserRights<br />testGetUser        |
+| 3-1 | FR4.3, | testValidIssueOrder |
+| 3-2 | FR4.5 | testValidPayOrder |
+| 3-3 | FR4.6 | testValidRecordOrderArrival |
+| 3-4 | FR4.4 | testValidPayOrderFor |
+| 4-1        | FR5.1                 |      testCreateValidCustomer<br /> testCreateCustomerUnauthorized      |
+| 4-2        | FR5.6            |    testCreateCard <br /> testGetCustomer <br /> testAttachCardToCustomer         |
+| 4-3        | FR5.1                 | testDetachValidCardFromCustomer            |
+| 4-4      | FR5.1         |  testModifyValidNameCustomerRecord <br />testModifyValidCardCustomerRecord<br />testModifyInvalidNameCustomerRecord<br />testDeleteCustomerRecord     |
+| 4-5      | FR5.2         |  testDeleteCustomerRecord     |
+| 4-6      | FR5.7         |  testModifyPointsOnCustomerCard     |
+| 5-1      | FR1.5      |   testValidLogin <br /> testValidLogout    |
+| 6-1 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR7.2, FR8.2 | testCompletedCreditCard <br /> testCompletedCash |
+| 6-2 | FR6.1, FR6.2, FR6.5, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testProductDiscount |
+| 6-3 | FR6.1, FR6.2, FR6.4, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testSaleDiscount |
+| 6-4 | FR5.7, FR6.1, FR6.2, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testLoyaltyCard |
+| 6-5 | FR6.1, FR6.2, FR6.7, FR6.10, FR6.11 | testCancelled |
+| 6-6 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testCompletedCash |
+| 7-1 | FR6.1, FR6.2, FR6.7, FR6.10, FR6.11, FR7.2, FR8.2 | testCompletedCreditCard |
+| 7-2 | FR6.1, FR6.2, FR6.7, FR6.10, FR6.11, FR7.2 | testFailedCreditCard |
+| 7-3 | FR6.1, FR6.2, FR6.7, FR6.10, FR6.11, FR7.2 | testInsufficientFunds |
+| 7-4 | FR6.1, FR6.2, FR6.3, FR6.7, FR6.10, FR6.11, FR7.1, FR8.2 | testCompletedCash |
+| 8-1 | FR6.12, FR6.13, FR6.14, FR6.15, FR7.4, FR8.1 | testCompletedReturnTransactionCreditCard |
+| 8-2 | FR6.12, FR6.13, FR6.14, FR6.15, FR7.3, FR8.1 | testCompletedReturnTransactionCash |
+| 9-1 | FR8.1, FR8.2, FR8.3, | testListBalance  |
+| 10-1 | FR7.4 | testCompletedReturnTransactionCreditCard |
+| 10-2 | FR7.3 | testCompletedReturnTransactionCash |
+
+
 
 
 
@@ -106,10 +160,11 @@ Report also for each of the scenarios the (one or more) API JUnit tests that cov
 <Report in the following table the coverage of the Non Functional Requirements of the application - only those that can be tested with automated testing frameworks.>
 
 
-### 
+
 
 | Non Functional Requirement | Test name |
 | -------------------------- | --------- |
-|                            |           |
-
+|      NFR4                      |  /acceptanceTests/barCodeValidationTest         |
+|      NFR5                      |  /acceptanceTests/creditCardValidationTest         |
+|      NFR6                      |  testInvalidCustomerCard         |
 

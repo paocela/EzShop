@@ -22,7 +22,7 @@ public class CustomerValidationTest {
     @Test
     public void testGetCustomerCard() {
         Customer customer = new Customer("Marco");
-        assertEquals("", customer.getCustomerCard());
+        assertNull(customer.getCustomerCard());
     }
 
     @Test
@@ -62,7 +62,7 @@ public class CustomerValidationTest {
     public void testCustomer() {
         Customer customer = new Customer("Marco");
         assertEquals("Marco", customer.getCustomerName());
-        assertEquals("", customer.getCustomerCard());
+        assertNull(customer.getCustomerCard());
         assertEquals(0, customer.getPoints(), 0);
     }
 

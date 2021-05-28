@@ -22,7 +22,7 @@ public class Customer implements it.polito.ezshop.data.Customer {
 
     public Customer(String name) {
         this.name = name;
-        this.card = "";
+        this.card = null;
         this.points = 0;
     }
 

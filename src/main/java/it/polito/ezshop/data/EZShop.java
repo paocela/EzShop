@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
 import it.polito.ezshop.model.ProductType;
+import it.polito.ezshop.model.ProductType;
 import it.polito.ezshop.model.ReturnTransaction;
 import it.polito.ezshop.model.SaleTransaction;
 import it.polito.ezshop.model.User;
@@ -38,6 +39,7 @@ import it.polito.ezshop.model.BalanceOperation;
 public class EZShop implements EZShopInterface {
 
     private final static String DATABASE_URL = "jdbc:sqlite:data/db.sqlite";
+    private final static String TEST_DATABASE_URL = "jdbc:sqlite:data/test_db.sqlite";
     private final static String CREDIT_CARDS_FILE_PATH = "src/main/java/it/polito/ezshop/utils/CreditCards.txt";
 
     ConnectionSource connectionSource;
@@ -57,10 +59,18 @@ public class EZShop implements EZShopInterface {
     private ReturnTransaction ongoingReturnTransaction = null;
 
     public EZShop() {
+        this(false);
+    }
+
+    public EZShop(boolean isTestEnvironment) {
         Logger.setGlobalLogLevel(Log.Level.ERROR);
 
         try {
-            connectionSource = new JdbcConnectionSource(DATABASE_URL);
+            if (isTestEnvironment) {
+                connectionSource = new JdbcConnectionSource(TEST_DATABASE_URL);
+            } else {
+                connectionSource = new JdbcConnectionSource(DATABASE_URL);
+            }
 
             TableUtils.createTableIfNotExists(connectionSource, User.class);
             TableUtils.createTableIfNotExists(connectionSource, ProductType.class);
@@ -77,7 +87,9 @@ public class EZShop implements EZShopInterface {
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
+            saleTransactionRecordDao = DaoManager.createDao(connectionSource, SaleTransactionRecord.class);
             returnTransactionDao = DaoManager.createDao(connectionSource, ReturnTransaction.class);
+            returnTransactionRecordDao = DaoManager.createDao(connectionSource, ReturnTransactionRecord.class);
             orderDao = DaoManager.createDao(connectionSource, Order.class);
             balanceOperationDao = DaoManager.createDao(connectionSource, BalanceOperation.class);
             creditCardDao = DaoManager.createDao(connectionSource, CreditCard.class);
@@ -302,7 +314,7 @@ public class EZShop implements EZShopInterface {
         try {
             User user = userDao.queryForId(id);
 
-            if(user != null){
+            if (user != null) {
                 user.setRole(roleEnum);
                 userDao.update(user);
                 isUpdated = true;
@@ -472,7 +484,7 @@ public class EZShop implements EZShopInterface {
 
                 productFreeQueryBuilder.where().eq("code", newCode);
                 boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
-                if (!isProductCodeAvailable) {
+                if (isProductCodeAvailable) {
 
                     UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
                     updateProductQueryBuilder.updateColumnValue("code", newCode)
@@ -575,22 +587,18 @@ public class EZShop implements EZShopInterface {
         User.RoleEnum[] roles = {User.RoleEnum.Administrator, User.RoleEnum.ShopManager};
         authorize(roles);
 
-        List<it.polito.ezshop.data.ProductType> products = null;
+        List<it.polito.ezshop.data.ProductType> products = new ArrayList<>();
 
         // Verify description validity
         if (description == null) {
             description = "";
         }
 
-        QueryBuilder<ProductType, Integer> productFreeQueryBuilder = productTypeDao.queryBuilder().setCountOf(true);
+        description = "%" + description + "%";
+
 
         try {
-            productFreeQueryBuilder.where().eq("description", description);
-            boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
-
-            if (!isProductCodeAvailable) {
-                products = new ArrayList<>(productTypeDao.queryForEq("description", description));
-            }
+            products.addAll(productTypeDao.queryBuilder().where().like("description", description).query());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -688,7 +696,7 @@ public class EZShop implements EZShopInterface {
         if (newPos == null || newPos.isEmpty()) {
             newPos = "";
         } else {
-            if(!newPos.matches("[0-9]+-[A-Za-z-0-9]+-[0-9]+")) {
+            if (!newPos.matches("[0-9]+-[A-Za-z-0-9]+-[0-9]+")) {
                 throw new InvalidLocationException();
             }
         }
@@ -952,11 +960,11 @@ public class EZShop implements EZShopInterface {
 
                 ProductType productToUpdate = getProductTypeByBarCode(orderToUpdate.getProductCode());
 
-                if (productToUpdate != null){
+                if (productToUpdate != null) {
 
-                   if(productToUpdate.getLocation() == null) {
-                       throw new InvalidLocationException();
-                   }
+                    if (productToUpdate.getLocation() == null) {
+                        throw new InvalidLocationException();
+                    }
 
                     updateQuantity(productToUpdate.getId(), orderToUpdate.getQuantity());
 
@@ -1102,7 +1110,7 @@ public class EZShop implements EZShopInterface {
             try {
                 UpdateBuilder<Customer, Integer> updateCustomerQueryBuilder = customerDao.updateBuilder();
                 updateCustomerQueryBuilder.updateColumnValue("name", newCustomerName)
-                        .updateColumnValue("card", "")
+                        .updateColumnValue("card", null)
                         .where().eq("id", id);
                 updateCustomerQueryBuilder.update();
                 isUpdated = true;
@@ -1429,7 +1437,7 @@ public class EZShop implements EZShopInterface {
                             return false;
                         }
 
-                        if(transaction.addProductToRecords(product, amount)){
+                        if (transaction.addProductToRecords(product, amount)) {
                             saleTransactionDao.update(transaction);
                             ongoingTransaction = transaction;
                             return true;
@@ -1503,7 +1511,7 @@ public class EZShop implements EZShopInterface {
                             return false;
                         }
 
-                        if(transaction.removeProductFromRecords(product, amount)){
+                        if (transaction.removeProductFromRecords(product, amount)) {
                             saleTransactionDao.update(transaction);
                             ongoingTransaction = transaction;
 
@@ -1808,7 +1816,7 @@ public class EZShop implements EZShopInterface {
             saleTransactionFreeQueryBuilder.where().eq("id", transactionId);
             boolean isSaleTransactionIdavailable = saleTransactionDao.countOf(saleTransactionFreeQueryBuilder.prepare()) == 0;
 
-            if (!isSaleTransactionIdavailable){
+            if (!isSaleTransactionIdavailable) {
                 QueryBuilder<SaleTransaction, Integer> closedTransactionByIdQueryBuilder = saleTransactionDao.queryBuilder();
 
                 closedTransactionByIdQueryBuilder.where().eq("id", transactionId)
@@ -1817,7 +1825,7 @@ public class EZShop implements EZShopInterface {
                 returnTransaction = closedTransactionByIdQueryBuilder.queryForFirst();
             }
 
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -1867,7 +1875,15 @@ public class EZShop implements EZShopInterface {
         if (amount <= 0) throw new InvalidQuantityException();
 
 
-        ProductType product = getProductTypeByBarCode(productCode);
+        QueryBuilder<ProductType, Integer> getProductQueryBuilder = productTypeDao.queryBuilder();
+        ProductType product = null;
+
+        try {
+            product = getProductQueryBuilder.where().eq("code", productCode).queryForFirst();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         if (product == null) return false;
 
         ReturnTransaction returnTransaction = getOngoingReturnTransactionById(returnId);
@@ -1880,32 +1896,32 @@ public class EZShop implements EZShopInterface {
 
             if (salerecord.getBarCode().equals(productCode)) {
 
-                int saleQuantity= salerecord.getAmount();
+                int saleQuantity = salerecord.getAmount();
                 if (amount > saleQuantity) return false;
 
-                double totprice= product.getPricePerUnit()*amount;
+                double totprice = product.getPricePerUnit() * amount;
 
-                if (transaction.getDiscountRate()!=0){
-                    totprice= totprice-(totprice*transaction.getDiscountRate());
+                if (transaction.getDiscountRate() != 0) {
+                    totprice = totprice - (totprice * transaction.getDiscountRate());
                 }
-                if (salerecord.getDiscountRate() != 0){
-                    totprice= totprice-(totprice*salerecord.getDiscountRate());
+                if (salerecord.getDiscountRate() != 0) {
+                    totprice = totprice - (totprice * salerecord.getDiscountRate());
                 }
 
 
                 try {
 
                     ForeignCollection<ReturnTransactionRecord> returntransactionRecords = returnTransaction.getReturnRecords();
-                    double oldreturnvalue= returnTransaction.getReturnValue();
+                    double oldreturnvalue = returnTransaction.getReturnValue();
 
                     ReturnTransactionRecord returnRecord = new ReturnTransactionRecord(product, amount, totprice);
-                    productadded= returntransactionRecords.add(returnRecord);
+                    productadded = returntransactionRecords.add(returnRecord);
 
                     if (productadded) {
 
-                        returnTransaction.setReturnValue(oldreturnvalue+ returnRecord.getTotalPrice());
+                        returnTransaction.setReturnValue(oldreturnvalue + returnRecord.getTotalPrice());
                         returnTransactionDao.update(returnTransaction);
-                        ongoingReturnTransaction=returnTransaction;
+                        ongoingReturnTransaction = returnTransaction;
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -1924,7 +1940,7 @@ public class EZShop implements EZShopInterface {
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
-        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+        if (returnId == null || returnId <= 0) throw new InvalidTransactionIdException();
 
         boolean transactionStatusChanged = false;
 
@@ -1937,12 +1953,12 @@ public class EZShop implements EZShopInterface {
             transactionStatusChanged = true;
 
 
-            if (commit){
+            if (commit) {
                 try {
                     SaleTransaction transaction = getSaleTransaction(ongoingReturnTransaction.getTicketNumber());
-                    if (transaction != null){
+                    if (transaction != null) {
 
-                        for (ReturnTransactionRecord p : ongoingReturnTransaction.getReturnRecords()){
+                        for (ReturnTransactionRecord p : ongoingReturnTransaction.getReturnRecords()) {
                             transaction.removeProductFromRecords(p.getProductType(), p.getQuantity());
                         }
 
@@ -1965,7 +1981,7 @@ public class EZShop implements EZShopInterface {
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
-        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+        if (returnId == null || returnId <= 0) throw new InvalidTransactionIdException();
 
         boolean isDeleted = false;
 
@@ -1973,14 +1989,14 @@ public class EZShop implements EZShopInterface {
 
             ReturnTransaction returnTransaction = returnTransactionDao.queryForId(returnId);
 
-            if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
+            if (returnTransaction != null && returnTransaction.getStatus() == ReturnTransaction.StatusEnum.CLOSED) {
                 SaleTransaction transaction = getSaleTransaction(ongoingReturnTransaction.getTicketNumber());
-                if (transaction != null){
-                    for (ReturnTransactionRecord p : ongoingReturnTransaction.getReturnRecords()){
+                if (transaction != null) {
+                    for (ReturnTransactionRecord p : ongoingReturnTransaction.getReturnRecords()) {
                         transaction.addProductToRecords(p.getProductType(), p.getQuantity());
                     }
                     saleTransactionDao.update(transaction);
-                    if (returnTransactionDao.deleteById(returnId)==1) isDeleted=true;
+                    if (returnTransactionDao.deleteById(returnId) == 1) isDeleted = true;
                 }
             }
 
@@ -2138,19 +2154,19 @@ public class EZShop implements EZShopInterface {
     @Override
     public double returnCashPayment(Integer returnId) throws InvalidTransactionIdException, UnauthorizedException {
 
-        System.out.println("[DEV] returnCashPayment(" + returnId );
+        System.out.println("[DEV] returnCashPayment(" + returnId);
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
-        double returncash=-1;
+        double returncash = -1;
 
-        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
+        if (returnId == null || returnId <= 0) throw new InvalidTransactionIdException();
 
-        ReturnTransaction returnTransaction= getOngoingReturnTransactionById(returnId);
-        if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
-            returncash= returnTransaction.getReturnValue();
+        ReturnTransaction returnTransaction = getOngoingReturnTransactionById(returnId);
+        if (returnTransaction != null && returnTransaction.getStatus() == ReturnTransaction.StatusEnum.CLOSED) {
+            returncash = returnTransaction.getReturnValue();
             returnTransaction.setStatus(ReturnTransaction.StatusEnum.PAID);
-            try{
+            try {
                 updateInventoryByReturnTransaction(returnTransaction);
                 returnTransactionDao.update(returnTransaction);
 
@@ -2159,7 +2175,7 @@ public class EZShop implements EZShopInterface {
 
                 ongoingReturnTransaction = null;
 
-            }catch (SQLException e) {
+            } catch (SQLException e) {
                 e.printStackTrace();
                 return -1;
             }
@@ -2169,33 +2185,33 @@ public class EZShop implements EZShopInterface {
 
     @Override
     public double returnCreditCardPayment(Integer returnId, String creditCard) throws InvalidTransactionIdException, InvalidCreditCardException, UnauthorizedException {
-        System.out.println("[DEV] returnCreditCardPayment(" + returnId );
+        System.out.println("[DEV] returnCreditCardPayment(" + returnId);
 
         authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
 
-        double returncash=-1;
+        double returncash = -1;
 
         // Validate credit card
         if (creditCard == null || creditCard.isEmpty() || !validateCreditCard(creditCard)) {
             throw new InvalidCreditCardException();
         }
 
-        if (returnId == null || returnId<=0) throw new InvalidTransactionIdException();
-        ReturnTransaction returnTransaction= getOngoingReturnTransactionById(returnId);
+        if (returnId == null || returnId <= 0) throw new InvalidTransactionIdException();
+        ReturnTransaction returnTransaction = getOngoingReturnTransactionById(returnId);
 
-        if (returnTransaction!=null && returnTransaction.getStatus()==ReturnTransaction.StatusEnum.CLOSED){
-            returncash= returnTransaction.getReturnValue();
+        if (returnTransaction != null && returnTransaction.getStatus() == ReturnTransaction.StatusEnum.CLOSED) {
+            returncash = returnTransaction.getReturnValue();
             returnTransaction.setStatus(ReturnTransaction.StatusEnum.PAID);
-            try{
+            try {
 
                 // Retrieve credit card
                 CreditCard card = creditCardDao.queryForId(creditCard);
 
-                if (card == null ) {
+                if (card == null) {
                     // Card is not registered
                     return -1;
                 }
-                
+
                 updateInventoryByReturnTransaction(returnTransaction);
 
                 returnTransactionDao.update(returnTransaction);
@@ -2212,7 +2228,7 @@ public class EZShop implements EZShopInterface {
 
                 ongoingReturnTransaction = null;
 
-            }catch (SQLException e) {
+            } catch (SQLException e) {
                 e.printStackTrace();
                 return -1;
             }
@@ -2294,7 +2310,7 @@ public class EZShop implements EZShopInterface {
 
         List<it.polito.ezshop.data.BalanceOperation> BalanceOperations = getCreditsAndDebits(null, null);
 
-        for(it.polito.ezshop.data.BalanceOperation b : BalanceOperations){
+        for (it.polito.ezshop.data.BalanceOperation b : BalanceOperations) {
             currentBalance += b.getMoney();
         }
 
@@ -2336,7 +2352,7 @@ public class EZShop implements EZShopInterface {
 
         // validate through Luhn's algorithm
         for (int i = creditCard.length() - 1; i >= 0; i--) {
-            try{
+            try {
                 n = Integer.parseInt(creditCard.substring(i, i + 1));
             } catch (NumberFormatException e) {
                 return false;
@@ -2493,8 +2509,8 @@ public class EZShop implements EZShopInterface {
         CreditCard card = new CreditCard(lineParts[0], Double.parseDouble(lineParts[1]));
 
         try {
-            if(!creditCardDao.idExists(card.getCode()))
-            creditCardDao.create(card);
+            if (!creditCardDao.idExists(card.getCode()))
+                creditCardDao.create(card);
         } catch (SQLException e) {
             e.printStackTrace();
         }
