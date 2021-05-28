@@ -11,6 +11,7 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import com.sun.media.sound.InvalidFormatException;
 import it.polito.ezshop.exceptions.*;
 
 import java.io.IOException;
@@ -153,6 +154,9 @@ public class EZShop implements EZShopInterface {
         User.RoleEnum roleEnum;
 
         // Verify role validity
+        if(role == null) {
+            throw new InvalidRoleException();
+        }
         try {
             roleEnum = User.RoleEnum.valueOf(role);
         } catch (IllegalArgumentException e) {
@@ -161,12 +165,12 @@ public class EZShop implements EZShopInterface {
 
         // Verify password validity
         if (password == null || password.isEmpty()) {
-            throw new InvalidUsernameException();
+            throw new InvalidPasswordException();
         }
 
         // Verify username validity
         if (username == null || username.isEmpty()) {
-            throw new InvalidPasswordException();
+            throw new InvalidUsernameException();
         }
 
         Integer returnId = -1;
@@ -1091,6 +1095,12 @@ public class EZShop implements EZShopInterface {
             throw new InvalidCustomerCardException();
         }
 
+        try {
+            Integer.parseInt(newCustomerCard);
+        } catch(NumberFormatException e) {
+            throw new InvalidCustomerCardException();
+        }
+
         if (newCustomerCard == null) {
             // update only name
             try {
@@ -1280,6 +1290,11 @@ public class EZShop implements EZShopInterface {
         if (customerCard == null || customerCard.length() != 10) {
             throw new InvalidCustomerCardException();
         }
+        try {
+            Integer.parseInt(customerCard);
+        } catch(NumberFormatException e) {
+            throw new InvalidCustomerCardException();
+        }
 
         // attach card to customer
         try {
@@ -1323,6 +1338,11 @@ public class EZShop implements EZShopInterface {
 
         // verify customer card validity
         if (customerCard == null || customerCard.length() != 10) {
+            throw new InvalidCustomerCardException();
+        }
+        try {
+            Integer.parseInt(customerCard);
+        } catch(NumberFormatException e) {
             throw new InvalidCustomerCardException();
         }
 
