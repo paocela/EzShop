@@ -1,7 +1,6 @@
 package it.polito.ezshop.data;
 
 import com.j256.ormlite.dao.*;
-import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.logger.Log;
 import com.j256.ormlite.logger.Logger;
@@ -11,7 +10,6 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import com.sun.media.sound.InvalidFormatException;
 import it.polito.ezshop.exceptions.*;
 
 import java.io.IOException;
@@ -24,12 +22,10 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
-import it.polito.ezshop.model.ProductType;
 import it.polito.ezshop.model.ProductType;
 import it.polito.ezshop.model.ReturnTransaction;
 import it.polito.ezshop.model.SaleTransaction;
@@ -159,7 +155,7 @@ public class EZShop implements EZShopInterface {
         }
         try {
             roleEnum = User.RoleEnum.valueOf(role);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             throw new InvalidRoleException();
         }
 
@@ -311,7 +307,7 @@ public class EZShop implements EZShopInterface {
         // Verify role validity
         try {
             roleEnum = User.RoleEnum.valueOf(role);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             throw new InvalidRoleException();
         }
 
@@ -490,9 +486,9 @@ public class EZShop implements EZShopInterface {
 
                 ProductType product = productTypeDao.queryForId(id);
                 boolean isProductCodeAvailable = true;
-                if (product.getBarCode().equals(newCode)){
-                    isProductCodeAvailable= true;
-                }else {
+                if (product.getBarCode().equals(newCode)) {
+                    isProductCodeAvailable = true;
+                } else {
                     productFreeQueryBuilder.where().eq("code", newCode);
                     isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
                 }
@@ -783,7 +779,7 @@ public class EZShop implements EZShopInterface {
 
         //Create order in db
         try {
-            if(getProductTypeByBarCode(productCode) != null) {
+            if (getProductTypeByBarCode(productCode) != null) {
                 Order order = new Order(productCode, quantity, pricePerUnit);
                 orderDao.create(order);
                 orderId = order.getOrderId();
@@ -1302,8 +1298,7 @@ public class EZShop implements EZShopInterface {
             updateCustomerQueryBuilder.updateColumnValue("card", customerCard)
                     .where().eq("id", customerId);
 
-            updateCustomerQueryBuilder.update();
-            isAttached = true;
+            isAttached = updateCustomerQueryBuilder.update() == 1;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -2448,7 +2443,7 @@ public class EZShop implements EZShopInterface {
 
         SaleTransaction returnTransaction = null;
 
-        if (ongoingTransaction!= null && transactionId.equals(ongoingTransaction.getId())) {
+        if (ongoingTransaction != null && transactionId.equals(ongoingTransaction.getId())) {
             returnTransaction = ongoingTransaction;
         } else {
             try {
