@@ -150,7 +150,7 @@ public class EZShop implements EZShopInterface {
         User.RoleEnum roleEnum;
 
         // Verify role validity
-        if(role == null) {
+        if (role == null) {
             throw new InvalidRoleException();
         }
         try {
@@ -1087,13 +1087,7 @@ public class EZShop implements EZShopInterface {
         }
 
         // verify card validity
-        if (newCustomerCard != null && !Arrays.asList(10, 0).contains(newCustomerCard.length())) {
-            throw new InvalidCustomerCardException();
-        }
-
-        try {
-            Integer.parseInt(newCustomerCard);
-        } catch(NumberFormatException e) {
+        if (newCustomerCard != null && (!Arrays.asList(10, 0).contains(newCustomerCard.length()) || !newCustomerCard.matches("^[0-9]*$"))) {
             throw new InvalidCustomerCardException();
         }
 
@@ -1283,12 +1277,7 @@ public class EZShop implements EZShopInterface {
         }
 
         // verify customer card validity
-        if (customerCard == null || customerCard.length() != 10) {
-            throw new InvalidCustomerCardException();
-        }
-        try {
-            Integer.parseInt(customerCard);
-        } catch(NumberFormatException e) {
+        if (customerCard == null || customerCard.length() != 10 || !customerCard.matches("^[0-9]*$")) {
             throw new InvalidCustomerCardException();
         }
 
@@ -1332,12 +1321,7 @@ public class EZShop implements EZShopInterface {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
         // verify customer card validity
-        if (customerCard == null || customerCard.length() != 10) {
-            throw new InvalidCustomerCardException();
-        }
-        try {
-            Integer.parseInt(customerCard);
-        } catch(NumberFormatException e) {
+        if (customerCard == null || customerCard.length() != 10 || !customerCard.matches("^[0-9]*$")) {
             throw new InvalidCustomerCardException();
         }
 
@@ -2348,14 +2332,14 @@ public class EZShop implements EZShopInterface {
     }
 
     public static String hashPassword(String password) {
-        String hashedPassword = null;
+        /*String hashedPassword = null;
         try {
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
             hashedPassword = byteToHex(sha1.digest(password.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-        }
-        return hashedPassword;
+        }*/
+        return password;
     }
 
     public static String byteToHex(final byte[] hash) {
