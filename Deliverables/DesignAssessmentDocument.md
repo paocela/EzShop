@@ -24,8 +24,8 @@ on April 30, discuss whether the design could be improved>
 | Packages                                  |     6   |
 | Classes (outer)                           |    41   |
 | Classes (all)                             |    46   |
-| NI (number of bytecode instructions)      |   6,104 |
-| LOC (non comment non blank lines of code) |  ~ 2,625|
+| NI (number of bytecode instructions)      |   6,073 |
+| LOC (non comment non blank lines of code) |  ~ 2,611|
 
 
 
@@ -34,8 +34,8 @@ on April 30, discuss whether the design could be improved>
 
 | Item | Tangled | Fat  | Size | XS   |
 | ---- | ------- | ---- | ---- | ---- |
-|ezshop.it.polito.ezshop.data.EZShop|  	    |214 |4495 |1974|
-|ezshop.it.polito.ezshop            |1,54%	| 4  |6104 | 94 |
+|ezshop.it.polito.ezshop.data.EZShop|  	    |213 |4,464 |1,949|
+|ezshop.it.polito.ezshop            |2%	| 4  |6,073 | 93 |
 |ezshop.it.polito.ezshop.data.EZShop.returnProduct(java.lang.Integer, java.lang.String, int):boolean	 |       | 17  |  182   | 21   |
 
 
