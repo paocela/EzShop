@@ -7,23 +7,15 @@ on April 30, discuss whether the design could be improved>
 ```
 
 # Levelized structure map
-```
-<Applying Structure 101 to your project, version to be delivered on june 4, produce the Levelized structure map,
-with all elements explosed, all dependencies, NO tangles; and report it here as a picture>
-```
+
 ![levelized_structured_map](WBimages/levelized_structured_map.png?raw=true "levelized_structured_map")
 # Structural over complexity chart
-```
-<Applying Structure 101 to your project, version to be delivered on june 4, produce the structural over complexity chart; and report it here as a picture>
-```
+
 ![structural_over_complexity](WBimages/structural_over_complexity.png?raw=true "structural_over_complexity")
 
 
 # Size metrics
 
-```
-<Report here the metrics about the size of your project, collected using Structure 101>
-```
 
 
 
@@ -39,9 +31,6 @@ with all elements explosed, all dependencies, NO tangles; and report it here as 
 
 # Items with XS
 
-```
-<Report here information about code tangles and fat packages>
-```
 
 | Item | Tangled | Fat  | Size | XS   |
 | ---- | ------- | ---- | ---- | ---- |
@@ -52,16 +41,21 @@ with all elements explosed, all dependencies, NO tangles; and report it here as 
 
 # Package level tangles
 
-```
-<Report screen captures of the package-level tangles by opening the items in the "composition perspective" 
-(double click on the tangle from the Views->Complexity page)>
-```
+
 ![ezshop](WBimages/ezshop.png?raw=true "ezshop")
 ![data](WBimages/data.png?raw=true "data")
 ![model](WBimages/model.png?raw=true "model")
 
 # Summary analysis
-```
-<Discuss here main differences of the current structure of your project vs the design delivered on April 30>
-<Discuss if the current structure shows weaknesses that should be fixed>
-```
+
+
+The main differences between the previous version of our project and the design delivered on April 30 are the following:
+- the card class has been fully integrated in the customer class
+- product discount has been fully integrated in SaleTransactionRecord class
+- credit card class has been added 
+- foreign IDs has been replaced with relationships provided by ORMLite (db)
+- all daos has been added to ezShop class in order to interact with the db
+
+Some of the weakness that could be fixed are the following:
+- EzShop fatness could be reduced by creating multiple controllers for each gui section (User, Order, Transaction, etc...) 
+- while tangling could be only reduced by modifying the interaction between gui and our code since right now EzShop is the single point of failure (the gui only calls method in this class) 
