@@ -49,13 +49,13 @@ on April 30, discuss whether the design could be improved>
 # Summary analysis
 
 
-The main differences between the previous version of our project and the design delivered on April 30 are the following:
+The main differences between the current version of our project and the design delivered on April 30 are the following:
 - the card class has been fully integrated in the customer class
 - product discount has been fully integrated in SaleTransactionRecord class
 - credit card class has been added 
-- foreign IDs has been replaced with relationships provided by ORMLite (db)
-- all daos has been added to ezShop class in order to interact with the db
+- foreign IDs have been replaced with relationships provided by ORMLite (db)
+- all DAOs have been added to ezShop class in order to interact with the db
 
 Some of the weakness that could be fixed are the following:
 - EzShop fatness could be reduced by creating multiple controllers for each gui section (User, Order, Transaction, etc...) 
-- while tangling could be only reduced by modifying the interaction between gui and our code since right now EzShop is the single point of failure (the gui only calls method in this class) 
+- Tangling could be only reduced by modifying the interaction between gui and our code, since right now EzShop is the single point of failure (the gui only calls method in this class) 
