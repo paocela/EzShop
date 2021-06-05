@@ -1,7 +1,6 @@
 package it.polito.ezshop.data;
 
 import com.j256.ormlite.dao.*;
-import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.logger.Log;
 import com.j256.ormlite.logger.Logger;
@@ -23,12 +22,10 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import it.polito.ezshop.model.*;
 import it.polito.ezshop.model.Customer;
-import it.polito.ezshop.model.ProductType;
 import it.polito.ezshop.model.ProductType;
 import it.polito.ezshop.model.ReturnTransaction;
 import it.polito.ezshop.model.SaleTransaction;
@@ -121,6 +118,8 @@ public class EZShop implements EZShopInterface {
             ProductTypeDeleteBuilder.delete();
             DeleteBuilder<BalanceOperation, Integer> BalanceOperationDeleteBuilder = balanceOperationDao.deleteBuilder();
             BalanceOperationDeleteBuilder.delete();
+            DeleteBuilder<User, Integer> UserDeleteBuilder = userDao.deleteBuilder();
+            UserDeleteBuilder.delete();
 
             creditCardDao.deleteBuilder().delete();
             loadCreditCardsFromUtils();
@@ -151,20 +150,23 @@ public class EZShop implements EZShopInterface {
         User.RoleEnum roleEnum;
 
         // Verify role validity
+        if (role == null) {
+            throw new InvalidRoleException();
+        }
         try {
             roleEnum = User.RoleEnum.valueOf(role);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             throw new InvalidRoleException();
         }
 
         // Verify password validity
         if (password == null || password.isEmpty()) {
-            throw new InvalidUsernameException();
+            throw new InvalidPasswordException();
         }
 
         // Verify username validity
         if (username == null || username.isEmpty()) {
-            throw new InvalidPasswordException();
+            throw new InvalidUsernameException();
         }
 
         Integer returnId = -1;
@@ -305,7 +307,7 @@ public class EZShop implements EZShopInterface {
         // Verify role validity
         try {
             roleEnum = User.RoleEnum.valueOf(role);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             throw new InvalidRoleException();
         }
 
@@ -482,8 +484,14 @@ public class EZShop implements EZShopInterface {
             boolean isProductIdavailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
             if (!isProductIdavailable) {
 
-                productFreeQueryBuilder.where().eq("code", newCode);
-                boolean isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+                ProductType product = productTypeDao.queryForId(id);
+                boolean isProductCodeAvailable = true;
+                if (product.getBarCode().equals(newCode)) {
+                    isProductCodeAvailable = true;
+                } else {
+                    productFreeQueryBuilder.where().eq("code", newCode);
+                    isProductCodeAvailable = productTypeDao.countOf(productFreeQueryBuilder.prepare()) == 0;
+                }
                 if (isProductCodeAvailable) {
 
                     UpdateBuilder<ProductType, Integer> updateProductQueryBuilder = productTypeDao.updateBuilder();
@@ -771,10 +779,11 @@ public class EZShop implements EZShopInterface {
 
         //Create order in db
         try {
-            Order order = new Order(productCode, quantity, pricePerUnit);
-            orderDao.create(order);
-            orderId = order.getOrderId();
-
+            if (getProductTypeByBarCode(productCode) != null) {
+                Order order = new Order(productCode, quantity, pricePerUnit);
+                orderDao.create(order);
+                orderId = order.getOrderId();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -829,7 +838,7 @@ public class EZShop implements EZShopInterface {
 
         //Create order in db
         try {
-            if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0) {
+            if (Double.doubleToRawLongBits(currentBalance - orderCost) >= 0 && getProductTypeByBarCode(productCode) != null) {
                 Order order = new Order(productCode, quantity, pricePerUnit);
 
                 //update balance
@@ -962,7 +971,7 @@ public class EZShop implements EZShopInterface {
 
                 if (productToUpdate != null) {
 
-                    if (productToUpdate.getLocation() == null) {
+                    if (productToUpdate.getLocation().equals("")) {
                         throw new InvalidLocationException();
                     }
 
@@ -1078,7 +1087,7 @@ public class EZShop implements EZShopInterface {
         }
 
         // verify card validity
-        if (newCustomerCard != null && !Arrays.asList(10, 0).contains(newCustomerCard.length())) {
+        if (newCustomerCard != null && (!Arrays.asList(10, 0).contains(newCustomerCard.length()) || !newCustomerCard.matches("^[0-9]*$"))) {
             throw new InvalidCustomerCardException();
         }
 
@@ -1268,7 +1277,7 @@ public class EZShop implements EZShopInterface {
         }
 
         // verify customer card validity
-        if (customerCard == null || customerCard.length() != 10) {
+        if (customerCard == null || customerCard.length() != 10 || !customerCard.matches("^[0-9]*$")) {
             throw new InvalidCustomerCardException();
         }
 
@@ -1278,8 +1287,7 @@ public class EZShop implements EZShopInterface {
             updateCustomerQueryBuilder.updateColumnValue("card", customerCard)
                     .where().eq("id", customerId);
 
-            updateCustomerQueryBuilder.update();
-            isAttached = true;
+            isAttached = updateCustomerQueryBuilder.update() == 1;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -1313,7 +1321,7 @@ public class EZShop implements EZShopInterface {
         authorize(User.RoleEnum.Administrator, User.RoleEnum.Cashier, User.RoleEnum.ShopManager);
 
         // verify customer card validity
-        if (customerCard == null || customerCard.length() != 10) {
+        if (customerCard == null || customerCard.length() != 10 || !customerCard.matches("^[0-9]*$")) {
             throw new InvalidCustomerCardException();
         }
 
@@ -2324,14 +2332,14 @@ public class EZShop implements EZShopInterface {
     }
 
     public static String hashPassword(String password) {
-        String hashedPassword = null;
+        /*String hashedPassword = null;
         try {
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
             hashedPassword = byteToHex(sha1.digest(password.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-        }
-        return hashedPassword;
+        }*/
+        return password;
     }
 
     public static String byteToHex(final byte[] hash) {
@@ -2419,7 +2427,7 @@ public class EZShop implements EZShopInterface {
 
         SaleTransaction returnTransaction = null;
 
-        if (transactionId.equals(ongoingTransaction.getId())) {
+        if (ongoingTransaction != null && transactionId.equals(ongoingTransaction.getId())) {
             returnTransaction = ongoingTransaction;
         } else {
             try {
@@ -2449,7 +2457,7 @@ public class EZShop implements EZShopInterface {
 
         ReturnTransaction returnTransaction = null;
 
-        if (transactionId.equals(ongoingReturnTransaction.getReturnId())) {
+        if (ongoingReturnTransaction != null && transactionId.equals(ongoingReturnTransaction.getReturnId())) {
             returnTransaction = ongoingReturnTransaction;
         } else {
             try {

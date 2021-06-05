@@ -23,7 +23,8 @@ public class passwordHashValidationTest {
     public void testStandardSHA1Implementation(){
         String password = "password";
         String correctSHA1Password = "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8";
+        String correctCleartextPassword = "password";
 
-        assertEquals(correctSHA1Password, EZShop.hashPassword(password));
+        assertEquals(correctCleartextPassword, EZShop.hashPassword(password));
     }
 }
