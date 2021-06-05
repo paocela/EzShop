@@ -995,6 +995,11 @@ public class EZShop implements EZShopInterface {
         return isRecorded;
     }
 
+    public boolean recordOrderArrivalRFID(Integer orderId, String RFIDfrom) throws InvalidOrderIdException, UnauthorizedException, 
+InvalidLocationException, InvalidRFIDException {
+        return false;
+    }
+    
     @Override
     public List<it.polito.ezshop.data.Order> getAllOrders() throws UnauthorizedException {
         List<it.polito.ezshop.data.Order> orderList = new ArrayList<>();
@@ -1480,6 +1485,11 @@ public class EZShop implements EZShopInterface {
      * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
+    public boolean addProductToSaleRFID(Integer transactionId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, InvalidQuantityException, UnauthorizedException{
+        return false;
+    }
+    
+    @Override
     public boolean deleteProductFromSale(Integer transactionId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
         System.out.println("[DEV] deleteProductFromSale(" + transactionId + "," + productCode + "," + amount + ")");
 
@@ -1553,6 +1563,11 @@ public class EZShop implements EZShopInterface {
      * @throws InvalidDiscountRateException  if the discount rate is less than 0 or if it greater than or equal to 1.00
      * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
      */
+    @Override
+    public boolean deleteProductFromSaleRFID(Integer transactionId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, InvalidQuantityException, UnauthorizedException{
+        return false;
+    }
+
     @Override
     public boolean applyDiscountRateToProduct(Integer transactionId, String productCode, double discountRate) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidDiscountRateException, UnauthorizedException {
         System.out.println("[DEV] applyDiscountRateToProduct(" + transactionId + "," + productCode + "," + discountRate + ")");
@@ -1939,6 +1954,13 @@ public class EZShop implements EZShopInterface {
             }
         }
 
+        return false;
+    }
+
+
+    @Override
+    public boolean returnProductRFID(Integer returnId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, UnauthorizedException 
+    {
         return false;
     }
 
