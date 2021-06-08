@@ -143,6 +143,7 @@ package it.polito.ezshop.data {
         - connectionSource: ConnectionSource
         - userDao: Dao<User, Integer>
         - productTypeDao: Dao<ProductType, Integer>
+        - productDao: Dao<Product, String>
         - customerDao: Dao<Customer, Integer>
         - saleTransactionDao: Dao<SaleTransaction, Integer>
         - returnTransactionDao: Dao<ReturnTransaction, Integer>
@@ -327,6 +328,7 @@ class InvalidCustomerIdException {}
 class InvalidTransactionIdException {}
 class InvalidPaymentException{}
 class InvalidCreditCardException{}
+class InvalidRFIDException{}
 hide members
 }
 ```

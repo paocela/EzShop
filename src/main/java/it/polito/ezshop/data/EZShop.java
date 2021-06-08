@@ -42,6 +42,7 @@ public class EZShop implements EZShopInterface {
     ConnectionSource connectionSource;
     Dao<User, Integer> userDao;
     Dao<ProductType, Integer> productTypeDao;
+    Dao<Product, String> productDao;
     Dao<Customer, Integer> customerDao;
     Dao<SaleTransaction, Integer> saleTransactionDao;
     Dao<ReturnTransaction, Integer> returnTransactionDao;
@@ -54,6 +55,10 @@ public class EZShop implements EZShopInterface {
     private User userLogged = null;
     private SaleTransaction ongoingTransaction = null;
     private ReturnTransaction ongoingReturnTransaction = null;
+
+    private Map<String, Product> ongoingTransactionProducts =  new HashMap<String,Product>();
+    private Map<String, Product> ongoingReturnTransactionProducts =  new HashMap<String,Product>();
+
 
     public EZShop() {
         this(false);
@@ -71,6 +76,7 @@ public class EZShop implements EZShopInterface {
 
             TableUtils.createTableIfNotExists(connectionSource, User.class);
             TableUtils.createTableIfNotExists(connectionSource, ProductType.class);
+            TableUtils.createTableIfNotExists(connectionSource, Product.class);
             TableUtils.createTableIfNotExists(connectionSource, Customer.class);
             TableUtils.createTableIfNotExists(connectionSource, SaleTransaction.class);
             TableUtils.createTableIfNotExists(connectionSource, SaleTransactionRecord.class);
@@ -82,6 +88,7 @@ public class EZShop implements EZShopInterface {
 
             userDao = DaoManager.createDao(connectionSource, User.class);
             productTypeDao = DaoManager.createDao(connectionSource, ProductType.class);
+            productDao = DaoManager.createDao(connectionSource, Product.class);
             customerDao = DaoManager.createDao(connectionSource, Customer.class);
             saleTransactionDao = DaoManager.createDao(connectionSource, SaleTransaction.class);
             saleTransactionRecordDao = DaoManager.createDao(connectionSource, SaleTransactionRecord.class);
@@ -994,19 +1001,80 @@ public class EZShop implements EZShopInterface {
 
         return isRecorded;
     }
+    /**
+     * This method records the arrival of an order with given <orderId>. This method changes the quantity of available product.
+     * This method records each product received, with its RFID. RFIDs are recorded starting from RFIDfrom, in increments of 1
+     * ex recordOrderArrivalRFID(10, "000000001000")  where order 10 ordered 10 quantities of an item, this method records
+     * products with RFID 1000, 1001, 1002, 1003 etc until 1009
+     * The product type affected must have a location registered. The order should be either in the PAYED state (in this
+     * case the state will change to the COMPLETED one and the quantity of product type will be updated) or in the
+     * COMPLETED one (in this case this method will have no effect at all).
+     * It can be invoked only after a user with role "Administrator" or "ShopManager" is logged in.
+     *
+     * @param orderId the id of the order that has arrived
+     *
+     * @return  true if the operation was successful
+     *          false if the order does not exist or if it was not in an ORDERED/COMPLETED state
+     *
+     * @throws InvalidOrderIdException if the order id is less than or equal to 0 or if it is null.
+     * @throws InvalidLocationException if the ordered product type has not an assigned location.
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     * @throws InvalidRFIDException if the RFID has invalid format or is not unique 
+     */
+    public boolean recordOrderArrivalRFID(Integer orderId, String RFIDfrom) throws InvalidOrderIdException, UnauthorizedException, InvalidLocationException, InvalidRFIDException {
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager);
 
-    public boolean recordOrderArrivalRFID(Integer orderId, String RFIDfrom) throws InvalidOrderIdException, UnauthorizedException, 
-InvalidLocationException, InvalidRFIDException {
+        //return false if the order does not exist or if it was not in an ORDERED/COMPLETED state
+        boolean isOrderArrived = false;
 
-        // Validate rfid
+        //check orderId validity
+        if (orderId == null || orderId <= 0) {
+            throw new InvalidOrderIdException();
+        }
 
-        //boolean isOrderArrived = recordOrderArrival(orderId);
+        //check validity of RFIDfrom
+        if(!validateRFID(RFIDfrom)){
+            throw new InvalidRFIDException();
+        }
 
-        // Create Products
+        try {
+            Order orderToUpdate = orderDao.queryForId(orderId);
 
-        return false;
+            if (orderToUpdate != null && orderToUpdate.getStatus().equals("PAYED")) {
+                String code = orderToUpdate.getProductCode();
+                ArrayList<Product> products = new ArrayList<>();
+                for(int i=0; i<orderToUpdate.getQuantity(); i++){
+                    //check if all RFID {RFIDfrom, ...RFID+quantity} are unused
+                    String RFID =  Integer.toString(Integer.parseInt(RFIDfrom)+i);
+                    while (RFID.length() < 10){
+                        RFID = "0" + RFID;
+                    }
+
+                    Product p = new Product(RFID, code);
+                    products.add(p);
+
+                    if(productDao.queryBuilder().where().eq("RFID", RFID).queryForFirst() != null){
+                        throw new InvalidRFIDException();
+                    }
+
+                }
+
+                for(Product p: products) {
+                    productDao.create(p);
+                }
+
+                isOrderArrived = recordOrderArrival(orderId);
+
+            }
+
+            // Create Products
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
+        return isOrderArrived;
     }
-    
+
     @Override
     public List<it.polito.ezshop.data.Order> getAllOrders() throws UnauthorizedException {
         List<it.polito.ezshop.data.Order> orderList = new ArrayList<>();
@@ -1392,6 +1460,7 @@ InvalidLocationException, InvalidRFIDException {
             returnId = newSaleTransaction.getId();
 
             ongoingTransaction = newSaleTransaction;
+            ongoingTransactionProducts.clear();
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1480,25 +1549,47 @@ InvalidLocationException, InvalidRFIDException {
      * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
      *
      * @param transactionId the id of the Sale transaction
-     * @param productCode   the barcode of the product to be deleted
-     * @param amount        the quantity of product to be deleted
+     * @param RFID          the rfid of the product to be added
      * @return true if the operation is successful
      * false   if the product code does not exist,
      * if the quantity of product cannot satisfy the request,
      * if the transaction id does not identify a started and open transaction.
      * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
-     * @throws InvalidProductCodeException   if the product code is empty, null or invalid
+     * @throws InvalidRFIDException          if the RFID is empty, null or invalid
      * @throws InvalidQuantityException      if the quantity is less than 0
      * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
-    public boolean addProductToSaleRFID(Integer transactionId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, InvalidQuantityException, UnauthorizedException{
-        // Recupero il prodotto da RFID
-        // LO aggiungo alla lista
+    public boolean addProductToSaleRFID(Integer transactionId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, InvalidQuantityException, UnauthorizedException {
 
-        return false;
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        if(!validateRFID(RFID)){
+            throw new InvalidRFIDException();
+        }
+
+        boolean isAdded = false;
+
+        try {
+            Product product = productDao.queryForId(RFID);
+
+            if(product != null && product.getTransactionId() == null){
+                product.setTransactionId(transactionId);
+
+                isAdded = addProductToSale(transactionId, product.getCode(), 1);
+
+                if(isAdded){
+                    ongoingTransactionProducts.put(product.getRFID(), product);
+                }
+            }
+        } catch (InvalidProductCodeException|SQLException e) {
+            e.printStackTrace();
+        }
+
+
+        return isAdded;
     }
-    
+
     @Override
     public boolean deleteProductFromSale(Integer transactionId, String productCode, int amount) throws InvalidTransactionIdException, InvalidProductCodeException, InvalidQuantityException, UnauthorizedException {
         System.out.println("[DEV] deleteProductFromSale(" + transactionId + "," + productCode + "," + amount + ")");
@@ -1563,19 +1654,45 @@ InvalidLocationException, InvalidRFIDException {
      * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
      *
      * @param transactionId the id of the Sale transaction
-     * @param productCode   the barcode of the product to be discounted
-     * @param discountRate  the discount rate of the product
+     * @param RFID          the rfid of the product to be added
      * @return true if the operation is successful
      * false   if the product code does not exist,
      * if the transaction id does not identify a started and open transaction.
      * @throws InvalidTransactionIdException if the transaction id less than or equal to 0 or if it is null
-     * @throws InvalidProductCodeException   if the product code is empty, null or invalid
-     * @throws InvalidDiscountRateException  if the discount rate is less than 0 or if it greater than or equal to 1.00
+     * @throws InvalidRFIDException          if the RFID is empty, null or invalid
+     * @throws InvalidQuantityException      if the quantity is less than 0
      * @throws UnauthorizedException         if there is no logged user or if it has not the rights to perform the operation
      */
     @Override
-    public boolean deleteProductFromSaleRFID(Integer transactionId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, InvalidQuantityException, UnauthorizedException{
-        return false;
+    public boolean deleteProductFromSaleRFID(Integer transactionId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, InvalidQuantityException, UnauthorizedException {
+        boolean isDeleted = false;
+        Product product = null;
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        if(!validateRFID(RFID)){
+            throw new InvalidRFIDException();
+        }
+
+        if(transactionId == null || transactionId <= 0) {
+            throw new InvalidTransactionIdException();
+        }
+
+        try{
+            product = productDao.queryForId(RFID);
+
+            if(product != null) {
+                isDeleted = deleteProductFromSale(transactionId, product.getCode(), 1);
+                if(isDeleted) {
+                    ongoingTransactionProducts.remove(RFID);
+                }
+            }
+
+        } catch (InvalidProductCodeException | SQLException e){
+            e.printStackTrace();
+        }
+
+        return isDeleted;
     }
 
     @Override
@@ -1814,6 +1931,8 @@ InvalidLocationException, InvalidRFIDException {
                 ongoingTransaction = null;
             }
 
+            ongoingTransactionProducts.clear();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -1888,6 +2007,7 @@ InvalidLocationException, InvalidRFIDException {
                 returnId = newReturnTransaction.getReturnId();
 
                 ongoingReturnTransaction = newReturnTransaction;
+                ongoingReturnTransactionProducts.clear();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -1966,12 +2086,53 @@ InvalidLocationException, InvalidRFIDException {
 
         return false;
     }
-
-
+    
+    
+    /**
+     * This method adds a product to the return transaction, starting from its RFID
+     * This method DOES NOT update the product quantity
+     * It can be invoked only after a user with role "Administrator", "ShopManager" or "Cashier" is logged in.
+     *
+     * @param returnId the id of the return transaction
+     * @param RFID the RFID of the product to be returned
+     *
+     * @return  true if the operation is successful
+     *          false   if the the product to be returned does not exists,
+     *                  if it was not in the transaction,
+     *                  if the transaction does not exist
+     *
+     * @throws InvalidTransactionIdException if the return id is less ther or equal to 0 or if it is null
+     * @throws InvalidRFIDException if the RFID is empty, null or invalid
+     * @throws UnauthorizedException if there is no logged user or if it has not the rights to perform the operation
+     */
     @Override
-    public boolean returnProductRFID(Integer returnId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, UnauthorizedException 
-    {
-        return false;
+    public boolean returnProductRFID(Integer returnId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, UnauthorizedException {
+
+        authorize(User.RoleEnum.Administrator, User.RoleEnum.ShopManager, User.RoleEnum.Cashier);
+
+        boolean productadded = false;
+
+        if (!validateRFID(RFID)) throw new InvalidRFIDException();
+
+        Product product = null;
+        try {
+            product = productDao.queryForId(RFID);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        if (product == null || product.getTransactionId() == null) return false;
+
+        try {
+            productadded= returnProduct(returnId, product.getCode(), 1);
+        } catch (InvalidProductCodeException e) {
+            e.printStackTrace();
+        } catch (InvalidQuantityException e) {
+            e.printStackTrace();
+        }
+        if (productadded){
+            ongoingReturnTransactionProducts.put(RFID, product);
+        }
+        return productadded;
     }
 
 
@@ -2044,6 +2205,8 @@ InvalidLocationException, InvalidRFIDException {
             if (isDeleted && ongoingReturnTransaction.getReturnId().equals(returnId)) {
                 ongoingReturnTransaction = null;
             }
+
+            ongoingReturnTransactionProducts.clear();
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -2446,6 +2609,10 @@ InvalidLocationException, InvalidRFIDException {
         return check == last;
     }
 
+    public static boolean validateRFID(String RFID){
+        return RFID != null && RFID.matches("[0-9]{10}");
+    }
+
 
     /**
      * Retrieve the ongoing_transaction (taken from this.ongoingTransaction if compatible, else from DB)
@@ -2518,12 +2685,17 @@ InvalidLocationException, InvalidRFIDException {
             productTypeDao.update(product);
         }
 
+        for(Map.Entry<String, Product> productEntry: ongoingTransactionProducts.entrySet()){
+            productDao.update(productEntry.getValue());
+        }
+        ongoingTransactionProducts.clear();
     }
 
-    /**
-     * Increase the inventory availability by the return amount
-     *
-     * @param returntransaction The ReturnTransaction we are updating
+        /**
+         * Increase the inventory availability by the return amount
+         *
+         * @param returntransaction The ReturnTransaction we are upda
+        }ting
      */
     private void updateInventoryByReturnTransaction(ReturnTransaction returntransaction) throws SQLException {
         for (ReturnTransactionRecord record : returntransaction.getReturnRecords()) {
@@ -2532,6 +2704,10 @@ InvalidLocationException, InvalidRFIDException {
             productTypeDao.update(product);
         }
 
+        for(Map.Entry<String, Product> productEntry: ongoingReturnTransactionProducts.entrySet()){
+            productDao.update(productEntry.getValue());
+        }
+        ongoingReturnTransactionProducts.clear();
     }
 
     private void loadCreditCardsFromUtils() throws IOException {
