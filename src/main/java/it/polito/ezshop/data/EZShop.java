@@ -131,6 +131,8 @@ public class EZShop implements EZShopInterface {
             creditCardDao.deleteBuilder().delete();
             loadCreditCardsFromUtils();
 
+            productDao.deleteBuilder().delete();
+
 
         } catch (SQLException | IOException e) {
             e.printStackTrace();
@@ -2130,6 +2132,7 @@ public class EZShop implements EZShopInterface {
             e.printStackTrace();
         }
         if (productadded){
+            product.setTransactionId(null);
             ongoingReturnTransactionProducts.put(RFID, product);
         }
         return productadded;
