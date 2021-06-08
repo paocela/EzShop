@@ -25,10 +25,7 @@ public class OrderRFIDIntegrationTest extends BaseIntegrationTest {
         //update balance
         boolean isBalanceUpdated = shop.recordBalanceUpdate(+10);
         assertTrue(isBalanceUpdated);
-        //issue order
-        orderId = shop.issueOrder("000000000000", 10, 1);
-        assertTrue(orderId > 0);
-        //pay order
+        //issue and pay order
         orderId = shop.payOrderFor("000000000000", 10, 1);
         assertTrue(orderId > 0);
     }
