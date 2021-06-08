@@ -997,6 +997,13 @@ public class EZShop implements EZShopInterface {
 
     public boolean recordOrderArrivalRFID(Integer orderId, String RFIDfrom) throws InvalidOrderIdException, UnauthorizedException, 
 InvalidLocationException, InvalidRFIDException {
+
+        // Validate rfid
+
+        //boolean isOrderArrived = recordOrderArrival(orderId);
+
+        // Create Products
+
         return false;
     }
     
@@ -1486,6 +1493,9 @@ InvalidLocationException, InvalidRFIDException {
      */
     @Override
     public boolean addProductToSaleRFID(Integer transactionId, String RFID) throws InvalidTransactionIdException, InvalidRFIDException, InvalidQuantityException, UnauthorizedException{
+        // Recupero il prodotto da RFID
+        // LO aggiungo alla lista
+
         return false;
     }
     

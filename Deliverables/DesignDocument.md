@@ -101,6 +101,7 @@ package it.polito.ezshop.data {
     + payOrderFor(string productCode, int quantity, double pricePerUnit): integer
     + payOrder(integer orderId): boolean
     + recordOrderArrival(integer orderId): boolean
+    + recordOrderArrivalRFID(Integer orderId, String RFIDfrom): boolean
     + getAllOrders(): List<Order>
     + defineCustomer(string customerName)
     + modifyCustomer(integer Id, string newCustomerName, string newCustomerCard): boolean
@@ -112,7 +113,9 @@ package it.polito.ezshop.data {
     + modifyPointsOnCard(customerCard: String, pointsToBeAdded: int): boolean
     + startSaleTransaction(): Integer
     + addProductToSale(transactionId: Integer, productCode: String, amount: int): boolean
+    + addProductToSaleRFID(Integer transactionId, String RFID): boolean
     + deleteProductFromSale(Integer transactionId, String productCode, int amount): boolean
+    +  deleteProductFromSaleRFID(Integer transactionId, String RFID): boolean
     + applyDiscountRateToProduct(transactionId: Integer, productCode: String, discountRate: double):boolean
     + applyDiscountRateToSale(transactionId: Integer, discountRate: double): boolean
     + computePointsForSale(transactionId: Integer): int
@@ -121,6 +124,7 @@ package it.polito.ezshop.data {
     + getSaleTransaction(Integer transactionId) : SaleTransaction
     + startReturnTransaction(Integer transactionId) : Integer
     + returnProduct(Integer returnId, String productCode, int amount) : Boolean
+    + returnProductRFID(Integer returnId, String RFID): boolean
     + endReturnTransaction(Integer returnId, boolean commit) : Boolean
     + deleteReturnTransaction(Integer returnId) : Boolean
     + receiveCashPayment(Integer transactionId, double cash) : double
@@ -150,6 +154,8 @@ package it.polito.ezshop.data {
         - userLogged: User
         - ongoingTransaction: SaleTransaction
         - ongoingReturnTransaction: ReturnTransaction
+        - ongoingTransactionProducts : Map<String, Product> 
+        - ongoingReturnTransactionProducts : Map<String, Product>
         
         - authorize(): void
         - updateInventoryByPaidTransaction(): void
@@ -204,8 +210,14 @@ package it.polito.ezshop.model {
 
 
     }
-    class SaleTransaction {
     
+    class Product {
+        RFID: String
+        code: String
+        transactionId: Integer
+    }
+    
+    class SaleTransaction {
         StatusEnum: enum
         id: Integer
         status: StatusEnum
@@ -282,6 +294,8 @@ ReturnTransactionRecord - ProductType
 
 Customer - "0..1" Card
 ProductType -- Order
+ProductType - "*" Product
+Product - "0..1" SaleTransaction
 
 BalanceOperation ^- SaleTransaction
 BalanceOperation ^- ReturnTransaction
