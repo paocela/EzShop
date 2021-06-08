@@ -20,6 +20,7 @@ import java.util.List;
         UserIntegrationTest.class,
         AuthenticateIntegrationTest.class,
         OrderIntegrationTest.class,
+        OrderRFIDIntegrationTest.class,
         ProductTypeIntegrationTest.class,
         BalanceUpdateIntegrationTest.class,
 })
