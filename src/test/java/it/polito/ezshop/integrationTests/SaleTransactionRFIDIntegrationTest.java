@@ -15,14 +15,14 @@ public class SaleTransactionRFIDIntegrationTest extends BaseIntegrationTest {
     private static Integer productId = null;
     private static Integer transactionId = null;
     private static final String productCode = "0123456789012";
-    private static final String productRFIDFrom = "0123456789";
+    private static final String productRFIDFrom = "012123456789";
     private static final int productQuantity = 8;
     private static final double productPricePerUnit = 2;
     private static final String creditCard = "5100293991053009";
     private String currentRFID = null;
 
-    private static final ArrayList<String> productRFIDs = new ArrayList<String>(Arrays.asList("0123456789", "0123456790", "0123456791",
-            "0123456792", "0123456793", "0123456794", "0123456795", "0123456796"));
+    private static final ArrayList<String> productRFIDs = new ArrayList<String>(Arrays.asList("012123456789", "012123456790", "012123456791",
+            "012123456792", "012123456793", "012123456794", "012123456795", "012123456796"));
     @BeforeClass
     public static void createProduct() throws UnauthorizedException, InvalidProductDescriptionException, InvalidPricePerUnitException, InvalidProductCodeException, InvalidLocationException, InvalidProductIdException, InvalidQuantityException, InvalidRFIDException, InvalidOrderIdException {
         loginAs(User.RoleEnum.ShopManager);

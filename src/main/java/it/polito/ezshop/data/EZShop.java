@@ -1047,8 +1047,8 @@ public class EZShop implements EZShopInterface {
                 ArrayList<Product> products = new ArrayList<>();
                 for(int i=0; i<orderToUpdate.getQuantity(); i++){
                     //check if all RFID {RFIDfrom, ...RFID+quantity} are unused
-                    String RFID =  Integer.toString(Integer.parseInt(RFIDfrom)+i);
-                    while (RFID.length() < 10){
+                    String RFID =  Long.toString(Long.parseLong(RFIDfrom)+i);
+                    while (RFID.length() < 12){
                         RFID = "0" + RFID;
                     }
 
@@ -2613,7 +2613,7 @@ public class EZShop implements EZShopInterface {
     }
 
     public static boolean validateRFID(String RFID){
-        return RFID != null && RFID.matches("[0-9]{10}");
+        return RFID != null && RFID.matches("[0-9]{12}");
     }
 
 

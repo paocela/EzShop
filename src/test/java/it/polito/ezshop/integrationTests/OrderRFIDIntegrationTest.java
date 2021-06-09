@@ -33,7 +33,7 @@ public class OrderRFIDIntegrationTest extends BaseIntegrationTest {
     @Test
     public void testValidRecordOrderArrivalRFID() throws UnauthorizedException, InvalidLocationException, InvalidOrderIdException, InvalidRFIDException {
         loginAs(User.RoleEnum.ShopManager);
-        boolean isRecorded = shop.recordOrderArrivalRFID(orderId, "0000000010");
+        boolean isRecorded = shop.recordOrderArrivalRFID(orderId, "000000000010");
         assertTrue(isRecorded);
     }
 
