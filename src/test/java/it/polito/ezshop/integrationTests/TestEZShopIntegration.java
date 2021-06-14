@@ -15,9 +15,12 @@ import java.util.List;
         CustomerIntegrationTest.class,
         SaleTransactionIntegrationTest.class,
         ReturnTransactionIntegrationTest.class,
+        SaleTransactionRFIDIntegrationTest.class,
+        ReturnTransactionRFIDIntegrationTest.class,
         UserIntegrationTest.class,
         AuthenticateIntegrationTest.class,
         OrderIntegrationTest.class,
+        OrderRFIDIntegrationTest.class,
         ProductTypeIntegrationTest.class,
         BalanceUpdateIntegrationTest.class,
 })
